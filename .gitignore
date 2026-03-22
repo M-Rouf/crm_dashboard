@@ -1,0 +1,20 @@
+# Environnement Pixi local
+.pixi/
+
+# Base de données locale de test et scripts associés
+crm_local.db
+*.db
+*.sqlite3
+seed_db.py
+
+# Cache et environnements Python classiques
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Fichiers OS système
+.DS_Store
+Thumbs.db
