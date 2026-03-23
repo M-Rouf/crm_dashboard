@@ -125,8 +125,16 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+    request=request, 
+    name="index.html", 
+    context={} # Tu peux ajouter tes variables ici si besoin
+    )
 
 @app.get("/contacts", response_class=HTMLResponse)
 def page_contacts(request: Request):
-    return templates.TemplateResponse("contacts.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request, 
+        name="contacts.html", 
+        context={}
+    )
