@@ -64,6 +64,14 @@ class ContactSchema(BaseModel):
     class Config:
         from_attributes = True
 
+class ContactCreate(BaseModel):
+    prenom: Optional[str] = None
+    nom: Optional[str] = None
+    entreprise: Optional[str] = None
+    poste: Optional[str] = None
+    email: str
+    telephone: Optional[str] = None
+
 class RequeteSchema(BaseModel):
     id: int
     contact_id: int
@@ -117,6 +125,24 @@ def update_statut(requete_id: int, statut_update: StatutUpdate, db: Session = De
 @app.get("/api/contacts", response_model=List[ContactSchema])
 def get_contacts(db: Session = Depends(get_db)):
     return db.query(Contact).all()
+
+@app.post("/api/contacts", response_model=ContactSchema)
+def create_contact(contact: ContactCreate, db: Session = Depends(get_db)):
+    db_contact = db.query(Contact).filter(Contact.email == contact.email).first()
+    if db_contact:
+        raise HTTPException(status_code=400, detail="L'email est déjà utilisé.")
+    new_contact = Contact(
+        prenom=contact.prenom,
+        nom=contact.nom,
+        entreprise=contact.entreprise,
+        poste=contact.poste,
+        email=contact.email,
+        telephone=contact.telephone
+    )
+    db.add(new_contact)
+    db.commit()
+    db.refresh(new_contact)
+    return new_contact
 
 # --- Frontend (Static files & Templates) ---
 app.mount("/css", StaticFiles(directory="css"), name="css")
