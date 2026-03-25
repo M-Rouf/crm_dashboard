@@ -130,7 +130,7 @@ def get_contacts(db: Session = Depends(get_db)):
 def create_contact(contact: ContactCreate, db: Session = Depends(get_db)):
     db_contact = db.query(Contact).filter(Contact.email == contact.email).first()
     if db_contact:
-        raise HTTPException(status_code=400, detail="L'email est déjà utilisé.")
+        raise HTTPException(status_code=400, detail="Le contact est déjà enregistré.")
     new_contact = Contact(
         prenom=contact.prenom,
         nom=contact.nom,
