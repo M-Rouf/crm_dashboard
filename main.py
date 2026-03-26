@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 import datetime
 import os
+import urllib.request
+import json
 
 # --- Configurations de la Base de Données ---
 # Par défaut, utilise SQLite en local pour faciliter les tests avec Pixi
@@ -49,6 +51,16 @@ class Requete(Base):
     
     contact = relationship("Contact", back_populates="requetes")
 
+class Action(Base):
+    __tablename__ = "actions"
+    id = Column(Integer, primary_key=True, index=True)
+    nom = Column(String(255), nullable=False)
+    client = Column(String(255))
+    detail = Column(Text)
+    priorite = Column(String(50), default="normale")
+    statut = Column(String(50), default="nouveau")
+    date = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+
 # --- Schémas Pydantic ---
 class ContactSchema(BaseModel):
     id: int
@@ -87,6 +99,21 @@ class RequeteSchema(BaseModel):
         from_attributes = True
 
 class StatutUpdate(BaseModel):
+    statut: str
+
+class ActionSchema(BaseModel):
+    id: int
+    nom: str
+    client: Optional[str] = None
+    detail: Optional[str] = None
+    priorite: Optional[str] = "normale"
+    statut: Optional[str] = "nouveau"
+    date: Optional[datetime.datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ActionStatutUpdate(BaseModel):
     statut: str
 
 # --- Initialisation FastAPI ---
@@ -144,6 +171,38 @@ def create_contact(contact: ContactCreate, db: Session = Depends(get_db)):
     db.refresh(new_contact)
     return new_contact
 
+@app.get("/api/actions", response_model=List[ActionSchema])
+def get_actions(db: Session = Depends(get_db)):
+    return db.query(Action).all()
+
+@app.patch("/api/actions/{action_id}/statut", response_model=ActionSchema)
+def update_action_statut(action_id: int, statut_update: ActionStatutUpdate, db: Session = Depends(get_db)):
+    action = db.query(Action).filter(Action.id == action_id).first()
+    if not action:
+        raise HTTPException(status_code=404, detail="Action non trouvée")
+    
+    action.statut = statut_update.statut
+    db.commit()
+    db.refresh(action)
+    return action
+
+class WebhookPayload(BaseModel):
+    texte: str
+
+@app.post("/api/actions/webhook")
+def trigger_action_webhook(payload: WebhookPayload):
+    try:
+        data = json.dumps({"action": payload.texte}).encode('utf-8')
+        req = urllib.request.Request(
+            "https://n8n.mrliw.fr/webhook-test/dashboard-actions",
+            data=data,
+            headers={'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req) as response:
+            return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # --- Frontend (Static files & Templates) ---
 app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/img", StaticFiles(directory="img"), name="img")
@@ -162,5 +221,13 @@ def page_contacts(request: Request):
     return templates.TemplateResponse(
         request=request, 
         name="contacts.html", 
+        context={}
+    )
+
+@app.get("/actions", response_class=HTMLResponse)
+def page_actions(request: Request):
+    return templates.TemplateResponse(
+        request=request, 
+        name="actions.html", 
         context={}
     )
