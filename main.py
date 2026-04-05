@@ -194,7 +194,7 @@ def trigger_action_webhook(payload: WebhookPayload):
     try:
         data = json.dumps({"action": payload.texte}).encode('utf-8')
         req = urllib.request.Request(
-            "https://n8n.mrliw.fr/webhook-test/dashboard-actions",
+            "https://n8n.mrliw.fr/webhook/dashboard-actions",
             data=data,
             headers={'Content-Type': 'application/json'}
         )
