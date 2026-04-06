@@ -301,7 +301,10 @@
                     }
                 }
 
-                onMounted(fetchData)
+                onMounted(() => {
+                    fetchData()
+                    setInterval(fetchData, 30000) // Rafraîchissement automatique toutes les 30s
+                })
 
                 const sortBy = (key) => {
                     if (sortKey.value === key) {

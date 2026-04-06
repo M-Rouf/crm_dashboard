@@ -355,7 +355,10 @@
                     }
                 }
 
-                onMounted(fetchData)
+                onMounted(() => {
+                    fetchData()
+                    setInterval(fetchData, 30000) // Rafraîchissement automatique toutes les 30s
+                })
 
                 const toggleStatus = async (req) => {
                     const newStatus = req.statut === 'nouveau' ? 'traite' : 'nouveau'
