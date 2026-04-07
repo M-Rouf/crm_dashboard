@@ -31,7 +31,8 @@ class Contact(Base):
     nom = Column(String(100))
     entreprise = Column(String(150))
     poste = Column(String(150))
-    adresse = Column(Text)
+    adresse_livraison = Column(Text)
+    adresse_facturation = Column(Text)
     email = Column(String(255), unique=True, index=True, nullable=False)
     telephone = Column(String(30))
     date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
@@ -68,7 +69,8 @@ class ContactSchema(BaseModel):
     nom: Optional[str] = None
     entreprise: Optional[str] = None
     poste: Optional[str] = None
-    adresse: Optional[str] = None
+    adresse_livraison: Optional[str] = None
+    adresse_facturation: Optional[str] = None
     email: str
     telephone: Optional[str] = None
     date_creation: Optional[datetime.datetime] = None
@@ -83,6 +85,8 @@ class ContactCreate(BaseModel):
     poste: Optional[str] = None
     email: str
     telephone: Optional[str] = None
+    adresse_livraison: Optional[str] = None
+    adresse_facturation: Optional[str] = None
 
 class RequeteSchema(BaseModel):
     id: int
@@ -164,12 +168,33 @@ def create_contact(contact: ContactCreate, db: Session = Depends(get_db)):
         entreprise=contact.entreprise,
         poste=contact.poste,
         email=contact.email,
-        telephone=contact.telephone
+        telephone=contact.telephone,
+        adresse_livraison=contact.adresse_livraison,
+        adresse_facturation=contact.adresse_facturation
     )
     db.add(new_contact)
     db.commit()
     db.refresh(new_contact)
     return new_contact
+
+@app.put("/api/contacts/{contact_id}", response_model=ContactSchema)
+def update_contact(contact_id: int, contact_update: ContactCreate, db: Session = Depends(get_db)):
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact non trouvé")
+    
+    contact.prenom = contact_update.prenom
+    contact.nom = contact_update.nom
+    contact.entreprise = contact_update.entreprise
+    contact.poste = contact_update.poste
+    contact.email = contact_update.email
+    contact.telephone = contact_update.telephone
+    contact.adresse_livraison = contact_update.adresse_livraison
+    contact.adresse_facturation = contact_update.adresse_facturation
+
+    db.commit()
+    db.refresh(contact)
+    return contact
 
 @app.get("/api/actions", response_model=List[ActionSchema])
 def get_actions(db: Session = Depends(get_db)):
