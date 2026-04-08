@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, Text
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, Text, Numeric
 from sqlalchemy.orm import sessionmaker, Session, declarative_base, relationship
 from pydantic import BaseModel
 from typing import List, Optional
@@ -38,6 +38,7 @@ class Contact(Base):
     date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     
     requetes = relationship("Requete", back_populates="contact")
+    devis = relationship("Devis", back_populates="contact")
 
 class Requete(Base):
     __tablename__ = "requetes"
@@ -61,6 +62,19 @@ class Action(Base):
     priorite = Column(String(50), default="normale")
     statut = Column(String(50), default="nouveau")
     date = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+
+class Devis(Base):
+    __tablename__ = "devis"
+    id = Column(Integer, primary_key=True, index=True)
+    nom = Column(String(255), nullable=False)
+    client = Column(Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
+    description = Column(Text)
+    montant_ht = Column(Numeric(10, 2))
+    file_path = Column(Text)
+    statut = Column(String(50), default="En attente")
+    date_emission = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+
+    contact = relationship("Contact", back_populates="devis")
 
 # --- Schémas Pydantic ---
 class ContactSchema(BaseModel):
@@ -118,6 +132,44 @@ class ActionSchema(BaseModel):
         from_attributes = True
 
 class ActionStatutUpdate(BaseModel):
+    statut: str
+
+class DevisSchema(BaseModel):
+    id: int
+    nom: str
+    client: int
+    description: Optional[str] = None
+    montant_ht: Optional[float] = None
+    file_path: Optional[str] = None
+    statut: Optional[str] = "En attente"
+    date_emission: Optional[datetime.datetime] = None
+
+    # Relationship for frontend mapping
+    contact: Optional[ContactSchema] = None
+
+    class Config:
+        from_attributes = True
+
+class DevisStatutUpdate(BaseModel):
+    statut: str
+
+class DevisSchema(BaseModel):
+    id: int
+    nom: str
+    client: int
+    description: Optional[str] = None
+    montant_ht: Optional[float] = None
+    file_path: Optional[str] = None
+    statut: Optional[str] = "En attente"
+    date_emission: Optional[datetime.datetime] = None
+
+    # Relationship for frontend mapping
+    contact: Optional[ContactSchema] = None
+
+    class Config:
+        from_attributes = True
+
+class DevisStatutUpdate(BaseModel):
     statut: str
 
 # --- Initialisation FastAPI ---
