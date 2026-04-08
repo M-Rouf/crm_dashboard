@@ -308,3 +308,27 @@ def page_actions(request: Request):
         name="actions.html", 
         context={}
     )
+
+@app.get("/api/devis", response_model=List[DevisSchema])
+def get_devis_list(db: Session = Depends(get_db)):
+    devis_all = db.query(Devis).all()
+    return devis_all
+
+@app.patch("/api/devis/{devis_id}/statut", response_model=DevisSchema)
+def update_devis_statut(devis_id: int, statut_update: DevisStatutUpdate, db: Session = Depends(get_db)):
+    devis_item = db.query(Devis).filter(Devis.id == devis_id).first()
+    if not devis_item:
+        raise HTTPException(status_code=404, detail="Devis non trouvé")
+    
+    devis_item.statut = statut_update.statut
+    db.commit()
+    db.refresh(devis_item)
+    return devis_item
+
+@app.get("/devis", response_class=HTMLResponse)
+def page_devis(request: Request):
+    return templates.TemplateResponse(
+        request=request, 
+        name="devis.html", 
+        context={}
+    )
