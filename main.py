@@ -325,6 +325,20 @@ def update_devis_statut(devis_id: int, statut_update: DevisStatutUpdate, db: Ses
     db.refresh(devis_item)
     return devis_item
 
+@app.post("/api/devis/webhook")
+def trigger_devis_webhook(payload: WebhookPayload):
+    try:
+        data = json.dumps({"devis_request": payload.texte}).encode('utf-8')
+        req = urllib.request.Request(
+            "https://n8n.mrliw.fr/webhook-test/devis_dashboard_request",
+            data=data,
+            headers={'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req) as response:
+            return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/devis", response_class=HTMLResponse)
 def page_devis(request: Request):
     return templates.TemplateResponse(
