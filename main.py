@@ -266,6 +266,23 @@ def update_action_statut(action_id: int, statut_update: ActionStatutUpdate, db: 
 class WebhookPayload(BaseModel):
     texte: str
 
+class ArticlePayload(BaseModel):
+    designation: str
+    quantite: int
+    prix_unitaire: float
+
+class ConfirmDevisPayload(BaseModel):
+    nom: Optional[str] = ""
+    prenom: Optional[str] = ""
+    entreprise: Optional[str] = ""
+    adresse_facturation: Optional[str] = ""
+    adresse_livraison: Optional[str] = ""
+    email: str
+    articles: List[ArticlePayload] = []
+    total_estime: float = 0.0
+    note: Optional[str] = ""
+    texte: str
+
 @app.post("/api/actions/webhook")
 def trigger_action_webhook(payload: WebhookPayload):
     try:
@@ -335,7 +352,31 @@ def trigger_devis_webhook(payload: WebhookPayload):
             headers={'Content-Type': 'application/json'}
         )
         with urllib.request.urlopen(req) as response:
-            return {"status": "success"}
+            res_body = response.read().decode('utf-8')
+            try:
+                return json.loads(res_body)
+            except:
+                return {"raw": res_body}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/devis/confirm")
+def confirm_devis_creation(payload: ConfirmDevisPayload):
+    try:
+        data_dict = payload.dict()
+        data = json.dumps(data_dict).encode('utf-8')
+        req = urllib.request.Request(
+            "https://n8n.mrliw.fr/webhook-test/creation_devis",
+            data=data,
+            headers={'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req) as response:
+            res_body = response.read().decode('utf-8')
+            try:
+                parsed_res = json.loads(res_body)
+                return {"status": "success", "n8n_response": parsed_res}
+            except:
+                return {"status": "success", "raw_response": res_body}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
