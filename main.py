@@ -347,7 +347,7 @@ def trigger_devis_webhook(payload: WebhookPayload):
     try:
         data = json.dumps({"devis_request": payload.texte}).encode('utf-8')
         req = urllib.request.Request(
-            "https://n8n.mrliw.fr/webhook-test/devis_dashboard_request",
+            "https://n8n.mrliw.fr/webhook/devis_dashboard_request",
             data=data,
             headers={'Content-Type': 'application/json'}
         )
