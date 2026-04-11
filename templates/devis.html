@@ -443,16 +443,65 @@
                                 <input type="text" v-model="parsedDevisData.adresse_facturation"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
                             </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse Livraison</label>
+                                <input type="text" v-model="parsedDevisData.adresse_livraison"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Note additionnelle</label>
+                                <textarea v-model="parsedDevisData.note" rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                            </div>
                             <div class="col-span-2 border-t border-gray-100 pt-4 mt-2">
-                                <h4 class="font-bold text-gray-800 text-sm mb-2">Articles (Aperçu)</h4>
-                                <ul class="text-sm text-gray-600 space-y-1">
-                                    <li v-for="a in parsedDevisData.articles" :key="a.designation">
-                                        {{a.quantite}}x {{a.designation}} - {{a.prix_unitaire}}€
-                                    </li>
-                                </ul>
+                                <div class="flex justify-between items-center mb-3">
+                                    <h4 class="font-bold text-gray-800 text-sm">Articles</h4>
+                                    <button type="button"
+                                        @click="parsedDevisData.articles.push({designation: '', quantite: 1, prix_unitaire: 0})"
+                                        class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 font-semibold transition-colors">+
+                                        Ajouter un article</button>
+                                </div>
+                                <div class="space-y-2 max-h-64 overflow-y-auto pr-1 stylised-scrollbar">
+                                    <div v-for="(a, idx) in parsedDevisData.articles" :key="idx"
+                                        class="flex gap-2 items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                        <div class="flex-grow">
+                                            <input type="text" v-model="a.designation"
+                                                placeholder="Désignation de l'article"
+                                                class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2 focus:ring-1 focus:ring-indigo-500 bg-white">
+                                            <div class="flex gap-3">
+                                                <div class="flex items-center gap-2 w-1/3">
+                                                    <span class="text-xs font-medium text-gray-500">Qté:</span>
+                                                    <input type="number" v-model.number="a.quantite" min="1"
+                                                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white">
+                                                </div>
+                                                <div class="flex items-center gap-2 w-2/3">
+                                                    <span class="text-xs font-medium text-gray-500">Prix U. HT
+                                                        (€):</span>
+                                                    <input type="number" v-model.number="a.prix_unitaire" step="0.01"
+                                                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" @click="parsedDevisData.articles.splice(idx, 1)"
+                                            class="text-gray-400 hover:text-red-500 p-1.5 hover:bg-white rounded transition-colors"
+                                            title="Retirer">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div v-if="parsedDevisData.articles.length === 0"
+                                        class="text-sm text-gray-400 italic py-3 text-center border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+                                        Aucun article enregistré.</div>
+                                </div>
                                 <div
-                                    class="mt-3 font-bold text-indigo-700 bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100 inline-block">
-                                    Total estimé: {{parsedDevisData.total_estime}}€
+                                    class="mt-4 flex items-center justify-between bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                                    <span class="font-bold text-indigo-900 text-sm">Total estimé (€) :</span>
+                                    <input type="number" v-model.number="parsedDevisData.total_estime" step="0.01"
+                                        class="w-32 px-2 py-1 border border-indigo-200 rounded text-sm font-bold text-right text-indigo-700 focus:ring-2 focus:outline-none focus:ring-indigo-500 bg-white">
                                 </div>
                             </div>
                         </div>
