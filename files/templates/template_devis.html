@@ -24,10 +24,10 @@
 
         /* Format A4 */
         .page {
-            width: 210mm;
+            max-width: 210mm;
             min-height: 297mm;
-            padding: 20mm;
-            margin: 10mm auto;
+            padding: 5mm 15mm;
+            margin: 0 auto;
             background: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             box-sizing: border-box;
@@ -183,6 +183,7 @@
             .page {
                 margin: 0;
                 box-shadow: none;
+                padding: 10mm 15mm; /* marges pdf plus fines */
             }
 
             button {
