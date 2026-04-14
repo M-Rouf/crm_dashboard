@@ -10,6 +10,9 @@ import datetime
 import os
 import urllib.request
 import json
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from scripts.generate_devis import generate_devis_files
 
 # --- Configurations de la Base de Données ---
 # Par défaut, utilise SQLite en local pour faciliter les tests avec Pixi
@@ -361,23 +364,63 @@ def trigger_devis_webhook(payload: WebhookPayload):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/devis/confirm")
-def confirm_devis_creation(payload: ConfirmDevisPayload):
+def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(get_db)):
     try:
-        data_dict = payload.dict()
-        data = json.dumps(data_dict).encode('utf-8')
-        req = urllib.request.Request(
-            "https://n8n.mrliw.fr/webhook-test/creation_devis",
-            data=data,
-            headers={'Content-Type': 'application/json'}
+        contact = db.query(Contact).filter(Contact.email == payload.email).first()
+        if not contact:
+            contact = Contact(
+                prenom=payload.prenom,
+                nom=payload.nom,
+                entreprise=payload.entreprise,
+                email=payload.email,
+                adresse_facturation=payload.adresse_facturation,
+                adresse_livraison=payload.adresse_livraison
+            )
+            db.add(contact)
+            db.commit()
+            db.refresh(contact)
+
+        now = datetime.datetime.now()
+        month = now.strftime("%m")
+        year = now.strftime("%y")
+        count = db.query(Devis).filter(Devis.nom.like(f"mrliw_d{month}{year}%")).count()
+        ref_devis = f"mrliw_d{month}{year}{count:02d}"
+
+        nom_client = f"{payload.prenom} {payload.nom} ({payload.entreprise})" if payload.entreprise else f"{payload.prenom} {payload.nom}"
+        contact_client = payload.email
+        if contact.telephone:
+            contact_client = f"{contact.telephone} | {payload.email}"
+
+        generations = generate_devis_files(
+            ref_devis=ref_devis,
+            nom_client=nom_client,
+            adresse_client=payload.adresse_livraison or "",
+            contact_client=contact_client,
+            articles=payload.articles,
+            total_ht=payload.total_estime
         )
-        with urllib.request.urlopen(req) as response:
-            res_body = response.read().decode('utf-8')
-            try:
-                parsed_res = json.loads(res_body)
-                return {"status": "success", "n8n_response": parsed_res}
-            except:
-                return {"status": "success", "raw_response": res_body}
+
+        desc_lines = ["Articles:"]
+        for a in payload.articles:
+            desc_lines.append(f"- {a.quantite}x {a.designation} ({a.prix_unitaire}€)")
+        if payload.note:
+            desc_lines.append(f"\nNote: {payload.note}")
+
+        devis = Devis(
+            nom=ref_devis,
+            client=contact.id,
+            description="\n".join(desc_lines),
+            montant_ht=payload.total_estime,
+            statut="En attente",
+            file_path=generations["pdf_path"]
+        )
+        db.add(devis)
+        db.commit()
+        db.refresh(devis)
+
+        return {"status": "success", "devis_id": devis.id, "ref": ref_devis}
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/devis", response_class=HTMLResponse)
