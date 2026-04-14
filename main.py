@@ -303,6 +303,8 @@ def trigger_action_webhook(payload: WebhookPayload):
 # --- Frontend (Static files & Templates) ---
 app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/img", StaticFiles(directory="img"), name="img")
+app.mount("/files", StaticFiles(directory="files"), name="files")
+app.mount("/app/files", StaticFiles(directory="files"), name="app_files") # Rétro-compatibilité pour les tests
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
@@ -412,7 +414,7 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
             description="\n".join(desc_lines),
             montant_ht=payload.total_estime,
             statut="En attente",
-            file_path=generations["pdf_path"]
+            file_path=generations.get("url_path", generations["pdf_path"])
         )
         db.add(devis)
         db.commit()

@@ -82,5 +82,6 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
 
     return {
         "html_path": html_output_path,
-        "pdf_path": pdf_output_path
+        "pdf_path": pdf_output_path,
+        "url_path": f"/files/devis/{ref_devis}.pdf"
     }
