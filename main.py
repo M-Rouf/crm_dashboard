@@ -370,17 +370,19 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
     try:
         contact = db.query(Contact).filter(Contact.email == payload.email).first()
         if not contact:
-            contact = Contact(
-                prenom=payload.prenom,
-                nom=payload.nom,
-                entreprise=payload.entreprise,
-                email=payload.email,
-                adresse_facturation=payload.adresse_facturation,
-                adresse_livraison=payload.adresse_livraison
-            )
+            contact = Contact(email=payload.email)
             db.add(contact)
-            db.commit()
-            db.refresh(contact)
+        
+        contact.prenom = payload.prenom
+        contact.nom = payload.nom
+        contact.entreprise = payload.entreprise
+        if payload.adresse_facturation:
+            contact.adresse_facturation = payload.adresse_facturation
+        if payload.adresse_livraison:
+            contact.adresse_livraison = payload.adresse_livraison
+        
+        db.commit()
+        db.refresh(contact)
 
         now = datetime.datetime.now()
         month = now.strftime("%m")

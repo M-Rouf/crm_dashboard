@@ -39,6 +39,10 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
     for key, val in replacements.items():
         html_content = html_content.replace(key, str(val))
 
+    # Correction du logo
+    logo_path = os.path.join(base_dir, "files", "templates", "logo_devis.png")
+    html_content = html_content.replace('src="logo_devis.png"', f'src="{logo_path}"')
+
     # Tableau d'articles
     # Extraction de la structure: <tr> ... <td>#ID</td> ... </tr>
     article_row_pattern = re.search(r'(<tr>\s*<td>#ID</td>.*?</tr>)', html_content, re.DOTALL)
@@ -73,7 +77,11 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
     options = {
         'enable-local-file-access': None,
         'encoding': 'UTF-8',
-        'page-size': 'A4'
+        'page-size': 'A4',
+        'margin-top': '0mm',
+        'margin-right': '0mm',
+        'margin-bottom': '0mm',
+        'margin-left': '0mm'
     }
     try:
         pdfkit.from_file(html_output_path, pdf_output_path, options=options)
