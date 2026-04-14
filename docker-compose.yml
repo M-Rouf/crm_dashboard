@@ -1,29 +1,25 @@
-version: '3.8'
-
 services:
-  web:
+  dashboard-web:
     build: .
     container_name: crm-dashboard-web
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://crm_user:secret123@db:5432/crm_db
-    depends_on:
-      - db
     restart: always
-
-  db:
-    image: postgres:15-alpine
-    container_name: crm-dashboard-db
     environment:
-      - POSTGRES_USER=crm_user
-      - POSTGRES_PASSWORD=secret123
-      - POSTGRES_DB=crm_db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: always
-    ports:
-      - "5432:5432"
+      - DATABASE_URL=postgresql://admin:crm_Mot2P%40sse@crm-postgres:5432/crm_db
+    networks:
+      - n8n_default
+    labels:
+      - "traefik.enable=true"
+      # --- LIGNE CRUCIALE ---
+      - "traefik.docker.network=n8n_default"
+      # ----------------------
+      - "traefik.http.routers.crm-dash.rule=Host(`dashboard.mrliw.fr`)"
+      - "traefik.http.routers.crm-dash.entrypoints=websecure"
+      - "traefik.http.routers.crm-dash.tls=true"
+      - "traefik.http.routers.crm-dash.tls.certresolver=myresolver"
+      - "traefik.http.services.crm-dash.loadbalancer.server.port=8000"
+      - "traefik.http.routers.crm-dash.middlewares=dash-auth"
+      - "traefik.http.middlewares.dash-auth.basicauth.users=admin:$$2b$$12$$4gi3Q6xGMdQ6y1pH9z7bHe6H5pGXuiZn.IsLjNwE5Hv.B3SntIBgu"
 
-volumes:
-  postgres_data:
+networks:
+  n8n_default:
+    external: true
