@@ -285,6 +285,7 @@ class ConfirmDevisPayload(BaseModel):
     total_estime: float = 0.0
     note: Optional[str] = ""
     texte: str
+    designation: Optional[str] = ""
 
 @app.post("/api/actions/webhook")
 def trigger_action_webhook(payload: WebhookPayload):
@@ -421,6 +422,24 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
         db.add(devis)
         db.commit()
         db.refresh(devis)
+        # Webhook final vers N8N
+        try:
+            webhook_payload = {
+                "prenom": payload.prenom,
+                "email": payload.email,
+                "nom_devis": ref_devis,
+                "designation_devis": payload.designation,
+                "file_path": devis.file_path
+            }
+            data = json.dumps(webhook_payload).encode('utf-8')
+            req = urllib.request.Request(
+                "https://n8n.mrliw.fr/webhook-test/creation_devis",
+                data=data,
+                headers={'Content-Type': 'application/json'}
+            )
+            urllib.request.urlopen(req)
+        except Exception as webhook_err:
+            print(f"Erreur webhook n8n: {webhook_err}")
 
         return {"status": "success", "devis_id": devis.id, "ref": ref_devis}
     except Exception as e:
