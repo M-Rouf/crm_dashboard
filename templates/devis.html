@@ -573,6 +573,9 @@
                         if (!res.ok) throw new Error("Erreur lors de l'envoi de la demande.")
 
                         const res_json = await res.json()
+                        if (!res_json.designation && res_json.articles && res_json.articles.length > 0) {
+                            res_json.designation = res_json.articles[0].designation
+                        }
                         parsedDevisData.value = res_json
                         step.value = 2
                     } catch (e) {
