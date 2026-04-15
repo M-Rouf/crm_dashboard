@@ -505,9 +505,11 @@
                                 </div>
                                 <div
                                     class="mt-4 flex items-center justify-between bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                                    <span class="font-bold text-indigo-900 text-sm">Total estimé (€) :</span>
-                                    <input type="number" v-model.number="parsedDevisData.total_estime" step="0.01"
-                                        class="w-32 px-2 py-1 border border-indigo-200 rounded text-sm font-bold text-right text-indigo-700 focus:ring-2 focus:outline-none focus:ring-indigo-500 bg-white">
+                                    <span class="font-bold text-indigo-900 text-sm">Total estimé HT (€) :</span>
+                                    <div
+                                        class="w-32 px-2 py-1 bg-transparent rounded text-sm font-bold text-right text-indigo-700">
+                                        {{ computedTotalEstime.toFixed(2) }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -585,9 +587,15 @@
                     }
                 }
 
+                const computedTotalEstime = computed(() => {
+                    if (!parsedDevisData.value || !parsedDevisData.value.articles) return 0;
+                    return parsedDevisData.value.articles.reduce((sum, a) => sum + (parseFloat(a.prix_unitaire || 0) * parseInt(a.quantite || 0)), 0);
+                })
+
                 const confirmDevis = async () => {
                     isSubmitting.value = true
                     addError.value = ''
+                    parsedDevisData.value.total_estime = computedTotalEstime.value
                     const reqPayload = { ...parsedDevisData.value, texte: newDevisRequestText.value }
                     try {
                         const res = await fetch('/api/devis/confirm', {
@@ -684,7 +692,7 @@
                     devis, searchQuery, showSigned, selectedDevis,
                     filteredDevis, stats, toggleStatus, clientName, formatCurrency, formatDate,
                     showAddModal, newDevisRequestText, isSubmitting, addError, requestSuccess, submitDevisRequest,
-                    step, parsedDevisData, closeAddModal, confirmDevis
+                    step, parsedDevisData, closeAddModal, confirmDevis, computedTotalEstime
                 }
             }
         }).mount('#app')
