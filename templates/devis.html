@@ -673,24 +673,31 @@
                         const res_json = await res.json()
                         updateSuccess.value = true
                         setTimeout(() => {
-                            closeUpdateModal()
-                            parsedDevisData.value = {
-                                id: selectedDevis.value.id,
-                                prenom: selectedDevis.value.contact.prenom || '',
-                                nom: selectedDevis.value.contact.nom || '',
-                                entreprise: selectedDevis.value.contact.entreprise || '',
-                                email: selectedDevis.value.contact.email || '',
-                                adresse_facturation: selectedDevis.value.contact.adresse_facturation || '',
-                                adresse_livraison: selectedDevis.value.contact.adresse_livraison || '',
-                                articles: res_json.articles || [],
-                                total_estime: res_json.total_estime || 0.0,
-                                note: res_json.note || '',
-                                texte: updateDevisText.value,
-                                designation: res_json.articles && res_json.articles.length > 0 ? res_json.articles[0].designation : ""
+                            try {
+                                const activeDevis = selectedDevis.value || {}
+                                const contact = activeDevis.contact || {}
+                                parsedDevisData.value = {
+                                    id: activeDevis.id,
+                                    prenom: contact.prenom || '',
+                                    nom: contact.nom || '',
+                                    entreprise: contact.entreprise || '',
+                                    email: contact.email || '',
+                                    adresse_facturation: contact.adresse_facturation || '',
+                                    adresse_livraison: contact.adresse_livraison || '',
+                                    articles: res_json.articles || [],
+                                    total_estime: res_json.total_estime || 0.0,
+                                    note: res_json.note || '',
+                                    texte: updateDevisText.value,
+                                    designation: res_json.articles && res_json.articles.length > 0 ? res_json.articles[0].designation : ""
+                                }
+                                newDevisRequestText.value = updateDevisText.value
+                                closeUpdateModal()
+                                step.value = 2
+                                showAddModal.value = true
+                            } catch (err) {
+                                console.error("Erreur après coup:", err)
+                                alert("Erreur d'affichage : " + err.message)
                             }
-                            newDevisRequestText.value = updateDevisText.value
-                            step.value = 2
-                            showAddModal.value = true
                         }, 2000)
                     } catch (e) {
                         updateError.value = e.message
