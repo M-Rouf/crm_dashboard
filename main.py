@@ -305,11 +305,11 @@ def trigger_update_devis_webhook(devis_id: int, payload: UpdateDevisPayload, db:
         }
         data = json.dumps(webhook_data).encode('utf-8')
         req = urllib.request.Request(
-            "https://n8n.mrliw.fr/webhook-test/update_devis",
+            "https://n8n.mrliw.fr/webhook/update_devis",
             data=data,
             headers={'Content-Type': 'application/json'}
         )
-        response = urllib.request.urlopen(req)
+        response = urllib.request.urlopen(req, timeout=120)
         response_body = response.read().decode('utf-8')
         return json.loads(response_body) if response_body else {"status": "envoyé"}
     except Exception as e:
