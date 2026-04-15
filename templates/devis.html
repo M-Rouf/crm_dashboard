@@ -269,6 +269,17 @@
                             class="text-xl font-bold text-indigo-600 bg-indigo-50 px-4 py-1.5 rounded-lg border border-indigo-100">
                             {{ formatCurrency(selectedDevis.montant_ht) }}
                         </span>
+                        <button @click="showUpdateModal = true"
+                            class="text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5"
+                            title="Modifier">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Modifier
+                        </button>
                         <button @click="selectedDevis = null"
                             class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100 transition-colors"
                             title="Fermer">
@@ -342,6 +353,54 @@
             </div>
 
 
+
+            <!-- Modal Modification Devis -->
+            <div v-if="showUpdateModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
+                aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeUpdateModal">
+                </div>
+                <div
+                    class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all sm:max-w-lg w-full relative z-10 flex flex-col max-h-[90vh]">
+                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">Modifier le devis
+                        </h3>
+                        <button @click="closeUpdateModal"
+                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="submitUpdateDevis" class="p-6 space-y-4">
+                        <div v-if="updateError"
+                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                            {{ updateError }}
+                        </div>
+                        <div v-if="updateSuccess"
+                            class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+                            Demande de modification envoyée avec succès !
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Détaillez vos modifications pour
+                                n8n</label>
+                            <textarea v-model="updateDevisText" rows="4" required
+                                placeholder="Ex: Ajouter une remise de 10% sur le montant HT..."
+                                class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+                            <button type="button" @click="closeUpdateModal" :disabled="isUpdating"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">Annuler</button>
+                            <button type="submit" :disabled="isUpdating || !updateDevisText"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                <span v-if="isUpdating">Envoi en cours...</span>
+                                <span v-else>Envoyer</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <!-- Modal Demande Création Devis -->
             <div v-if="showAddModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
@@ -587,6 +646,41 @@
                     }
                 }
 
+                const showUpdateModal = ref(false)
+                const updateDevisText = ref('')
+                const isUpdating = ref(false)
+                const updateError = ref('')
+                const updateSuccess = ref(false)
+
+                const closeUpdateModal = () => {
+                    showUpdateModal.value = false
+                    updateDevisText.value = ''
+                    updateError.value = ''
+                    updateSuccess.value = false
+                }
+
+                const submitUpdateDevis = async () => {
+                    isUpdating.value = true
+                    updateError.value = ''
+                    try {
+                        const res = await fetch(`/api/devis/${selectedDevis.value.id}/update_webhook`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ texte: updateDevisText.value })
+                        })
+                        if (!res.ok) throw new Error("Erreur lors de l'envoi de la modification.")
+
+                        updateSuccess.value = true
+                        setTimeout(() => {
+                            closeUpdateModal()
+                        }, 2000)
+                    } catch (e) {
+                        updateError.value = e.message
+                    } finally {
+                        isUpdating.value = false
+                    }
+                }
+
                 const computedTotalEstime = computed(() => {
                     if (!parsedDevisData.value || !parsedDevisData.value.articles) return 0;
                     return parsedDevisData.value.articles.reduce((sum, a) => sum + (parseFloat(a.prix_unitaire || 0) * parseInt(a.quantite || 0)), 0);
@@ -692,7 +786,8 @@
                     devis, searchQuery, showSigned, selectedDevis,
                     filteredDevis, stats, toggleStatus, clientName, formatCurrency, formatDate,
                     showAddModal, newDevisRequestText, isSubmitting, addError, requestSuccess, submitDevisRequest,
-                    step, parsedDevisData, closeAddModal, confirmDevis, computedTotalEstime
+                    step, parsedDevisData, closeAddModal, confirmDevis, computedTotalEstime,
+                    showUpdateModal, updateDevisText, isUpdating, updateError, updateSuccess, closeUpdateModal, submitUpdateDevis
                 }
             }
         }).mount('#app')

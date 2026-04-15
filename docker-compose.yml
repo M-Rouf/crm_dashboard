@@ -5,6 +5,7 @@ services:
     restart: always
     volumes:
       - ./files:/app/files
+      - ./templates:/app/templates
     environment:
       - DATABASE_URL=postgresql://admin:crm_Mot2P%40sse@crm-postgres:5432/crm_db
     networks:

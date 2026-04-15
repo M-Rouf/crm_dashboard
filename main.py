@@ -287,6 +287,33 @@ class ConfirmDevisPayload(BaseModel):
     texte: str
     designation: Optional[str] = ""
 
+class UpdateDevisPayload(BaseModel):
+    texte: str
+
+@app.post("/api/devis/{devis_id}/update_webhook")
+def trigger_update_devis_webhook(devis_id: int, payload: UpdateDevisPayload, db: Session = Depends(get_db)):
+    devis = db.query(Devis).filter(Devis.id == devis_id).first()
+    if not devis:
+        raise HTTPException(status_code=404, detail="Devis non trouvé")
+    
+    try:
+        webhook_data = {
+            "ref_devis": devis.nom,
+            "description_de_devis": devis.description,
+            "texte_modification": payload.texte
+        }
+        data = json.dumps(webhook_data).encode('utf-8')
+        req = urllib.request.Request(
+            "https://n8n.mrliw.fr/webhook-test/update_devis",
+            data=data,
+            headers={'Content-Type': 'application/json'}
+        )
+        response = urllib.request.urlopen(req)
+        response_body = response.read().decode('utf-8')
+        return json.loads(response_body) if response_body else {"status": "envoyé"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/actions/webhook")
 def trigger_action_webhook(payload: WebhookPayload):
     try:
