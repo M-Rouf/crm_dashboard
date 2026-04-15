@@ -275,6 +275,7 @@ class ArticlePayload(BaseModel):
     prix_unitaire: float
 
 class ConfirmDevisPayload(BaseModel):
+    id: Optional[int] = None
     nom: Optional[str] = ""
     prenom: Optional[str] = ""
     entreprise: Optional[str] = ""
@@ -412,11 +413,17 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
         db.commit()
         db.refresh(contact)
 
-        now = datetime.datetime.now()
-        month = now.strftime("%m")
-        year = now.strftime("%y")
-        count = db.query(Devis).filter(Devis.nom.like(f"mrliw_d{month}{year}%")).count()
-        ref_devis = f"mrliw_d{month}{year}{count:02d}"
+        if payload.id:
+            devis = db.query(Devis).filter(Devis.id == payload.id).first()
+            if not devis:
+                raise HTTPException(status_code=404, detail="Devis non trouvé pour la mise à jour.")
+            ref_devis = devis.nom
+        else:
+            now = datetime.datetime.now()
+            month = now.strftime("%m")
+            year = now.strftime("%y")
+            count = db.query(Devis).filter(Devis.nom.like(f"mrliw_d{month}{year}%")).count()
+            ref_devis = f"mrliw_d{month}{year}{count:02d}"
 
         nom_client = f"{payload.prenom} {payload.nom} ({payload.entreprise})" if payload.entreprise else f"{payload.prenom} {payload.nom}"
         contact_client = payload.email
@@ -438,15 +445,22 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
         if payload.note:
             desc_lines.append(f"\nNote: {payload.note}")
 
-        devis = Devis(
-            nom=ref_devis,
-            client=contact.id,
-            description="\n".join(desc_lines),
-            montant_ht=payload.total_estime,
-            statut="En attente",
-            file_path=generations.get("url_path", generations["pdf_path"])
-        )
-        db.add(devis)
+        file_path = generations.get("url_path", generations["pdf_path"])
+        if payload.id:
+            devis.description = "\n".join(desc_lines)
+            devis.montant_ht = payload.total_estime
+            devis.file_path = file_path
+        else:
+            devis = Devis(
+                nom=ref_devis,
+                client=contact.id,
+                description="\n".join(desc_lines),
+                montant_ht=payload.total_estime,
+                statut="En attente",
+                file_path=file_path
+            )
+            db.add(devis)
+        
         db.commit()
         db.refresh(devis)
         # Webhook final vers N8N
