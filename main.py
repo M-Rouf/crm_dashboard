@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -10,6 +10,7 @@ import datetime
 import os
 import urllib.request
 import json
+import shutil
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from scripts.generate_devis import generate_devis_files
@@ -371,10 +372,37 @@ def update_devis_statut(devis_id: int, statut_update: DevisStatutUpdate, db: Ses
     if not devis_item:
         raise HTTPException(status_code=404, detail="Devis non trouvé")
     
+    if devis_item.statut == "Signé":
+        raise HTTPException(status_code=400, detail="Un devis signé ne peut pas être modifié")
+    
     devis_item.statut = statut_update.statut
     db.commit()
     db.refresh(devis_item)
     return devis_item
+
+@app.post("/api/devis/{devis_id}/upload_signed")
+def upload_signed_devis(devis_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    devis_item = db.query(Devis).filter(Devis.id == devis_id).first()
+    if not devis_item:
+        raise HTTPException(status_code=404, detail="Devis non trouvé")
+    if devis_item.statut == "Signé":
+        raise HTTPException(status_code=400, detail="Ce devis est déjà signé")
+
+    if devis_item.file_path and devis_item.file_path.startswith("/files/"):
+        file_system_path = "." + devis_item.file_path
+    else:
+        file_system_path = f"./files/devis/{devis_item.nom}.pdf"
+    
+    try:
+        with open(file_system_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur système fichier: {e}")
+
+    devis_item.statut = "Signé"
+    db.commit()
+    db.refresh(devis_item)
+    return {"status": "success", "file_path": devis_item.file_path}
 
 @app.post("/api/devis/webhook")
 def trigger_devis_webhook(payload: WebhookPayload):
