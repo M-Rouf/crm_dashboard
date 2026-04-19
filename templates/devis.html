@@ -78,8 +78,17 @@
                 </h1>
 
                 <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <button @click="showManualAddModal = true"
+                        class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14" />
+                            <path d="M12 5v14" />
+                        </svg>
+                        Ajout Manuel
+                    </button>
                     <button @click="showAddModal = true"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm">
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -367,6 +376,88 @@
 
 
 
+
+            <!-- Modal Ajout Manuel Devis -->
+            <div v-if="showManualAddModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
+                aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeManualModal">
+                </div>
+                <div
+                    class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all sm:max-w-xl w-full relative z-10 flex flex-col max-h-[90vh]">
+                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">Ajouter un devis
+                            manuel</h3>
+                        <button @click="closeManualModal"
+                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="submitManualAdd" class="p-6 space-y-4 overflow-y-auto">
+                        <div v-if="manualError"
+                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                            {{ manualError }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact (Client / Fournisseur)
+                                *</label>
+                            <select v-model="manualAddForm.client" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+                                <option value="" disabled>Sélectionner un contact...</option>
+                                <option v-for="c in contacts" :key="c.id" :value="c.id">{{ clientName(c) }}</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nom (Référence) *</label>
+                                <input v-model="manualAddForm.nom" placeholder="Ex: mrliw_dXXXXXX" type="text" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                                <select v-model="manualAddForm.type" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+                                    <option value="émis">Devis émis</option>
+                                    <option value="reçu">Devis reçu</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Montant Total HT *</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">€</span>
+                                </div>
+                                <input v-model="manualAddForm.montant_ht" type="number" step="0.01" min="0" required
+                                    class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optionnel)</label>
+                            <textarea v-model="manualAddForm.description" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Fichier PDF *</label>
+                            <input type="file" ref="manualFileInput" accept="application/pdf" required
+                                class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                        </div>
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+                            <button type="button" @click="closeManualModal" :disabled="isManualSubmitting"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">Annuler</button>
+                            <button type="submit" :disabled="isManualSubmitting"
+                                class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                <span v-if="isManualSubmitting">Traitement...</span>
+                                <span v-else>Enregistrer</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <!-- Modal Upload PDF Signé -->
             <div v-if="showUploadModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
@@ -803,10 +894,80 @@
                     }
                 }
 
+                const contacts = ref([])
+                const fetchContacts = async () => {
+                    try {
+                        const res = await fetch('/api/contacts')
+                        if (res.ok) contacts.value = await res.json()
+                    } catch (e) {
+                        console.error('Erreur récupération contacts:', e)
+                    }
+                }
+
                 onMounted(() => {
                     fetchData()
+                    fetchContacts()
                     setInterval(fetchData, 30000) // Rafraîchissement automatique
                 })
+
+                const showManualAddModal = ref(false)
+                const manualAddForm = ref({
+                    nom: '',
+                    client: '',
+                    type: 'émis',
+                    description: '',
+                    montant_ht: 0
+                })
+                const manualFileInput = ref(null)
+                const isManualSubmitting = ref(false)
+                const manualError = ref('')
+
+                const closeManualModal = () => {
+                    showManualAddModal.value = false
+                    manualAddForm.value = { nom: '', client: '', type: 'émis', description: '', montant_ht: 0 }
+                    manualError.value = ''
+                    if (manualFileInput.value) manualFileInput.value.value = ""
+                }
+
+                const submitManualAdd = async () => {
+                    if (!manualFileInput.value || !manualFileInput.value.files[0]) {
+                        manualError.value = "Le fichier PDF est obligatoire."
+                        return
+                    }
+                    if (!manualAddForm.value.client) {
+                        manualError.value = "Veuillez sélectionner un contact."
+                        return
+                    }
+
+                    isManualSubmitting.value = true
+                    manualError.value = ''
+
+                    const formData = new FormData()
+                    formData.append('nom', manualAddForm.value.nom)
+                    formData.append('client', manualAddForm.value.client)
+                    formData.append('type', manualAddForm.value.type)
+                    formData.append('description', manualAddForm.value.description)
+                    formData.append('montant_ht', manualAddForm.value.montant_ht)
+                    formData.append('file', manualFileInput.value.files[0])
+
+                    try {
+                        const res = await fetch('/api/devis/manuel', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        if (!res.ok) {
+                            const errObj = await res.json().catch(() => ({}))
+                            throw new Error(errObj.detail || "Erreur lors de l'ajout manuel.")
+                        }
+
+                        closeManualModal()
+                        fetchData()
+                    } catch (e) {
+                        manualError.value = e.message
+                    } finally {
+                        isManualSubmitting.value = false
+                    }
+                }
 
                 const showUploadModal = ref(false)
                 const devisToUpload = ref(null)
@@ -903,7 +1064,8 @@
                     showAddModal, newDevisRequestText, isSubmitting, addError, requestSuccess, submitDevisRequest,
                     step, parsedDevisData, closeAddModal, confirmDevis, computedTotalEstime,
                     showUpdateModal, updateDevisText, isUpdating, updateError, updateSuccess, closeUpdateModal, submitUpdateDevis,
-                    showUploadModal, devisToUpload, isUploading, uploadError, fileInput, openUploadModal, closeUploadModal, submitUploadDevis
+                    showUploadModal, devisToUpload, isUploading, uploadError, fileInput, openUploadModal, closeUploadModal, submitUploadDevis,
+                    showManualAddModal, manualAddForm, manualFileInput, isManualSubmitting, manualError, closeManualModal, submitManualAdd, contacts
                 }
             }
         }).mount('#app')

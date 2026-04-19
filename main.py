@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -386,6 +386,50 @@ def upload_signed_devis(devis_id: int, file: UploadFile = File(...), db: Session
     db.commit()
     db.refresh(devis_item)
     return {"status": "success", "file_path": devis_item.file_path}
+
+@app.post("/api/devis/manuel")
+def create_manual_devis(
+    nom: str = Form(""),
+    client: int = Form(...),
+    type: str = Form("émis"),
+    description: str = Form(""),
+    montant_ht: float = Form(0.0),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    contact = db.query(Contact).filter(Contact.id == client).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Client introuvable")
+
+    filename = file.filename
+    safe_nom = "".join([c if c.isalnum() else "_" for c in nom]) if nom else "manuel"
+    # To keep files unique and safe
+    import time
+    unix_time = str(int(time.time()))
+    safe_filename = f"{safe_nom}_{unix_time}_{filename}"
+
+    file_system_path = f"./files/devis/{safe_filename}"
+    file_path = f"/files/devis/{safe_filename}"
+    
+    try:
+        with open(file_system_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur système fichier: {e}")
+        
+    devis = Devis(
+        nom=nom or f"Devis manuel ({safe_filename})",
+        client=client,
+        description=description,
+        montant_ht=montant_ht,
+        type=type,
+        statut="Signé" if type == "reçu" else "En attente",
+        file_path=file_path
+    )
+    db.add(devis)
+    db.commit()
+    db.refresh(devis)
+    return {"status": "success", "id": devis.id}
 
 @app.post("/api/devis/webhook")
 def trigger_devis_webhook(payload: WebhookPayload):
