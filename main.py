@@ -76,6 +76,7 @@ class Devis(Base):
     montant_ht = Column(Numeric(10, 2))
     file_path = Column(Text)
     statut = Column(String(50), default="En attente")
+    type = Column(String(50), default="émis")
     date_emission = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
     contact = relationship("Contact", back_populates="devis")
@@ -146,25 +147,7 @@ class DevisSchema(BaseModel):
     montant_ht: Optional[float] = None
     file_path: Optional[str] = None
     statut: Optional[str] = "En attente"
-    date_emission: Optional[datetime.datetime] = None
-
-    # Relationship for frontend mapping
-    contact: Optional[ContactSchema] = None
-
-    class Config:
-        from_attributes = True
-
-class DevisStatutUpdate(BaseModel):
-    statut: str
-
-class DevisSchema(BaseModel):
-    id: int
-    nom: str
-    client: int
-    description: Optional[str] = None
-    montant_ht: Optional[float] = None
-    file_path: Optional[str] = None
-    statut: Optional[str] = "En attente"
+    type: Optional[str] = "émis"
     date_emission: Optional[datetime.datetime] = None
 
     # Relationship for frontend mapping
