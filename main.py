@@ -500,7 +500,8 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
 
         desc_lines = ["Articles:"]
         for a in payload.articles:
-            desc_lines.append(f"- {a.quantite}x {a.designation} ({a.prix_unitaire}€)")
+            remise_str = f" - Remise: {a.remise}%" if a.remise > 0 else ""
+            desc_lines.append(f"- {a.quantite}x {a.designation} ({a.prix_unitaire}€{remise_str})")
         if payload.note:
             desc_lines.append(f"\nNote: {payload.note}")
 
