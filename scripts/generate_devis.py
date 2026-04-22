@@ -3,7 +3,7 @@ import pdfkit
 import re
 from datetime import datetime, timedelta
 
-def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, articles, total_ht):
+def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, articles, total_ht, delai=""):
     # Chemin vers les fichiers
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     template_path = os.path.join(base_dir, "files", "templates", "template_devis.html")
@@ -33,7 +33,8 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
         "#durée_offre": date_offre,
         "#Tot_HT": f"{total_ht:.2f} €",
         "#Tot_TVA": "0,00 €",
-        "#Tot_TTC": f"{total_ht:.2f} €"
+        "#Tot_TTC": f"{total_ht:.2f} €",
+        "#delai": delai
     }
     
     for key, val in replacements.items():
@@ -54,13 +55,17 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
                 art = art.dict()
             ht_price = float(art.get('prix_unitaire', 0))
             qty = int(art.get('quantite', 1))
-            total_art_ht = ht_price * qty
+            remise = float(art.get('remise', 0))
+            
+            # Application de la remise : prix * qty * (1 - remise/100)
+            total_art_ht = (ht_price * qty) * (1 - remise / 100)
             
             row_html = row_template
             row_html = row_html.replace("#ID", str(i))
             row_html = row_html.replace("#Nom_article", str(art.get('designation', '')))
             row_html = row_html.replace("#nb_article", str(qty))
             row_html = row_html.replace("#UHT", f"{ht_price:.2f} €")
+            row_html = row_html.replace("#remise", f"{remise}%" if remise > 0 else "")
             row_html = row_html.replace("#TVA", "0,00 €")
             row_html = row_html.replace("#THT", f"{total_art_ht:.2f} €")
             row_html = row_html.replace("#TTC", f"{total_art_ht:.2f} €")

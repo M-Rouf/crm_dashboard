@@ -79,7 +79,8 @@
             border-top: 1px solid var(--border-color);
             border-bottom: 1px solid var(--border-color);
             padding: 15px 0;
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
             justify-content: space-between;
             margin-bottom: 20px;
         }
@@ -187,7 +188,8 @@
                 max-width: none;
                 margin: 0;
                 box-shadow: none;
-                padding: 10mm 15mm; /* marges pdf plus fines */
+                padding: 10mm 15mm;
+                /* marges pdf plus fines */
                 box-sizing: border-box;
             }
 
@@ -228,8 +230,8 @@
                 #contact_client
             </div>
             <div class="total-amount-box">
-                <div class="label-small" style="text-align: right;">Montant Total</div>
-                <div class="total-amount-val">#prix_total</div>
+                <div class="label-small" style="text-align: right;">Délai :</div>
+                <strong>#delai</strong>
             </div>
         </div>
 
@@ -252,10 +254,11 @@
             <thead>
                 <tr>
                     <th style="width: 5%;">N°</th>
-                    <th style="width: 40%;">Article</th>
+                    <th style="width: 35%;">Article</th>
                     <th style="width: 10%;">Quantité</th>
-                    <th style="width: 15%;">Prix unité HT</th>
-                    <th style="width: 10%;">TVA (0%)</th>
+                    <th style="width: 10%;">Prix unité HT</th>
+                    <th style="width: 10%">Remise (%)</th>
+                    <th style="width: 10%;">TVA</th>
                     <th style="width: 10%;">Montant HT</th>
                     <th style="width: 10%;">Total TTC</th>
                 </tr>
@@ -266,6 +269,7 @@
                     <td>#Nom_article</td>
                     <td>#nb_article</td>
                     <td>#UHT</td>
+                    <td>#remise</td>
                     <td>#TVA</td>
                     <td>#THT</td>
                     <td>#TTC</td>

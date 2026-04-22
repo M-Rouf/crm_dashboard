@@ -257,6 +257,7 @@ class ArticlePayload(BaseModel):
     designation: str
     quantite: int
     prix_unitaire: float
+    remise: float = 0.0
 
 class ConfirmDevisPayload(BaseModel):
     id: Optional[int] = None
@@ -268,6 +269,8 @@ class ConfirmDevisPayload(BaseModel):
     email: str
     articles: List[ArticlePayload] = []
     total_estime: float = 0.0
+    delai: Optional[str] = ""
+    envoi: int = 1
     note: Optional[str] = ""
     texte: str
     designation: Optional[str] = ""
@@ -491,7 +494,8 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
             adresse_client=payload.adresse_livraison or "",
             contact_client=contact_client,
             articles=payload.articles,
-            total_ht=payload.total_estime
+            total_ht=payload.total_estime,
+            delai=payload.delai
         )
 
         desc_lines = ["Articles:"]
@@ -519,23 +523,24 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
         db.commit()
         db.refresh(devis)
         # Webhook final vers N8N
-        try:
-            webhook_payload = {
-                "prenom": payload.prenom,
-                "email": payload.email,
-                "nom_devis": ref_devis,
-                "designation_devis": payload.designation,
-                "file_path": devis.file_path
-            }
-            data = json.dumps(webhook_payload).encode('utf-8')
-            req = urllib.request.Request(
-                "https://n8n.mrliw.fr/webhook/envoi_devis",
-                data=data,
-                headers={'Content-Type': 'application/json'}
-            )
-            urllib.request.urlopen(req)
-        except Exception as webhook_err:
-            print(f"Erreur webhook n8n: {webhook_err}")
+        if payload.envoi == 1:
+            try:
+                webhook_payload = {
+                    "prenom": payload.prenom,
+                    "email": payload.email,
+                    "nom_devis": ref_devis,
+                    "designation_devis": payload.designation,
+                    "file_path": devis.file_path
+                }
+                data = json.dumps(webhook_payload).encode('utf-8')
+                req = urllib.request.Request(
+                    "https://n8n.mrliw.fr/webhook/envoi_devis",
+                    data=data,
+                    headers={'Content-Type': 'application/json'}
+                )
+                urllib.request.urlopen(req)
+            except Exception as webhook_err:
+                print(f"Erreur webhook n8n: {webhook_err}")
 
         return {"status": "success", "devis_id": devis.id, "ref": ref_devis}
     except Exception as e:
