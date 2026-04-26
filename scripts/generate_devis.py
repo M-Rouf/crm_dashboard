@@ -3,7 +3,7 @@ import pdfkit
 import re
 from datetime import datetime, timedelta
 
-def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, articles, total_ht, delai=""):
+def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, articles, total_ht, total_tva=0, total_ttc=0, delai=""):
     # Chemin vers les fichiers
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     template_path = os.path.join(base_dir, "files", "templates", "template_devis.html")
@@ -32,8 +32,8 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
         "#date_devis": date_devis_str,
         "#durée_offre": date_offre,
         "#Tot_HT": f"{total_ht:.2f} €",
-        "#Tot_TVA": "0,00 €",
-        "#Tot_TTC": f"{total_ht:.2f} €",
+        "#Tot_TVA": f"{total_tva:.2f} €",
+        "#Tot_TTC": f"{total_ttc:.2f} €",
         "#delai": delai
     }
     

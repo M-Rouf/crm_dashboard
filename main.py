@@ -77,6 +77,8 @@ class Devis(Base):
     client = Column(Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
     description = Column(Text)
     montant_ht = Column(Numeric(10, 2))
+    montant_tva = Column(Numeric(10, 2), default=0)
+    montant_ttc = Column(Numeric(10, 2), default=0)
     file_path = Column(Text)
     statut = Column(String(50), default="En attente")
     type = Column(String(50), default="émis")
@@ -154,6 +156,8 @@ class DevisSchema(BaseModel):
     client: int
     description: Optional[str] = None
     montant_ht: Optional[float] = None
+    montant_tva: Optional[float] = 0.0
+    montant_ttc: Optional[float] = 0.0
     file_path: Optional[str] = None
     statut: Optional[str] = "En attente"
     type: Optional[str] = "émis"
@@ -287,6 +291,9 @@ class ConfirmDevisPayload(BaseModel):
     email: str
     articles: List[ArticlePayload] = []
     total_estime: float = 0.0
+    tva_percent: float = 0.0
+    montant_tva: float = 0.0
+    montant_ttc: float = 0.0
     delai: Optional[str] = ""
     envoi: int = 1
     note: Optional[str] = ""
@@ -415,6 +422,7 @@ def create_manual_devis(
     type: str = Form("émis"),
     description: str = Form(""),
     montant_ht: float = Form(0.0),
+    montant_tva: float = Form(0.0),
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
@@ -443,6 +451,8 @@ def create_manual_devis(
         client=client,
         description=description,
         montant_ht=montant_ht,
+        montant_tva=montant_tva,
+        montant_ttc=montant_ht + montant_tva,
         type=type,
         statut="Signé" if type == "reçu" else "En attente",
         file_path=file_path
@@ -516,6 +526,8 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
             contact_client=contact_client,
             articles=payload.articles,
             total_ht=payload.total_estime,
+            total_tva=payload.montant_tva,
+            total_ttc=payload.montant_ttc,
             delai=payload.delai
         )
 
@@ -530,6 +542,8 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
         if payload.id:
             devis.description = "\n".join(desc_lines)
             devis.montant_ht = payload.total_estime
+            devis.montant_tva = payload.montant_tva
+            devis.montant_ttc = payload.montant_ttc
             devis.file_path = file_path
         else:
             devis = Devis(
@@ -537,6 +551,8 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
                 client=contact.id,
                 description="\n".join(desc_lines),
                 montant_ht=payload.total_estime,
+                montant_tva=payload.montant_tva,
+                montant_ttc=payload.montant_ttc,
                 statut="En attente",
                 file_path=file_path
             )
