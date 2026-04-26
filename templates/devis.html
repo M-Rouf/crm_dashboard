@@ -891,7 +891,21 @@
                         const res_json = await res.json()
                         const mappedData = {
                             ...res_json,
-                            articles: (res_json.articles || []).map(a => ({ ...a, remise: a.remise || 0 })),
+                            articles: (res_json.articles || []).map(a => {
+                                const origQty = parseFloat(a.quantite || 0);
+                                const origPrice = parseFloat(a.prix_unitaire || 0);
+                                let newQty = Math.max(1, Math.round(origQty));
+                                let newPrice = origPrice;
+                                if (origQty > 0 && origQty !== newQty) {
+                                    newPrice = (origPrice * origQty) / newQty;
+                                }
+                                return {
+                                    ...a,
+                                    quantite: newQty,
+                                    prix_unitaire: Number(newPrice.toFixed(2)),
+                                    remise: a.remise || 0
+                                };
+                            }),
                             delai: res_json.delai || '',
                             type_entite: res_json.type_entite || 'B2B',
                             envoi: res_json.envoi !== undefined ? res_json.envoi : 1
@@ -949,7 +963,21 @@
                                     email: contact.email || '',
                                     adresse_facturation: contact.adresse_facturation || '',
                                     adresse_livraison: contact.adresse_livraison || '',
-                                    articles: (res_json.articles || []).map(a => ({ ...a, remise: a.remise || 0 })),
+                                    articles: (res_json.articles || []).map(a => {
+                                        const origQty = parseFloat(a.quantite || 0);
+                                        const origPrice = parseFloat(a.prix_unitaire || 0);
+                                        let newQty = Math.max(1, Math.round(origQty));
+                                        let newPrice = origPrice;
+                                        if (origQty > 0 && origQty !== newQty) {
+                                            newPrice = (origPrice * origQty) / newQty;
+                                        }
+                                        return {
+                                            ...a,
+                                            quantite: newQty,
+                                            prix_unitaire: Number(newPrice.toFixed(2)),
+                                            remise: a.remise || 0
+                                        };
+                                    }),
                                     total_estime: res_json.total_estime || 0.0,
                                     tva_percent: 0,
                                     delai: res_json.delai || '',

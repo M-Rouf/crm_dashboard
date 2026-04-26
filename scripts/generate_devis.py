@@ -66,7 +66,6 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
             row_html = row_html.replace("#nb_article", str(qty))
             row_html = row_html.replace("#UHT", f"{ht_price:.2f} €")
             row_html = row_html.replace("#remise", f"{remise}%" if remise > 0 else "")
-            row_html = row_html.replace("#TVA", "0,00 €")
             row_html = row_html.replace("#THT", f"{total_art_ht:.2f} €")
             row_html = row_html.replace("#TTC", f"{total_art_ht:.2f} €")
             
