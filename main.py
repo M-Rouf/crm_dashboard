@@ -34,6 +34,9 @@ class Contact(Base):
     prenom = Column(String(100))
     nom = Column(String(100))
     entreprise = Column(String(150))
+    siret = Column(String(14))
+    tva_intra = Column(String(20))
+    type_entite = Column(String(20), default='B2B')
     poste = Column(String(150))
     adresse_livraison = Column(Text)
     adresse_facturation = Column(Text)
@@ -87,6 +90,9 @@ class ContactSchema(BaseModel):
     prenom: Optional[str] = None
     nom: Optional[str] = None
     entreprise: Optional[str] = None
+    siret: Optional[str] = None
+    tva_intra: Optional[str] = None
+    type_entite: Optional[str] = 'B2B'
     poste: Optional[str] = None
     adresse_livraison: Optional[str] = None
     adresse_facturation: Optional[str] = None
@@ -101,6 +107,9 @@ class ContactCreate(BaseModel):
     prenom: Optional[str] = None
     nom: Optional[str] = None
     entreprise: Optional[str] = None
+    siret: Optional[str] = None
+    tva_intra: Optional[str] = None
+    type_entite: Optional[str] = 'B2B'
     poste: Optional[str] = None
     email: str
     telephone: Optional[str] = None
@@ -205,6 +214,9 @@ def create_contact(contact: ContactCreate, db: Session = Depends(get_db)):
         prenom=contact.prenom,
         nom=contact.nom,
         entreprise=contact.entreprise,
+        siret=contact.siret,
+        tva_intra=contact.tva_intra,
+        type_entite=contact.type_entite,
         poste=contact.poste,
         email=contact.email,
         telephone=contact.telephone,
@@ -225,6 +237,9 @@ def update_contact(contact_id: int, contact_update: ContactCreate, db: Session =
     contact.prenom = contact_update.prenom
     contact.nom = contact_update.nom
     contact.entreprise = contact_update.entreprise
+    contact.siret = contact_update.siret
+    contact.tva_intra = contact_update.tva_intra
+    contact.type_entite = contact_update.type_entite
     contact.poste = contact_update.poste
     contact.email = contact_update.email
     contact.telephone = contact_update.telephone
@@ -264,6 +279,9 @@ class ConfirmDevisPayload(BaseModel):
     nom: Optional[str] = ""
     prenom: Optional[str] = ""
     entreprise: Optional[str] = ""
+    siret: Optional[str] = ""
+    tva_intra: Optional[str] = ""
+    type_entite: Optional[str] = "B2B"
     adresse_facturation: Optional[str] = ""
     adresse_livraison: Optional[str] = ""
     email: str
@@ -463,6 +481,9 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
         contact.prenom = payload.prenom
         contact.nom = payload.nom
         contact.entreprise = payload.entreprise
+        contact.siret = payload.siret
+        contact.tva_intra = payload.tva_intra
+        contact.type_entite = payload.type_entite
         if payload.adresse_facturation:
             contact.adresse_facturation = payload.adresse_facturation
         if payload.adresse_livraison:

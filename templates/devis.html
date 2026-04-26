@@ -657,6 +657,25 @@
                                 <input type="text" v-model="parsedDevisData.entreprise"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
                             </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">SIRET</label>
+                                <input type="text" v-model="parsedDevisData.siret" maxlength="14"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">TVA
+                                    Intracommunautaire</label>
+                                <input type="text" v-model="parsedDevisData.tva_intra"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Type d'entité</label>
+                                <select v-model="parsedDevisData.type_entite"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+                                    <option value="B2B">B2B (Professionnel)</option>
+                                    <option value="B2C">B2C (Particulier)</option>
+                                </select>
+                            </div>
                             <div class="col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Email <span
                                         class="text-red-500">*</span></label>
@@ -826,6 +845,7 @@
                             ...res_json,
                             articles: (res_json.articles || []).map(a => ({ ...a, remise: a.remise || 0 })),
                             delai: res_json.delai || '',
+                            type_entite: res_json.type_entite || 'B2B',
                             envoi: res_json.envoi !== undefined ? res_json.envoi : 1
                         }
                         if (!mappedData.designation && mappedData.articles && mappedData.articles.length > 0) {
@@ -875,6 +895,9 @@
                                     prenom: contact.prenom || '',
                                     nom: contact.nom || '',
                                     entreprise: contact.entreprise || '',
+                                    siret: contact.siret || '',
+                                    tva_intra: contact.tva_intra || '',
+                                    type_entite: contact.type_entite || 'B2B',
                                     email: contact.email || '',
                                     adresse_facturation: contact.adresse_facturation || '',
                                     adresse_livraison: contact.adresse_livraison || '',
