@@ -47,6 +47,7 @@ class Contact(Base):
     requetes = relationship("Requete", back_populates="contact")
     devis = relationship("Devis", back_populates="contact")
     actions = relationship("Action", back_populates="contact")
+    commandes = relationship("Commande", back_populates="contact")
 
 class Requete(Base):
     __tablename__ = "requetes"
@@ -88,6 +89,26 @@ class Devis(Base):
     date_emission = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
     contact = relationship("Contact", back_populates="devis")
+    commandes = relationship("Commande", back_populates="devis")
+
+class Commande(Base):
+    __tablename__ = "commandes"
+    id = Column(Integer, primary_key=True, index=True)
+    reference = Column(String(100), unique=True)
+    contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
+    devis_id = Column(Integer, ForeignKey("devis.id", ondelete="SET NULL"), nullable=True)
+    flux = Column(String(20), nullable=False)  # 'vente' ou 'achat'
+    statut = Column(String(50), default="en_attente")
+    priorite = Column(String(20), default="normale")
+    montant_ht = Column(Numeric(12, 2), default=0)
+    montant_ttc = Column(Numeric(12, 2), default=0)
+    date_commande = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+    date_livraison_prevue = Column(DateTime(timezone=True))
+    url_suivi_colis = Column(Text)
+    notes_internes = Column(Text)
+
+    contact = relationship("Contact", back_populates="commandes")
+    devis = relationship("Devis", back_populates="commandes")
 
 # --- Schémas Pydantic ---
 class ContactSchema(BaseModel):
@@ -175,6 +196,30 @@ class DevisSchema(BaseModel):
         from_attributes = True
 
 class DevisStatutUpdate(BaseModel):
+    statut: str
+
+class CommandeSchema(BaseModel):
+    id: int
+    reference: Optional[str] = None
+    contact_id: int
+    devis_id: Optional[int] = None
+    flux: str
+    statut: Optional[str] = "en_attente"
+    priorite: Optional[str] = "normale"
+    montant_ht: Optional[float] = 0
+    montant_ttc: Optional[float] = 0
+    date_commande: Optional[datetime.datetime] = None
+    date_livraison_prevue: Optional[datetime.datetime] = None
+    url_suivi_colis: Optional[str] = None
+    notes_internes: Optional[str] = None
+
+    contact: Optional[ContactSchema] = None
+    devis: Optional[DevisSchema] = None
+
+    class Config:
+        from_attributes = True
+
+class StatutCommandeUpdate(BaseModel):
     statut: str
 
 # --- Initialisation FastAPI ---
@@ -274,6 +319,21 @@ def update_action_statut(action_id: int, statut_update: ActionStatutUpdate, db: 
     db.commit()
     db.refresh(action)
     return action
+
+@app.get("/api/commandes", response_model=List[CommandeSchema])
+def get_commandes(db: Session = Depends(get_db)):
+    return db.query(Commande).all()
+
+@app.patch("/api/commandes/{commande_id}/statut", response_model=CommandeSchema)
+def update_commande_statut(commande_id: int, statut_update: StatutCommandeUpdate, db: Session = Depends(get_db)):
+    commande = db.query(Commande).filter(Commande.id == commande_id).first()
+    if not commande:
+        raise HTTPException(status_code=404, detail="Commande non trouvée")
+    
+    commande.statut = statut_update.statut
+    db.commit()
+    db.refresh(commande)
+    return commande
 
 class WebhookPayload(BaseModel):
     texte: str
@@ -375,6 +435,14 @@ def page_actions(request: Request):
     return templates.TemplateResponse(
         request=request, 
         name="actions.html", 
+        context={}
+    )
+
+@app.get("/commandes", response_class=HTMLResponse)
+def page_commandes(request: Request):
+    return templates.TemplateResponse(
+        request=request, 
+        name="commandes.html", 
         context={}
     )
 
