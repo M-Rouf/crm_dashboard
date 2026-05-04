@@ -151,7 +151,7 @@
                                         <div class="font-semibold text-gray-900">{{ act.nom }}</div>
                                     </td>
                                     <td class="px-6 py-4 text-gray-700 font-medium">
-                                        {{ act.client || '-' }}
+                                        {{ act.contact ? clientName(act.contact) : '-' }}
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <span :class="badgeClass(act.priorite)"
@@ -215,7 +215,8 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
-                                    {{ selectedAction.client || 'Aucun client associé' }}
+                                    {{ selectedAction.contact ? clientName(selectedAction.contact) : 'Aucun client
+                                    associé' }}
                                 </span>
                                 <span class="flex items-center gap-1.5">
                                     <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -440,7 +441,7 @@
                     return actions.value.filter(act => {
                         const term = searchQuery.value.toLowerCase()
                         const matchName = (act.nom && act.nom.toLowerCase().includes(term)) ||
-                            (act.client && act.client.toLowerCase().includes(term))
+                            (act.contact && clientName(act.contact).toLowerCase().includes(term))
                         const matchStatus = showExecuted.value ? true : act.statut === 'nouveau'
                         return matchName && matchStatus
                     }).sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -477,10 +478,18 @@
                     return map[priorite] || 'bg-gray-100 text-gray-700'
                 }
 
+                const clientName = (contact) => {
+                    if (!contact) return ''
+                    const prenom = contact.prenom || ''
+                    const nom = contact.nom || ''
+                    const full = `${prenom} ${nom}`.trim()
+                    return full || contact.entreprise || contact.email
+                }
+
                 return {
                     actions, searchQuery, showExecuted, selectedAction,
                     showAddModal, newActionText, isSubmitting, addSuccess, addError,
-                    filteredActions, stats, toggleStatus, submitAction, formatDate, badgeClass
+                    filteredActions, stats, toggleStatus, submitAction, formatDate, badgeClass, clientName
                 }
             }
         }).mount('#app')

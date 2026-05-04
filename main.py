@@ -46,6 +46,7 @@ class Contact(Base):
     
     requetes = relationship("Requete", back_populates="contact")
     devis = relationship("Devis", back_populates="contact")
+    actions = relationship("Action", back_populates="contact")
 
 class Requete(Base):
     __tablename__ = "requetes"
@@ -64,11 +65,13 @@ class Action(Base):
     __tablename__ = "actions"
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String(255), nullable=False)
-    client = Column(String(255))
+    client = Column(Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=True)
     detail = Column(Text)
     priorite = Column(String(50), default="normale")
     statut = Column(String(50), default="nouveau")
     date = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+
+    contact = relationship("Contact", back_populates="actions")
 
 class Devis(Base):
     __tablename__ = "devis"
@@ -138,11 +141,13 @@ class StatutUpdate(BaseModel):
 class ActionSchema(BaseModel):
     id: int
     nom: str
-    client: Optional[str] = None
+    client: Optional[int] = None
     detail: Optional[str] = None
     priorite: Optional[str] = "normale"
     statut: Optional[str] = "nouveau"
     date: Optional[datetime.datetime] = None
+
+    contact: Optional[ContactSchema] = None
 
     class Config:
         from_attributes = True
