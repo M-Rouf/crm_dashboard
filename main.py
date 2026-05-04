@@ -65,7 +65,7 @@ class Action(Base):
     __tablename__ = "actions"
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String(255), nullable=False)
-    client = Column(Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=True)
+    contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="SET NULL"), nullable=True)
     detail = Column(Text)
     priorite = Column(String(50), default="normale")
     statut = Column(String(50), default="nouveau")
@@ -141,7 +141,7 @@ class StatutUpdate(BaseModel):
 class ActionSchema(BaseModel):
     id: int
     nom: str
-    client: Optional[int] = None
+    contact_id: Optional[int] = None
     detail: Optional[str] = None
     priorite: Optional[str] = "normale"
     statut: Optional[str] = "nouveau"
