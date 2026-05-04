@@ -259,16 +259,10 @@ def update_contact(contact_id: int, contact_update: ContactCreate, db: Session =
     db.refresh(contact)
     return contact
 
-@app.get("/api/actions")
+@app.get("/api/actions", response_model=List[ActionSchema])
 def get_actions(db: Session = Depends(get_db)):
-    try:
-        actions = db.query(Action).all()
-        return [ActionSchema.from_orm(a) for a in actions]
-    except Exception as e:
-        import traceback
-        with open("error_actions.log", "w") as f:
-            f.write(traceback.format_exc())
-        return {"error": str(e), "traceback": traceback.format_exc()}
+    actions = db.query(Action).all()
+    return [ActionSchema.from_orm(a) for a in actions]
 
 @app.patch("/api/actions/{action_id}/statut", response_model=ActionSchema)
 def update_action_statut(action_id: int, statut_update: ActionStatutUpdate, db: Session = Depends(get_db)):
