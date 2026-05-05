@@ -95,6 +95,7 @@ class Commande(Base):
     __tablename__ = "commandes"
     id = Column(Integer, primary_key=True, index=True)
     reference = Column(String(100), unique=True)
+    description = Column(Text)
     contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
     devis_id = Column(Integer, ForeignKey("devis.id", ondelete="SET NULL"), nullable=True)
     flux = Column(String(20), nullable=False)  # 'vente' ou 'achat'
@@ -102,6 +103,7 @@ class Commande(Base):
     priorite = Column(String(20), default="normale")
     montant_ht = Column(Numeric(12, 2), default=0)
     montant_ttc = Column(Numeric(12, 2), default=0)
+    file_path = Column(Text)
     date_commande = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     date_livraison_prevue = Column(DateTime(timezone=True))
     url_suivi_colis = Column(Text)
@@ -201,6 +203,7 @@ class DevisStatutUpdate(BaseModel):
 class CommandeSchema(BaseModel):
     id: int
     reference: Optional[str] = None
+    description: Optional[str] = None
     contact_id: int
     devis_id: Optional[int] = None
     flux: str
@@ -208,6 +211,7 @@ class CommandeSchema(BaseModel):
     priorite: Optional[str] = "normale"
     montant_ht: Optional[float] = 0
     montant_ttc: Optional[float] = 0
+    file_path: Optional[str] = None
     date_commande: Optional[datetime.datetime] = None
     date_livraison_prevue: Optional[datetime.datetime] = None
     url_suivi_colis: Optional[str] = None

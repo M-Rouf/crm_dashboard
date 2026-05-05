@@ -47,10 +47,10 @@
                             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
                         <a href="/actions"
                             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
-                        <a href="/commandes"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Commandes</a>
                         <a href="/devis"
                             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Devis</a>
+                        <a href="/commandes"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Commandes</a>
                     </nav>
                 </div>
 
@@ -119,6 +119,7 @@
                                 class="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                                 <tr class="text-xs uppercase tracking-wider text-gray-600 border-b border-gray-200">
                                     <th class="px-6 py-4 font-semibold">Référence</th>
+                                    <th class="px-6 py-4 font-semibold text-center">Priorité</th>
                                     <th class="px-6 py-4 font-semibold">Client / Fournisseur</th>
                                     <th class="px-6 py-4 font-semibold text-center">Flux</th>
                                     <th class="px-6 py-4 font-semibold text-right">Montant TTC</th>
@@ -135,6 +136,12 @@
                                 }">
                                     <td class="px-6 py-4">
                                         <div class="font-semibold text-gray-900">{{ cmd.reference || '-' }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span :class="badgeClass(cmd.priorite)"
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                            {{ cmd.priorite || 'normale' }}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4 text-gray-700 font-medium">
                                         <template v-if="cmd.contact">
@@ -231,6 +238,23 @@
                         </button>
                     </div>
 
+                    <div v-if="selectedCommande.description"
+                        class="bg-gray-50/80 p-5 mb-4 rounded-xl border border-gray-100/80 text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        {{ selectedCommande.description }}
+                    </div>
+
+                    <div v-if="selectedCommande.file_path" class="mb-5">
+                        <a :href="'/' + selectedCommande.file_path" target="_blank"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors font-medium text-sm border border-indigo-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                            Ouvrir le fichier joint
+                        </a>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
                             <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Détails
@@ -305,6 +329,43 @@
                         <span class="font-bold text-lg">{{ stats.terminee }}</span>
                     </div>
                 </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+                    <h3 class="text-gray-800 font-bold mb-1">Commandes par priorité</h3>
+
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-red-50 text-red-700 border border-red-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-200"></span> Urgente
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.urgente }}</span>
+                    </div>
+
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm shadow-orange-200"></span>
+                            Haute
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.haute }}</span>
+                    </div>
+
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-200"></span> Normale
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.normale }}</span>
+                    </div>
+
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 text-gray-700 border border-gray-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-gray-400 shadow-sm shadow-gray-200"></span> Basse
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.basse }}</span>
+                    </div>
+                </div>
             </aside>
         </div>
     </div>
@@ -375,6 +436,10 @@
                         en_attente: commandes.value.filter(a => a.statut === 'en_attente').length,
                         en_cours: commandes.value.filter(a => a.statut === 'en_cours').length,
                         terminee: commandes.value.filter(a => a.statut === 'terminee').length,
+                        basse: commandes.value.filter(a => a.priorite === 'basse').length,
+                        normale: commandes.value.filter(a => a.priorite === 'normale' || !a.priorite).length,
+                        haute: commandes.value.filter(a => a.priorite === 'haute').length,
+                        urgente: commandes.value.filter(a => a.priorite === 'urgente').length,
                     }
                 })
 
@@ -401,6 +466,16 @@
                     return 'bg-gray-50 text-gray-700 ring-gray-200 focus:ring-gray-600'
                 }
 
+                const badgeClass = (priorite) => {
+                    const map = {
+                        'basse': 'bg-gray-100 text-gray-700',
+                        'normale': 'bg-blue-100 text-blue-700',
+                        'haute': 'bg-orange-100 text-orange-700',
+                        'urgente': 'bg-red-100 text-red-700'
+                    }
+                    return map[priorite] || 'bg-blue-100 text-blue-700'
+                }
+
                 const clientName = (contact) => {
                     if (!contact) return ''
                     const prenom = contact.prenom || ''
@@ -411,7 +486,7 @@
 
                 return {
                     commandes, searchQuery, statusFilter, fluxFilter, selectedCommande,
-                    filteredCommandes, stats, updateStatus, formatDate, fluxClass, statusSelectClass, clientName
+                    filteredCommandes, stats, updateStatus, formatDate, fluxClass, statusSelectClass, badgeClass, clientName
                 }
             }
         }).mount('#app')
