@@ -198,8 +198,12 @@
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <h2 class="text-xl font-bold text-gray-800">
-                                {{ selectedCommande.reference ? 'Commande ' + selectedCommande.reference : 'Commande
-                                sans référence' }}
+                                <template v-if="selectedCommande.reference">
+                                    Commande {{ selectedCommande.reference }}
+                                </template>
+                                <template v-else>
+                                    Commande sans référence
+                                </template>
                             </h2>
                             <div class="text-sm text-gray-500 mt-2 flex flex-wrap gap-x-5 gap-y-2">
                                 <span class="flex items-center gap-1.5 font-medium text-gray-700">
