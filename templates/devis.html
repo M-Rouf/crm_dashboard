@@ -374,7 +374,7 @@
                                 <span class="text-sm font-medium text-indigo-700 truncate max-w-[150px]"
                                     :title="selectedDevis.file_path">{{ selectedDevis.file_path.split('/').pop()
                                     }}</span>
-                                <a :href="selectedDevis.file_path" target="_blank"
+                                <a :href="selectedDevis.file_path + '?v=' + Date.now()" target="_blank"
                                     class="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
