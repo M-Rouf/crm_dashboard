@@ -296,23 +296,6 @@
 
             <!-- Sidebar (25% sur Desktop) -->
             <aside class="md:w-1/4 flex flex-col gap-6 order-1 md:order-2">
-                <div
-                    class="bg-indigo-600 p-6 rounded-2xl shadow-xl shadow-indigo-200 text-white relative overflow-hidden">
-                    <div class="relative z-10">
-                        <h3 class="text-indigo-100 font-medium text-sm mb-1 uppercase tracking-wider">
-                            Total Ventes TTC
-                        </h3>
-                        <div class="text-3xl font-bold tracking-tight">
-                            {{ stats.totalVentesTtc.toFixed(2) }} €
-                        </div>
-                    </div>
-                    <svg class="absolute -bottom-6 -right-6 w-36 h-36 text-indigo-500 opacity-40 transform -rotate-12"
-                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="1" x2="12" y2="23"></line>
-                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                    </svg>
-                </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
                     <h3 class="text-gray-800 font-bold mb-1">Commandes par statut</h3>
@@ -454,15 +437,7 @@
                 });
 
                 const stats = computed(() => {
-                    let totalVentesTtc = 0;
-                    commandes.value.forEach((c) => {
-                        if (c.flux === "vente" && c.montant_ttc) {
-                            totalVentesTtc += parseFloat(c.montant_ttc);
-                        }
-                    });
-
                     return {
-                        totalVentesTtc: totalVentesTtc,
                         en_attente: commandes.value.filter(
                             (a) => a.statut === "en_attente",
                         ).length,
