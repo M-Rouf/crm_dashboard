@@ -22,6 +22,11 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
     date_devis_str = date_now.strftime("%d/%m/%Y")
     date_offre = (date_now + timedelta(weeks=6)).strftime("%d/%m/%Y")
     
+    safe_notes = ""
+    if notes:
+        safe_notes = str(notes).replace("\\r\\n", "<br>").replace("\\n", "<br>").replace("\\r", "<br>")
+        safe_notes = safe_notes.replace(chr(13)+chr(10), "<br>").replace(chr(10), "<br>").replace(chr(13), "<br>")
+
     # Remplacements de base
     replacements = {
         "#ref_devis": ref_devis,
@@ -35,7 +40,7 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
         "#Tot_TVA": f"{total_tva:.2f} €",
         "#Tot_TTC": f"{total_ttc:.2f} €",
         "#delai": delai,
-        "#notes_devis": f'<div class="note-section" style="margin-bottom: 20px; font-size: 10pt; color: #555;"><strong>Notes additionnelles :</strong><br>{str(notes).replace("\\r\\n", "<br>").replace("\\n", "<br>").replace("\\r", "<br>").replace(chr(13)+chr(10), "<br>").replace(chr(10), "<br>").replace(chr(13), "<br>")}</div>' if notes else ""
+        "#notes_devis": f'<div class="note-section" style="margin-bottom: 20px; font-size: 10pt; color: #555;"><strong>Notes additionnelles :</strong><br>{safe_notes}</div>' if safe_notes else ""
     }
     
     for key, val in replacements.items():
