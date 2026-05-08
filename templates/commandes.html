@@ -1,749 +1,557 @@
 <!doctype html>
 <html lang="fr">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Commandes CRM | mrliw.fr</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ["Inter", "sans-serif"],
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                    },
+                },
             },
-          },
-        },
-      };
+        };
     </script>
     <!-- Google Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <!-- Fichier CSS statique -->
     <link rel="stylesheet" href="/css/style.css" />
     <!-- Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  </head>
+</head>
 
-  <body
-    class="bg-gray-50 text-gray-900 leading-normal tracking-normal min-h-screen"
-  >
+<body class="bg-gray-50 text-gray-900 leading-normal tracking-normal min-h-screen">
     {% raw %}
     <div id="app" v-cloak class="min-h-screen flex flex-col">
-      <!-- En-tête Global -->
-      <header
-        class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50"
-      >
-        <div
-          class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between"
-        >
-          <div class="flex items-center gap-6">
-            <!-- Logo -->
-            <a href="/" class="flex items-center gap-2">
-              <img
-                src="/img/logo_mrliw.png"
-                alt="MRLIW Logo"
-                class="h-8 w-auto"
-              />
-              <span
-                class="font-bold text-gray-800 text-lg hidden sm:block tracking-tight"
-                >Dashboard</span
-              >
-            </a>
+        <!-- En-tête Global -->
+        <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+            <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
+                <div class="flex items-center gap-6">
+                    <!-- Logo -->
+                    <a href="/" class="flex items-center gap-2">
+                        <img src="/img/logo_mrliw.png" alt="MRLIW Logo" class="h-8 w-auto" />
+                        <span class="font-bold text-gray-800 text-lg hidden sm:block tracking-tight">Dashboard</span>
+                    </a>
 
-            <!-- Navigation -->
-            <nav class="flex items-center gap-1">
-              <a
-                href="/"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                >Requêtes</a
-              >
-              <a
-                href="/contacts"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                >Contacts</a
-              >
-              <a
-                href="/actions"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                >Actions</a
-              >
-              <a
-                href="/devis"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                >Devis</a
-              >
-              <a
-                href="/commandes"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700"
-                >Commandes</a
-              >
-            </nav>
-          </div>
+                    <!-- Navigation -->
+                    <nav class="flex items-center gap-1">
+                        <a href="/"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
+                        <a href="/contacts"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
+                        <a href="/actions"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
+                        <a href="/devis"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Devis</a>
+                        <a href="/commandes"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Commandes</a>
+                    </nav>
+                </div>
 
-          <div class="flex items-center">
-            <div
-              class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shadow-sm border border-indigo-200"
-            >
-              MR
+                <div class="flex items-center">
+                    <div
+                        class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shadow-sm border border-indigo-200">
+                        MR
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </header>
+        </header>
 
-      <div
-        class="container mx-auto p-4 md:p-8 max-w-7xl flex flex-col md:flex-row gap-6 flex-grow"
-      >
-        <!-- Main Content (75% sur Desktop) -->
-        <main class="md:w-3/4 flex flex-col gap-6 order-2 md:order-1">
-          <!-- Header / Filtres -->
-          <div
-            class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100"
-          >
-            <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="text-indigo-600"
-              >
-                <path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"></path>
-                <path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3"></path>
-                <path d="M4 12H20"></path>
-                <line x1="12" y1="12" x2="12" y2="12.01"></line>
-              </svg>
-              Commandes
-            </h1>
+        <div class="container mx-auto p-4 md:p-8 max-w-7xl flex flex-col md:flex-row gap-6 flex-grow">
+            <!-- Main Content (75% sur Desktop) -->
+            <main class="md:w-3/4 flex flex-col gap-6 order-2 md:order-1">
+                <!-- Header / Filtres -->
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="text-indigo-600">
+                            <path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"></path>
+                            <path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3"></path>
+                            <path d="M4 12H20"></path>
+                            <line x1="12" y1="12" x2="12" y2="12.01"></line>
+                        </svg>
+                        Commandes
+                    </h1>
 
-            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                  <svg
-                    class="w-4 h-4 text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </span>
-                <input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="Chercher par référence, client..."
-                  class="w-full sm:w-56 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
-                />
-              </div>
+                    <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                                <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </span>
+                            <input v-model="searchQuery" type="text" placeholder="Chercher par référence, client..."
+                                class="w-full sm:w-56 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" />
+                        </div>
 
-              <select
-                v-model="statusFilter"
-                class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-              >
-                <option value="">Tous les statuts</option>
-                <option value="en_attente">En attente</option>
-                <option value="en_cours">En cours</option>
-                <option value="terminee">Terminée</option>
-              </select>
-              <select
-                v-model="fluxFilter"
-                class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-              >
-                <option value="">Tous les flux</option>
-                <option value="vente">Vente</option>
-                <option value="achat">Achat</option>
-              </select>
-            </div>
-          </div>
+                        <select v-model="statusFilter"
+                            class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
+                            <option value="">Tous les statuts</option>
+                            <option value="en_attente">En attente</option>
+                            <option value="en_cours">En cours</option>
+                            <option value="terminee">Terminée</option>
+                        </select>
+                        <select v-model="fluxFilter"
+                            class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
+                            <option value="">Tous les flux</option>
+                            <option value="vente">Vente</option>
+                            <option value="achat">Achat</option>
+                        </select>
+                    </div>
+                </div>
 
-          <!-- Tableau élégant avec scroll -->
-          <div
-            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-          >
-            <div
-              class="overflow-x-auto overflow-y-auto max-h-[600px] lg:max-h-[65vh] stylised-scrollbar relative"
-            >
-              <table class="w-full text-left border-collapse">
-                <thead
-                  class="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
-                >
-                  <tr
-                    class="text-xs uppercase tracking-wider text-gray-600 border-b border-gray-200"
-                  >
-                    <th class="px-6 py-4 font-semibold">Référence</th>
-                    <th class="px-6 py-4 font-semibold text-center">
-                      Priorité
-                    </th>
-                    <th class="px-6 py-4 font-semibold">
-                      Client / Fournisseur
-                    </th>
-                    <th class="px-6 py-4 font-semibold text-center">Flux</th>
-                    <th class="px-6 py-4 font-semibold text-right">
-                      Montant TTC
-                    </th>
-                    <th class="px-6 py-4 font-semibold text-center">Date</th>
-                    <th class="px-6 py-4 font-semibold text-center">Statut</th>
-                  </tr>
-                </thead>
-                <tbody class="text-sm divide-y divide-gray-100">
-                  <tr
-                    v-for="cmd in filteredCommandes"
-                    :key="cmd.id"
-                    @click="selectedCommande = cmd"
-                    class="hover:bg-gray-50/50 transition-colors group cursor-pointer"
-                    :class="{
+                <!-- Tableau élégant avec scroll -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div
+                        class="overflow-x-auto overflow-y-auto max-h-[600px] lg:max-h-[65vh] stylised-scrollbar relative">
+                        <table class="w-full text-left border-collapse">
+                            <thead
+                                class="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                                <tr class="text-xs uppercase tracking-wider text-gray-600 border-b border-gray-200">
+                                    <th class="px-6 py-4 font-semibold">Référence</th>
+                                    <th class="px-6 py-4 font-semibold text-center">
+                                        Priorité
+                                    </th>
+                                    <th class="px-6 py-4 font-semibold">
+                                        Client / Fournisseur
+                                    </th>
+                                    <th class="px-6 py-4 font-semibold text-center">Flux</th>
+                                    <th class="px-6 py-4 font-semibold text-right">
+                                        Montant TTC
+                                    </th>
+                                    <th class="px-6 py-4 font-semibold text-center">Date</th>
+                                    <th class="px-6 py-4 font-semibold text-center">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-gray-100">
+                                <tr v-for="cmd in filteredCommandes" :key="cmd.id" @click="selectedCommande = cmd"
+                                    class="hover:bg-gray-50/50 transition-colors group cursor-pointer" :class="{
                                     'opacity-75 grayscale hover:grayscale-0': cmd.statut === 'terminee',
                                     'bg-indigo-50/50 border-l-4 border-indigo-500': selectedCommande && selectedCommande.id === cmd.id,
                                     'border-l-4 border-transparent': !(selectedCommande && selectedCommande.id === cmd.id)
-                                }"
-                  >
-                    <td class="px-6 py-4">
-                      <div class="font-semibold text-gray-900">
-                        {{ cmd.reference || '-' }}
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                      <span
-                        :class="badgeClass(cmd.priorite)"
-                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
-                      >
-                        {{ cmd.priorite || 'normale' }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 text-gray-700 font-medium">
-                      <template v-if="cmd.contact">
-                        {{ clientName(cmd.contact) }}
-                      </template>
-                      <template v-else> - </template>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                      <span
-                        :class="fluxClass(cmd.flux)"
-                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
-                      >
-                        {{ cmd.flux }}
-                      </span>
-                    </td>
-                    <td
-                      class="px-6 py-4 text-right text-gray-900 font-semibold"
-                    >
-                      {{ cmd.montant_ttc ? Number(cmd.montant_ttc).toFixed(2) +
-                      ' €' : '-' }}
-                    </td>
-                    <td
-                      class="px-6 py-4 text-center text-gray-500 whitespace-nowrap"
-                    >
-                      {{ formatDate(cmd.date_commande) }}
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                      <select
-                        @click.stop
-                        v-model="cmd.statut"
-                        @change="updateStatus(cmd)"
-                        class="text-xs font-semibold rounded-full px-2.5 py-1 border-0 ring-1 ring-inset cursor-pointer focus:ring-2 focus:ring-indigo-600 focus:outline-none"
-                        :class="statusSelectClass(cmd.statut)"
-                      >
-                        <option value="en_attente">En attente</option>
-                        <option value="en_cours">En cours</option>
-                        <option value="terminee">Terminée</option>
-                      </select>
-                    </td>
-                  </tr>
-                  <tr v-if="filteredCommandes.length === 0">
-                    <td
-                      colspan="6"
-                      class="py-12 text-center text-gray-400 font-medium"
-                    >
-                      <div class="flex flex-col items-center gap-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="48"
-                          height="48"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="1.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="text-gray-300"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <line x1="12" x2="12" y1="8" y2="12" />
-                          <line x1="12" x2="12.01" y1="16" y2="16" />
-                        </svg>
-                        Aucune commande trouvée.
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Zone de détails de la commande sélectionnée -->
-          <div
-            v-if="selectedCommande"
-            class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mt-2 transition-all duration-300"
-          >
-            <div class="flex justify-between items-start mb-4">
-              <div>
-                <h2 class="text-xl font-bold text-gray-800">
-                  <template v-if="selectedCommande.reference">
-                    Commande {{ selectedCommande.reference }}
-                  </template>
-                  <template v-else> Commande sans référence </template>
-                </h2>
-                <div
-                  class="text-sm text-gray-500 mt-2 flex flex-wrap gap-x-5 gap-y-2"
-                >
-                  <span
-                    class="flex items-center gap-1.5 font-medium text-gray-700"
-                  >
-                    <svg
-                      class="w-4 h-4 text-gray-400"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                    <template v-if="selectedCommande.contact">
-                      {{ clientName(selectedCommande.contact) }}
-                    </template>
-                    <template v-else> Aucun contact associé </template>
-                  </span>
-                  <span class="flex items-center gap-1.5">
-                    <svg
-                      class="w-4 h-4 text-gray-400"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      ></path>
-                    </svg>
-                    {{ selectedCommande.montant_ttc ?
-                    Number(selectedCommande.montant_ttc).toFixed(2) + ' € TTC' :
-                    '-' }}
-                  </span>
+                                }">
+                                    <td class="px-6 py-4">
+                                        <div class="font-semibold text-gray-900">
+                                            {{ cmd.reference || '-' }}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span :class="badgeClass(cmd.priorite)"
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                            {{ cmd.priorite || 'normale' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-700 font-medium">
+                                        <template v-if="cmd.contact">
+                                            {{ clientName(cmd.contact) }}
+                                        </template>
+                                        <template v-else> - </template>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span :class="fluxClass(cmd.flux)"
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                            {{ cmd.flux }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-gray-900 font-semibold">
+                                        {{ cmd.montant_ttc ? Number(cmd.montant_ttc).toFixed(2) +
+                                        ' €' : '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-center text-gray-500 whitespace-nowrap">
+                                        {{ formatDate(cmd.date_commande) }}
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <select @click.stop v-model="cmd.statut" @change="updateStatus(cmd)"
+                                            class="text-xs font-semibold rounded-full px-2.5 py-1 border-0 ring-1 ring-inset cursor-pointer focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+                                            :class="statusSelectClass(cmd.statut)">
+                                            <option value="en_attente">En attente</option>
+                                            <option value="en_cours">En cours</option>
+                                            <option value="terminee">Terminée</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr v-if="filteredCommandes.length === 0">
+                                    <td colspan="6" class="py-12 text-center text-gray-400 font-medium">
+                                        <div class="flex flex-col items-center gap-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                                                stroke-linecap="round" stroke-linejoin="round" class="text-gray-300">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="12" x2="12" y1="8" y2="12" />
+                                                <line x1="12" x2="12.01" y1="16" y2="16" />
+                                            </svg>
+                                            Aucune commande trouvée.
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-              </div>
-              <button
-                @click="selectedCommande = null"
-                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100 transition-colors"
-                title="Fermer"
-              >
-                <svg
-                  class="w-5 h-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
 
-            <div
-              v-if="selectedCommande.description"
-              class="bg-gray-50/80 p-5 mb-4 rounded-xl border border-gray-100/80 text-gray-700 whitespace-pre-wrap leading-relaxed"
-            >
-              {{ selectedCommande.description }}
-            </div>
+                <!-- Zone de détails de la commande sélectionnée -->
+                <div v-if="selectedCommande"
+                    class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mt-2 transition-all duration-300">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">
+                                <template v-if="selectedCommande.reference">
+                                    Commande {{ selectedCommande.reference }}
+                                </template>
+                                <template v-else> Commande sans référence </template>
+                            </h2>
+                            <div class="text-sm text-gray-500 mt-2 flex flex-wrap gap-x-5 gap-y-2">
+                                <span class="flex items-center gap-1.5 font-medium text-gray-700">
+                                    <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <template v-if="selectedCommande.contact">
+                                        {{ clientName(selectedCommande.contact) }}
+                                    </template>
+                                    <template v-else> Aucun contact associé </template>
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                        </path>
+                                    </svg>
+                                    {{ selectedCommande.montant_ttc ?
+                                    Number(selectedCommande.montant_ttc).toFixed(2) + ' € TTC' :
+                                    '-' }}
+                                </span>
+                            </div>
+                        </div>
+                        <button @click="selectedCommande = null"
+                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                            title="Fermer">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
 
-            <div v-if="selectedCommande.file_path" class="mb-5">
-              <a
-                :href="'/' + selectedCommande.file_path"
-                target="_blank"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors font-medium text-sm border border-indigo-100 shadow-sm"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                  />
-                </svg>
-                Ouvrir le fichier joint
-              </a>
-            </div>
+                    <div v-if="selectedCommande.description"
+                        class="bg-gray-50/80 p-5 mb-4 rounded-xl border border-gray-100/80 text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        {{ selectedCommande.description }}
+                    </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <h4
-                  class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
-                >
-                  Détails Logistiques
-                </h4>
-                <p class="text-sm text-gray-800 mb-1">
-                  <span class="font-medium text-gray-600"
-                    >Date de livraison :</span
-                  >
-                  {{ formatDate(selectedCommande.date_livraison_prevue) || 'Non
-                  définie' }}
-                </p>
-                <p class="text-sm text-gray-800">
-                  <span class="font-medium text-gray-600">Suivi Colis :</span>
-                  <a
-                    v-if="selectedCommande.url_suivi_colis"
-                    :href="selectedCommande.url_suivi_colis"
-                    target="_blank"
-                    class="text-indigo-600 hover:text-indigo-800 underline"
-                  >
-                    Lien de suivi
-                  </a>
-                  <span v-else>Aucun lien</span>
-                </p>
-              </div>
-              <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <h4
-                  class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
-                >
-                  Informations Internes
-                </h4>
-                <p
-                  class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed"
-                >
-                  {{ selectedCommande.notes_internes || 'Aucune note interne.'
-                  }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </main>
+                    <div v-if="selectedCommande.file_path" class="mb-5">
+                        <a :href="'/' + selectedCommande.file_path" target="_blank"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors font-medium text-sm border border-indigo-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                            Ouvrir le fichier joint
+                        </a>
+                    </div>
 
-        <!-- Sidebar (25% sur Desktop) -->
-        <aside class="md:w-1/4 flex flex-col gap-6 order-1 md:order-2">
-          <div
-            class="bg-indigo-600 p-6 rounded-2xl shadow-xl shadow-indigo-200 text-white relative overflow-hidden"
-          >
-            <div class="relative z-10">
-              <h3
-                class="text-indigo-100 font-medium text-sm mb-1 uppercase tracking-wider"
-              >
-                Total Ventes TTC
-              </h3>
-              <div class="text-3xl font-bold tracking-tight">
-                {{ stats.totalVentesTtc.toFixed(2) }} €
-              </div>
-            </div>
-            <svg
-              class="absolute -bottom-6 -right-6 w-36 h-36 text-indigo-500 opacity-40 transform -rotate-12"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line x1="12" y1="1" x2="12" y2="23"></line>
-              <path
-                d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
-              ></path>
-            </svg>
-          </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                Détails Logistiques
+                            </h4>
+                            <p class="text-sm text-gray-800 mb-1">
+                                <span class="font-medium text-gray-600">Date de livraison :</span>
+                                {{ formatDate(selectedCommande.date_livraison_prevue) || `Non définie` }}
+                            </p>
+                            <p class="text-sm text-gray-800">
+                                <span class="font-medium text-gray-600">Suivi Colis :</span>
+                                <a v-if="selectedCommande.url_suivi_colis" :href="selectedCommande.url_suivi_colis"
+                                    target="_blank" class="text-indigo-600 hover:text-indigo-800 underline">
+                                    Lien de suivi
+                                </a>
+                                <span v-else>Aucun lien</span>
+                            </p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                Informations Internes
+                            </h4>
+                            <p class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                {{ selectedCommande.notes_internes || 'Aucune note interne.'
+                                }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </main>
 
-          <div
-            class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4"
-          >
-            <h3 class="text-gray-800 font-bold mb-1">Commandes par statut</h3>
+            <!-- Sidebar (25% sur Desktop) -->
+            <aside class="md:w-1/4 flex flex-col gap-6 order-1 md:order-2">
+                <div
+                    class="bg-indigo-600 p-6 rounded-2xl shadow-xl shadow-indigo-200 text-white relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h3 class="text-indigo-100 font-medium text-sm mb-1 uppercase tracking-wider">
+                            Total Ventes TTC
+                        </h3>
+                        <div class="text-3xl font-bold tracking-tight">
+                            {{ stats.totalVentesTtc.toFixed(2) }} €
+                        </div>
+                    </div>
+                    <svg class="absolute -bottom-6 -right-6 w-36 h-36 text-indigo-500 opacity-40 transform -rotate-12"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
 
-            <div
-              class="flex items-center justify-between p-3.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-100"
-            >
-              <div class="flex items-center gap-2.5 font-semibold">
-                <span
-                  class="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm shadow-orange-200"
-                ></span>
-                En attente
-              </div>
-              <span class="font-bold text-lg">{{ stats.en_attente }}</span>
-            </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+                    <h3 class="text-gray-800 font-bold mb-1">Commandes par statut</h3>
 
-            <div
-              class="flex items-center justify-between p-3.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-100"
-            >
-              <div class="flex items-center gap-2.5 font-semibold">
-                <span
-                  class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-200"
-                ></span>
-                En cours
-              </div>
-              <span class="font-bold text-lg">{{ stats.en_cours }}</span>
-            </div>
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm shadow-orange-200"></span>
+                            En attente
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.en_attente }}</span>
+                    </div>
 
-            <div
-              class="flex items-center justify-between p-3.5 rounded-xl bg-green-50 text-green-700 border border-green-100"
-            >
-              <div class="flex items-center gap-2.5 font-semibold">
-                <span
-                  class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm shadow-green-200"
-                ></span>
-                Terminées
-              </div>
-              <span class="font-bold text-lg">{{ stats.terminee }}</span>
-            </div>
-          </div>
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-200"></span>
+                            En cours
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.en_cours }}</span>
+                    </div>
 
-          <div
-            class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4"
-          >
-            <h3 class="text-gray-800 font-bold mb-1">Commandes par priorité</h3>
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-green-50 text-green-700 border border-green-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm shadow-green-200"></span>
+                            Terminées
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.terminee }}</span>
+                    </div>
+                </div>
 
-            <div
-              class="flex items-center justify-between p-3.5 rounded-xl bg-red-50 text-red-700 border border-red-100"
-            >
-              <div class="flex items-center gap-2.5 font-semibold">
-                <span
-                  class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-200"
-                ></span>
-                Urgente
-              </div>
-              <span class="font-bold text-lg">{{ stats.urgente }}</span>
-            </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+                    <h3 class="text-gray-800 font-bold mb-1">Commandes par priorité</h3>
 
-            <div
-              class="flex items-center justify-between p-3.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-100"
-            >
-              <div class="flex items-center gap-2.5 font-semibold">
-                <span
-                  class="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm shadow-orange-200"
-                ></span>
-                Haute
-              </div>
-              <span class="font-bold text-lg">{{ stats.haute }}</span>
-            </div>
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-red-50 text-red-700 border border-red-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-200"></span>
+                            Urgente
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.urgente }}</span>
+                    </div>
 
-            <div
-              class="flex items-center justify-between p-3.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-100"
-            >
-              <div class="flex items-center gap-2.5 font-semibold">
-                <span
-                  class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-200"
-                ></span>
-                Normale
-              </div>
-              <span class="font-bold text-lg">{{ stats.normale }}</span>
-            </div>
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm shadow-orange-200"></span>
+                            Haute
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.haute }}</span>
+                    </div>
 
-            <div
-              class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 text-gray-700 border border-gray-100"
-            >
-              <div class="flex items-center gap-2.5 font-semibold">
-                <span
-                  class="w-2.5 h-2.5 rounded-full bg-gray-400 shadow-sm shadow-gray-200"
-                ></span>
-                Basse
-              </div>
-              <span class="font-bold text-lg">{{ stats.basse }}</span>
-            </div>
-          </div>
-        </aside>
-      </div>
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-200"></span>
+                            Normale
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.normale }}</span>
+                    </div>
+
+                    <div
+                        class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 text-gray-700 border border-gray-100">
+                        <div class="flex items-center gap-2.5 font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-gray-400 shadow-sm shadow-gray-200"></span>
+                            Basse
+                        </div>
+                        <span class="font-bold text-lg">{{ stats.basse }}</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
     </div>
 
     <script>
-      const { createApp, ref, computed, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted } = Vue;
 
-      createApp({
-        setup() {
-          const commandes = ref([]);
-          const searchQuery = ref("");
-          const statusFilter = ref("");
-          const fluxFilter = ref("");
-          const selectedCommande = ref(null);
+        createApp({
+            setup() {
+                const commandes = ref([]);
+                const searchQuery = ref("");
+                const statusFilter = ref("");
+                const fluxFilter = ref("");
+                const selectedCommande = ref(null);
 
-          const fetchData = async () => {
-            try {
-              const res = await fetch("/api/commandes");
-              if (!res.ok) throw new Error("API Error");
-              commandes.value = await res.json();
-            } catch (e) {
-              console.error("Erreur lors de la récupération :", e);
-            }
-          };
+                const fetchData = async () => {
+                    try {
+                        const res = await fetch("/api/commandes");
+                        if (!res.ok) throw new Error("API Error");
+                        commandes.value = await res.json();
+                    } catch (e) {
+                        console.error("Erreur lors de la récupération :", e);
+                    }
+                };
 
-          onMounted(() => {
-            fetchData();
-            setInterval(fetchData, 30000); // Rafraîchissement automatique toutes les 30s
-          });
+                onMounted(() => {
+                    fetchData();
+                    setInterval(fetchData, 30000); // Rafraîchissement automatique toutes les 30s
+                });
 
-          const updateStatus = async (cmd) => {
-            try {
-              await fetch(`/api/commandes/${cmd.id}/statut`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ statut: cmd.statut }),
-              });
-            } catch (e) {
-              console.error("Erreur lors de la mise à jour du statut", e);
-            }
-          };
+                const updateStatus = async (cmd) => {
+                    try {
+                        await fetch(`/api/commandes/${cmd.id}/statut`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ statut: cmd.statut }),
+                        });
+                    } catch (e) {
+                        console.error("Erreur lors de la mise à jour du statut", e);
+                    }
+                };
 
-          const filteredCommandes = computed(() => {
-            return commandes.value
-              .filter((cmd) => {
-                const term = searchQuery.value.toLowerCase();
+                const filteredCommandes = computed(() => {
+                    return commandes.value
+                        .filter((cmd) => {
+                            const term = searchQuery.value.toLowerCase();
 
-                const refMatch = cmd.reference
-                  ? cmd.reference.toLowerCase().includes(term)
-                  : false;
-                const contactMatch = cmd.contact
-                  ? clientName(cmd.contact).toLowerCase().includes(term)
-                  : false;
-                const matchSearch = refMatch || contactMatch;
+                            const refMatch = cmd.reference
+                                ? cmd.reference.toLowerCase().includes(term)
+                                : false;
+                            const contactMatch = cmd.contact
+                                ? clientName(cmd.contact).toLowerCase().includes(term)
+                                : false;
+                            const matchSearch = refMatch || contactMatch;
 
-                const matchStatus = statusFilter.value
-                  ? cmd.statut === statusFilter.value
-                  : true;
-                const matchFlux = fluxFilter.value
-                  ? cmd.flux === fluxFilter.value
-                  : true;
+                            const matchStatus = statusFilter.value
+                                ? cmd.statut === statusFilter.value
+                                : true;
+                            const matchFlux = fluxFilter.value
+                                ? cmd.flux === fluxFilter.value
+                                : true;
 
-                return matchSearch && matchStatus && matchFlux;
-              })
-              .sort(
-                (a, b) => new Date(b.date_commande) - new Date(a.date_commande),
-              );
-          });
+                            return matchSearch && matchStatus && matchFlux;
+                        })
+                        .sort(
+                            (a, b) => new Date(b.date_commande) - new Date(a.date_commande),
+                        );
+                });
 
-          const stats = computed(() => {
-            let totalVentesTtc = 0;
-            commandes.value.forEach((c) => {
-              if (c.flux === "vente" && c.montant_ttc) {
-                totalVentesTtc += parseFloat(c.montant_ttc);
-              }
-            });
+                const stats = computed(() => {
+                    let totalVentesTtc = 0;
+                    commandes.value.forEach((c) => {
+                        if (c.flux === "vente" && c.montant_ttc) {
+                            totalVentesTtc += parseFloat(c.montant_ttc);
+                        }
+                    });
 
-            return {
-              totalVentesTtc: totalVentesTtc,
-              en_attente: commandes.value.filter(
-                (a) => a.statut === "en_attente",
-              ).length,
-              en_cours: commandes.value.filter((a) => a.statut === "en_cours")
-                .length,
-              terminee: commandes.value.filter((a) => a.statut === "terminee")
-                .length,
-              basse: commandes.value.filter((a) => a.priorite === "basse")
-                .length,
-              normale: commandes.value.filter(
-                (a) => a.priorite === "normale" || !a.priorite,
-              ).length,
-              haute: commandes.value.filter((a) => a.priorite === "haute")
-                .length,
-              urgente: commandes.value.filter((a) => a.priorite === "urgente")
-                .length,
-            };
-          });
+                    return {
+                        totalVentesTtc: totalVentesTtc,
+                        en_attente: commandes.value.filter(
+                            (a) => a.statut === "en_attente",
+                        ).length,
+                        en_cours: commandes.value.filter((a) => a.statut === "en_cours")
+                            .length,
+                        terminee: commandes.value.filter((a) => a.statut === "terminee")
+                            .length,
+                        basse: commandes.value.filter((a) => a.priorite === "basse")
+                            .length,
+                        normale: commandes.value.filter(
+                            (a) => a.priorite === "normale" || !a.priorite,
+                        ).length,
+                        haute: commandes.value.filter((a) => a.priorite === "haute")
+                            .length,
+                        urgente: commandes.value.filter((a) => a.priorite === "urgente")
+                            .length,
+                    };
+                });
 
-          const formatDate = (dateStr) => {
-            if (!dateStr) return "";
-            const d = new Date(dateStr);
-            return (
-              d.toLocaleDateString("fr-FR", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              }) +
-              " à " +
-              d.toLocaleTimeString("fr-FR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            );
-          };
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return "";
+                    const d = new Date(dateStr);
+                    return (
+                        d.toLocaleDateString("fr-FR", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                        }) +
+                        " à " +
+                        d.toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        })
+                    );
+                };
 
-          const fluxClass = (flux) => {
-            if (flux === "vente") return "bg-emerald-100 text-emerald-700";
-            if (flux === "achat") return "bg-purple-100 text-purple-700";
-            return "bg-gray-100 text-gray-700";
-          };
+                const fluxClass = (flux) => {
+                    if (flux === "vente") return "bg-emerald-100 text-emerald-700";
+                    if (flux === "achat") return "bg-purple-100 text-purple-700";
+                    return "bg-gray-100 text-gray-700";
+                };
 
-          const statusSelectClass = (statut) => {
-            if (statut === "en_attente")
-              return "bg-orange-50 text-orange-700 ring-orange-200 focus:ring-orange-600";
-            if (statut === "en_cours")
-              return "bg-blue-50 text-blue-700 ring-blue-200 focus:ring-blue-600";
-            if (statut === "terminee")
-              return "bg-green-50 text-green-700 ring-green-200 focus:ring-green-600";
-            return "bg-gray-50 text-gray-700 ring-gray-200 focus:ring-gray-600";
-          };
+                const statusSelectClass = (statut) => {
+                    if (statut === "en_attente")
+                        return "bg-orange-50 text-orange-700 ring-orange-200 focus:ring-orange-600";
+                    if (statut === "en_cours")
+                        return "bg-blue-50 text-blue-700 ring-blue-200 focus:ring-blue-600";
+                    if (statut === "terminee")
+                        return "bg-green-50 text-green-700 ring-green-200 focus:ring-green-600";
+                    return "bg-gray-50 text-gray-700 ring-gray-200 focus:ring-gray-600";
+                };
 
-          const badgeClass = (priorite) => {
-            const map = {
-              basse: "bg-gray-100 text-gray-700",
-              normale: "bg-blue-100 text-blue-700",
-              haute: "bg-orange-100 text-orange-700",
-              urgente: "bg-red-100 text-red-700",
-            };
-            return map[priorite] || "bg-blue-100 text-blue-700";
-          };
+                const badgeClass = (priorite) => {
+                    const map = {
+                        basse: "bg-gray-100 text-gray-700",
+                        normale: "bg-blue-100 text-blue-700",
+                        haute: "bg-orange-100 text-orange-700",
+                        urgente: "bg-red-100 text-red-700",
+                    };
+                    return map[priorite] || "bg-blue-100 text-blue-700";
+                };
 
-          const clientName = (contact) => {
-            if (!contact) return "";
-            const prenom = contact.prenom || "";
-            const nom = contact.nom || "";
-            const full = `${prenom} ${nom}`.trim();
-            return full || contact.entreprise || contact.email;
-          };
+                const clientName = (contact) => {
+                    if (!contact) return "";
+                    const prenom = contact.prenom || "";
+                    const nom = contact.nom || "";
+                    const full = `${prenom} ${nom}`.trim();
+                    return full || contact.entreprise || contact.email;
+                };
 
-          return {
-            commandes,
-            searchQuery,
-            statusFilter,
-            fluxFilter,
-            selectedCommande,
-            filteredCommandes,
-            stats,
-            updateStatus,
-            formatDate,
-            fluxClass,
-            statusSelectClass,
-            badgeClass,
-            clientName,
-          };
-        },
-      }).mount("#app");
+                return {
+                    commandes,
+                    searchQuery,
+                    statusFilter,
+                    fluxFilter,
+                    selectedCommande,
+                    filteredCommandes,
+                    stats,
+                    updateStatus,
+                    formatDate,
+                    fluxClass,
+                    statusSelectClass,
+                    badgeClass,
+                    clientName,
+                };
+            },
+        }).mount("#app");
     </script>
     {% endraw %}
-  </body>
+</body>
+
 </html>
