@@ -606,7 +606,8 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
             total_ht=payload.total_estime,
             total_tva=payload.montant_tva,
             total_ttc=payload.montant_ttc,
-            delai=payload.delai
+            delai=payload.delai,
+            notes=payload.note
         )
 
         desc_lines = ["Articles:"]

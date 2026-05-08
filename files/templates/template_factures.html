@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+
+        body {
+            font-family: 'Helvetica', sans-serif;
+            color: #333;
+            font-size: 12pt;
+            margin: 0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 50px;
+        }
+
+        .company-info {
+            width: 45%;
+        }
+
+        .client-info {
+            width: 45%;
+            text-align: right;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .invoice-details {
+            margin-bottom: 30px;
+        }
+
+        .invoice-details h1 {
+            color: #004a99;
+            margin: 0;
+            font-size: 24pt;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #004a99;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .totals {
+            margin-top: 30px;
+            float: right;
+            width: 300px;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        .totals-row.grand-total {
+            font-weight: bold;
+            font-size: 14pt;
+            border-top: 2px solid #333;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 8pt;
+            color: #777;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <div class="company-info">
+            <strong>{{ data.ma_societe_nom }}</strong><br>
+            {{ data.ma_societe_adresse }}<br>
+            SIRET : {{ data.ma_societe_siret }}<br>
+            TVA : {{ data.ma_societe_tva_intra }}
+        </div>
+        <div class="client-info">
+            <small>Facturer à :</small><br>
+            <strong>{{ data.client_nom }}</strong><br>
+            {% if data.client_siret %}SIRET : {{ data.client_siret }}{% endif %}<br>
+            {{ data.client_adresse }}
+        </div>
+    </div>
+
+    <div class="invoice-details">
+        <h1>FACTURE</h1>
+        <p>
+            N° : <strong>{{ data.numero_facture }}</strong><br>
+            Date : {{ data.date_emission_visuelle }}<br>
+            Échéance : {{ data.date_echeance_visuelle }}
+        </p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th style="text-align: right;">Montant HT</th>
+            </tr>
+        </thead>
+        <tbody>
+            {# Ici tu pourras looper sur tes lignes si tu en as plusieurs #}
+            <tr>
+                <td>{{ data.description }}</td>
+                <td style="text-align: right;">{{ "{:,.2f}".format(data.montant_ht) }} €</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="totals-row">
+            <span>Total HT</span>
+            <span>{{ "{:,.2f}".format(data.montant_ht) }} €</span>
+        </div>
+        <div class="totals-row">
+            <span>TVA (20%)</span>
+            <span>{{ "{:,.2f}".format(data.montant_tva) }} €</span>
+        </div>
+        <div class="totals-row grand-total">
+            <span>Total TTC</span>
+            <span>{{ "{:,.2f}".format(data.montant_ttc) }} €</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        {{ data.ma_societe_nom }} - SIRET {{ data.ma_societe_siret }} - Numéro TVA {{ data.ma_societe_tva_intra }}<br>
+        Dispense d'immatriculation au registre du commerce et des sociétés (RCS) et au répertoire des métiers (RM).
+    </div>
+
+</body>
+
+</html>
