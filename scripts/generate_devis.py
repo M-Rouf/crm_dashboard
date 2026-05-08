@@ -35,7 +35,7 @@ def generate_devis_files(ref_devis, nom_client, adresse_client, contact_client, 
         "#Tot_TVA": f"{total_tva:.2f} €",
         "#Tot_TTC": f"{total_ttc:.2f} €",
         "#delai": delai,
-        "#notes_devis": f'<div class="note-section" style="margin-bottom: 20px; font-size: 10pt; color: #555;"><strong>Notes additionnelles :</strong><br>{notes.replace(chr(10), "<br>")}</div>' if notes else ""
+        "#notes_devis": f'<div class="note-section" style="margin-bottom: 20px; font-size: 10pt; color: #555;"><strong>Notes additionnelles :</strong><br>{str(notes).replace("\\r\\n", "<br>").replace("\\n", "<br>").replace("\\r", "<br>").replace(chr(13)+chr(10), "<br>").replace(chr(10), "<br>").replace(chr(13), "<br>")}</div>' if notes else ""
     }
     
     for key, val in replacements.items():
