@@ -1,1251 +1,2064 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Devis CRM | mrliw.fr</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
     </script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <!-- Fichier CSS statique -->
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css" />
     <!-- Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-</head>
+  </head>
 
-<body class="bg-gray-50 text-gray-900 leading-normal tracking-normal min-h-screen">
+  <body
+    class="bg-gray-50 text-gray-900 leading-normal tracking-normal min-h-screen"
+  >
     {% raw %}
     <div id="app" v-cloak class="min-h-screen flex flex-col">
-        <!-- En-tête Global -->
-        <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
-            <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
-                <div class="flex items-center gap-6">
-                    <!-- Logo -->
-                    <a href="/" class="flex items-center gap-2">
-                        <img src="/img/logo_mrliw.png" alt="MRLIW Logo" class="h-8 w-auto">
-                        <span class="font-bold text-gray-800 text-lg hidden sm:block tracking-tight">Dashboard</span>
-                    </a>
+      <!-- En-tête Global -->
+      <header
+        class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50"
+      >
+        <div
+          class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between"
+        >
+          <div class="flex items-center gap-6">
+            <!-- Logo -->
+            <a href="/" class="flex items-center gap-2">
+              <img
+                src="/img/logo_mrliw.png"
+                alt="MRLIW Logo"
+                class="h-8 w-auto"
+              />
+              <span
+                class="font-bold text-gray-800 text-lg hidden sm:block tracking-tight"
+                >Dashboard</span
+              >
+            </a>
 
-                    <!-- Navigation -->
-                    <nav class="flex items-center gap-1">
-                        <a href="/"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
-                        <a href="/contacts"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
-                        <a href="/actions"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
-                        <a href="/devis"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Devis</a>
-                        <a href="/commandes"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Commandes</a>
-                    </nav>
-                </div>
+            <!-- Navigation -->
+            <nav class="flex items-center gap-1">
+              <a
+                href="/"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                >Requêtes</a
+              >
+              <a
+                href="/contacts"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                >Contacts</a
+              >
+              <a
+                href="/actions"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                >Actions</a
+              >
+              <a
+                href="/devis"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700"
+                >Devis</a
+              >
+              <a
+                href="/commandes"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                >Commandes</a
+              >
+            </nav>
+          </div>
 
-                <div class="flex items-center">
-                    <div
-                        class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shadow-sm border border-indigo-200">
-                        MR</div>
-                </div>
-            </div>
-        </header>
-
-        <div class="container mx-auto p-4 md:p-8 max-w-7xl flex flex-col gap-6 flex-grow">
-            <!-- Header / Filtres -->
+          <div class="flex items-center">
             <div
-                class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="lucide lucide-file-text text-indigo-600">
-                        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-                        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-                        <path d="M10 9H8" />
-                        <path d="M16 13H8" />
-                        <path d="M16 17H8" />
-                    </svg>
-                    Gestion des devis
-                </h1>
+              class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shadow-sm border border-indigo-200"
+            >
+              MR
+            </div>
+          </div>
+        </div>
+      </header>
 
-                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                    <button @click="showManualAddModal = true"
-                        class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M5 12h14" />
-                            <path d="M12 5v14" />
-                        </svg>
-                        Ajout Manuel
-                    </button>
-                    <button @click="showAddModal = true"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Créer
-                    </button>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </span>
-                        <input v-model="searchQuery" type="text" placeholder="Chercher un nom ou client..."
-                            class="w-full sm:w-64 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors">
-                    </div>
+      <div
+        class="container mx-auto p-4 md:p-8 max-w-7xl flex flex-col gap-6 flex-grow"
+      >
+        <!-- Header / Filtres -->
+        <div
+          class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100"
+        >
+          <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-file-text text-indigo-600"
+            >
+              <path
+                d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+              />
+              <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+              <path d="M10 9H8" />
+              <path d="M16 13H8" />
+              <path d="M16 17H8" />
+            </svg>
+            Gestion des devis
+          </h1>
 
-                    <button @click="showSigned = !showSigned"
-                        :class="showSigned ? 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
-                        class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                        <svg v-if="!showSigned" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-                            <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-                            <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-                            <line x1="2" x2="22" y1="2" y2="22" />
-                        </svg>
-                        <span class="hidden sm:inline">{{ showSigned ? 'Masquer signés' : 'Afficher signés' }}</span>
-                    </button>
-                </div>
+          <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <button
+              @click="showManualAddModal = true"
+              class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+              </svg>
+              Ajout Manuel
+            </button>
+            <button
+              @click="showAddModal = true"
+              class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Créer
+            </button>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg
+                  class="w-4 h-4 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </span>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Chercher un nom ou client..."
+                class="w-full sm:w-64 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
+              />
             </div>
 
-            <!-- KPI Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <!-- Total -->
-                <div
-                    class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 mb-1">Total des devis</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ devis.length }}</p>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-file-text">
-                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-                            <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-                            <path d="M10 9H8" />
-                            <path d="M16 13H8" />
-                            <path d="M16 17H8" />
-                        </svg>
-                    </div>
-                </div>
+            <button
+              @click="showSigned = !showSigned"
+              :class="showSigned ? 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+              class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg
+                v-if="!showSigned"
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg
+                v-else
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                <path
+                  d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"
+                />
+                <path
+                  d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"
+                />
+                <line x1="2" x2="22" y1="2" y2="22" />
+              </svg>
+              <span class="hidden sm:inline"
+                >{{ showSigned ? 'Masquer signés' : 'Afficher signés' }}</span
+              >
+            </button>
+          </div>
+        </div>
 
-                <!-- En attente -->
-                <div
-                    class="bg-orange-50 p-6 rounded-2xl shadow-sm border border-orange-100 flex items-center justify-between group hover:shadow-md transition-shadow">
-                    <div>
-                        <p class="text-sm font-medium text-orange-600 mb-1">En attente</p>
-                        <p class="text-3xl font-bold text-orange-900">{{ stats.enAttente }}</p>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-clock">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                    </div>
-                </div>
-
-                <!-- Signés -->
-                <div
-                    class="bg-green-50 p-6 rounded-2xl shadow-sm border border-green-100 flex items-center justify-between group hover:shadow-md transition-shadow">
-                    <div>
-                        <p class="text-sm font-medium text-green-600 mb-1">Signés</p>
-                        <p class="text-3xl font-bold text-green-900">{{ stats.signes }}</p>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-check-circle-2">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="m9 12 2 2 4-4" />
-                        </svg>
-                    </div>
-                </div>
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <!-- Total -->
+          <div
+            class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"
+          >
+            <div>
+              <p class="text-sm font-medium text-gray-500 mb-1">
+                Total des devis
+              </p>
+              <p class="text-3xl font-bold text-gray-900">{{ devis.length }}</p>
             </div>
+            <div
+              class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-file-text"
+              >
+                <path
+                  d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+                />
+                <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                <path d="M10 9H8" />
+                <path d="M16 13H8" />
+                <path d="M16 17H8" />
+              </svg>
+            </div>
+          </div>
 
-            <!-- Tableau -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
-                <div class="overflow-x-auto overflow-y-auto max-h-[600px] lg:max-h-[65vh] stylised-scrollbar relative">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50">
-                            <tr class="text-xs uppercase tracking-wider text-gray-600">
-                                <th
-                                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold border-b border-gray-200">
-                                    Nom du devis</th>
-                                <th
-                                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold border-b border-gray-200">
-                                    Client</th>
-                                <th
-                                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200">
-                                    Type</th>
-                                <th
-                                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200">
-                                    Montant HT</th>
-                                <th
-                                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200">
-                                    Montant TTC</th>
-                                <th
-                                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200">
-                                    Date</th>
-                                <th
-                                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200">
-                                    Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-sm divide-y divide-gray-100">
-                            <tr v-for="dev in filteredDevis" :key="dev.id" @click="selectedDevis = dev"
-                                class="hover:bg-gray-50/50 transition-colors group cursor-pointer" :class="{
+          <!-- En attente -->
+          <div
+            class="bg-orange-50 p-6 rounded-2xl shadow-sm border border-orange-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+          >
+            <div>
+              <p class="text-sm font-medium text-orange-600 mb-1">En attente</p>
+              <p class="text-3xl font-bold text-orange-900">
+                {{ stats.enAttente }}
+              </p>
+            </div>
+            <div
+              class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-clock"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Signés -->
+          <div
+            class="bg-green-50 p-6 rounded-2xl shadow-sm border border-green-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+          >
+            <div>
+              <p class="text-sm font-medium text-green-600 mb-1">Signés</p>
+              <p class="text-3xl font-bold text-green-900">
+                {{ stats.signes }}
+              </p>
+            </div>
+            <div
+              class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-500"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-check-circle-2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tableau -->
+        <div
+          class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative"
+        >
+          <div
+            class="overflow-x-auto overflow-y-auto max-h-[600px] lg:max-h-[65vh] stylised-scrollbar relative"
+          >
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-gray-50">
+                <tr class="text-xs uppercase tracking-wider text-gray-600">
+                  <th
+                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold border-b border-gray-200"
+                  >
+                    Nom du devis
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold border-b border-gray-200"
+                  >
+                    Client
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200"
+                  >
+                    Type
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200"
+                  >
+                    Montant HT
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200"
+                  >
+                    Montant TTC
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200"
+                  >
+                    Date
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-gray-50 px-6 py-4 font-semibold text-center border-b border-gray-200"
+                  >
+                    Statut
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="text-sm divide-y divide-gray-100">
+                <tr
+                  v-for="dev in filteredDevis"
+                  :key="dev.id"
+                  @click="selectedDevis = dev"
+                  class="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                  :class="{
                                 'bg-indigo-50/50 border-l-4 border-indigo-500': selectedDevis && selectedDevis.id === dev.id,
                                 'border-l-4 border-transparent': !(selectedDevis && selectedDevis.id === dev.id)
-                            }">
-                                <td class="px-6 py-4">
-                                    <div class="font-semibold text-gray-900">{{ dev.nom }}</div>
-                                </td>
-                                <td class="px-6 py-4 text-gray-700 font-medium">
-                                    {{ clientName(dev.contact) }}
-                                </td>
-                                <td class="px-6 py-4 text-center whitespace-nowrap">
-                                    <span
-                                        :class="dev.type === 'reçu' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider">
-                                        {{ dev.type || 'émis' }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-center font-semibold text-gray-900 whitespace-nowrap">
-                                    <span v-if="dev.montant_ht">{{ formatCurrency(dev.montant_ht) }}</span>
-                                    <span v-else class="text-gray-400 font-normal">-</span>
-                                </td>
-                                <td class="px-6 py-4 text-center font-bold text-indigo-700 whitespace-nowrap">
-                                    <span v-if="dev.montant_ttc">{{ formatCurrency(dev.montant_ttc) }}</span>
-                                    <span v-else class="text-gray-400 font-normal">-</span>
-                                </td>
-                                <td class="px-6 py-4 text-center text-gray-500 whitespace-nowrap">
-                                    {{ formatDate(dev.date_emission) }}
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <button v-if="dev.statut === 'En attente'" @click.stop="openUploadModal(dev)"
-                                        class="bg-orange-100 text-orange-700 hover:bg-orange-200 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
-                                        title="Importer le PDF signé pour valider">
-                                        {{ dev.statut }}
-                                    </button>
-                                    <span v-else
-                                        class="bg-green-100 text-green-700 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
-                                        title="Signé et verrouillé">
-                                        {{ dev.statut }}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr v-if="filteredDevis.length === 0">
-                                <td colspan="6" class="py-12 text-center text-gray-400 font-medium">
-                                    <div class="flex flex-col items-center gap-3">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                                            stroke-linecap="round" stroke-linejoin="round" class="text-gray-300">
-                                            <circle cx="12" cy="12" r="10" />
-                                            <line x1="12" x2="12" y1="8" y2="12" />
-                                            <line x1="12" x2="12.01" y1="16" y2="16" />
-                                        </svg>
-                                        Aucun devis trouvé.
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Zone de détails -->
-            <div v-if="selectedDevis"
-                class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 relative overflow-x-auto">
-                <div class="flex flex-wrap sm:flex-nowrap justify-between items-start mb-4 relative z-10 gap-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800">{{ selectedDevis.nom }}</h2>
-                        <div class="text-sm text-gray-500 mt-2 flex flex-wrap gap-x-5 gap-y-2">
-                            <span class="flex items-center gap-1.5 font-medium text-gray-700">
-                                <svg class="w-4 h-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                {{ clientName(selectedDevis.contact) }}
-                            </span>
-                            <span class="flex items-center gap-1.5">
-                                <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                {{ formatDate(selectedDevis.date_emission) }}
-                            </span>
-                        </div>
+                            }"
+                >
+                  <td class="px-6 py-4">
+                    <div class="font-semibold text-gray-900">{{ dev.nom }}</div>
+                  </td>
+                  <td class="px-6 py-4 text-gray-700 font-medium">
+                    {{ clientName(dev.contact) }}
+                  </td>
+                  <td class="px-6 py-4 text-center whitespace-nowrap">
+                    <span
+                      :class="dev.type === 'reçu' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider"
+                    >
+                      {{ dev.type || 'émis' }}
+                    </span>
+                  </td>
+                  <td
+                    class="px-6 py-4 text-center font-semibold text-gray-900 whitespace-nowrap"
+                  >
+                    <span v-if="dev.montant_ht"
+                      >{{ formatCurrency(dev.montant_ht) }}</span
+                    >
+                    <span v-else class="text-gray-400 font-normal">-</span>
+                  </td>
+                  <td
+                    class="px-6 py-4 text-center font-bold text-indigo-700 whitespace-nowrap"
+                  >
+                    <span v-if="dev.montant_ttc"
+                      >{{ formatCurrency(dev.montant_ttc) }}</span
+                    >
+                    <span v-else class="text-gray-400 font-normal">-</span>
+                  </td>
+                  <td
+                    class="px-6 py-4 text-center text-gray-500 whitespace-nowrap"
+                  >
+                    {{ formatDate(dev.date_emission) }}
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <button
+                      v-if="dev.statut === 'En attente'"
+                      @click.stop="openUploadModal(dev)"
+                      class="bg-orange-100 text-orange-700 hover:bg-orange-200 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
+                      title="Importer le PDF signé pour valider"
+                    >
+                      {{ dev.statut }}
+                    </button>
+                    <span
+                      v-else
+                      class="bg-green-100 text-green-700 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                      title="Signé et verrouillé"
+                    >
+                      {{ dev.statut }}
+                    </span>
+                  </td>
+                </tr>
+                <tr v-if="filteredDevis.length === 0">
+                  <td
+                    colspan="6"
+                    class="py-12 text-center text-gray-400 font-medium"
+                  >
+                    <div class="flex flex-col items-center gap-3">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="48"
+                        height="48"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="text-gray-300"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" x2="12" y1="8" y2="12" />
+                        <line x1="12" x2="12.01" y1="16" y2="16" />
+                      </svg>
+                      Aucun devis trouvé.
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div v-if="selectedDevis.montant_ht !== null" class="flex flex-col items-end mr-3">
-                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">HT : {{
-                                formatCurrency(selectedDevis.montant_ht) }}</span>
-                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">TVA : {{
-                                formatCurrency(selectedDevis.montant_tva) }}</span>
-                            <span
-                                class="text-lg font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100 mt-1 shadow-sm">
-                                TTC : {{ formatCurrency(selectedDevis.montant_ttc) }}
-                            </span>
-                        </div>
-                        <button v-if="selectedDevis.statut !== 'Signé'" @click="showUpdateModal = true"
-                            class="text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5"
-                            title="Modifier">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            Modifier
-                        </button>
-                        <button @click="selectedDevis = null"
-                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100 transition-colors"
-                            title="Fermer">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10 mt-6">
-                    <div class="lg:col-span-2">
-                        <div class="bg-gray-50 p-5 rounded-xl border border-gray-100 h-full">
-                            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="text-gray-500">
-                                    <line x1="21" x2="3" y1="6" y2="6" />
-                                    <line x1="21" x2="9" y1="12" y2="12" />
-                                    <line x1="21" x2="7" y1="18" y2="18" />
-                                </svg>
-                                Description
-                            </h3>
-                            <div class="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">{{
-                                selectedDevis.description || 'Aucune description attachée.' }}</div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div
-                            class="bg-white p-5 rounded-xl border border-gray-100 h-full shadow-sm flex flex-col justify-center gap-4">
-                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="text-gray-500">
-                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                                    <polyline points="14 2 14 8 20 8" />
-                                </svg>
-                                Document
-                            </h3>
-                            <div v-if="selectedDevis.file_path"
-                                class="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-lg p-3">
-                                <span class="text-sm font-medium text-indigo-700 truncate max-w-[150px]"
-                                    :title="selectedDevis.file_path">{{ selectedDevis.file_path.split('/').pop()
-                                    }}</span>
-                                <a :href="selectedDevis.file_path + '?v=' + Date.now()" target="_blank"
-                                    class="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                        <polyline points="7 10 12 15 17 10" />
-                                        <line x1="12" x2="12" y1="15" y2="3" />
-                                    </svg>
-                                    Ouvrir
-                                </a>
-                            </div>
-                            <p v-else class="text-sm text-gray-500 italic">Aucun fichier lié à ce devis.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Watermark -->
-                <svg class="absolute -bottom-10 -right-10 w-64 h-64 text-gray-50 rotate-[-15deg] pointer-events-none"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-            </div>
-
-
-
-
-
-            <!-- Modal Ajout Manuel Devis -->
-            <div v-if="showManualAddModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
-                aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeManualModal">
-                </div>
-                <div
-                    class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all sm:max-w-xl w-full relative z-10 flex flex-col max-h-[90vh]">
-                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">Ajouter un devis
-                            manuel</h3>
-                        <button @click="closeManualModal"
-                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <form @submit.prevent="submitManualAdd" class="p-6 space-y-4 overflow-y-auto">
-                        <div v-if="manualError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ manualError }}
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact (Client / Fournisseur)
-                                *</label>
-                            <select v-model="manualAddForm.client" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
-                                <option value="" disabled>Sélectionner un contact...</option>
-                                <option v-for="c in contacts" :key="c.id" :value="c.id">{{ clientName(c) }}</option>
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nom (Référence) *</label>
-                                <input v-model="manualAddForm.nom" placeholder="Ex: mrliw_dXXXXXX" type="text" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-                                <select v-model="manualAddForm.type" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
-                                    <option value="émis">Devis émis</option>
-                                    <option value="reçu">Devis reçu</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant Total HT *</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">€</span>
-                                    </div>
-                                    <input v-model.number="manualAddForm.montant_ht" type="number" step="0.01" min="0"
-                                        required
-                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant Total TVA</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">€</span>
-                                    </div>
-                                    <input v-model.number="manualAddForm.montant_tva" type="number" step="0.01" min="0"
-                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="flex items-center justify-between bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                            <span class="font-bold text-emerald-900 text-sm">Total TTC calculé :</span>
-                            <div class="text-sm font-bold text-emerald-700">
-                                {{ formatCurrency((manualAddForm.montant_ht || 0) + (manualAddForm.montant_tva || 0)) }}
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optionnel)</label>
-                            <textarea v-model="manualAddForm.description" rows="3"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Fichier PDF *</label>
-                            <input type="file" ref="manualFileInput" @change="onManualFileChange"
-                                accept="application/pdf" required
-                                class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
-                            <button type="button" @click="closeManualModal" :disabled="isManualSubmitting"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">Annuler</button>
-                            <button type="submit" :disabled="isManualSubmitting"
-                                class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <span v-if="isManualSubmitting">Traitement...</span>
-                                <span v-else>Enregistrer</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Modal Upload PDF Signé -->
-            <div v-if="showUploadModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
-                aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeUploadModal">
-                </div>
-                <div
-                    class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all sm:max-w-lg w-full relative z-10 flex flex-col max-h-[90vh]">
-                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">Importer le devis
-                            signé</h3>
-                        <button @click="closeUploadModal"
-                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <form @submit.prevent="submitUploadDevis" class="p-6 space-y-4">
-                        <div v-if="uploadError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ uploadError }}
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionnez le fichier PDF
-                                scanné et signé par le client :</label>
-                            <input type="file" ref="fileInput" accept="application/pdf" required
-                                class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
-                            <button type="button" @click="closeUploadModal" :disabled="isUploading"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">Annuler</button>
-                            <button type="submit" :disabled="isUploading"
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <span v-if="isUploading">Import en cours...</span>
-                                <span v-else>Valider</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Modal Modification Devis -->
-            <div v-if="showUpdateModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
-                aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeUpdateModal">
-                </div>
-                <div
-                    class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all sm:max-w-lg w-full relative z-10 flex flex-col max-h-[90vh]">
-                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">Modifier le devis
-                        </h3>
-                        <button @click="closeUpdateModal"
-                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <form @submit.prevent="submitUpdateDevis" class="p-6 space-y-4">
-                        <div v-if="updateError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ updateError }}
-                        </div>
-                        <div v-if="updateSuccess"
-                            class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
-                            Demande de modification envoyée avec succès !
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Détaillez vos modifications pour
-                                n8n</label>
-                            <textarea v-model="updateDevisText" rows="4" required
-                                placeholder="Ex: Ajouter une remise de 10% sur le montant HT..."
-                                class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
-                            <button type="button" @click="closeUpdateModal" :disabled="isUpdating"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">Annuler</button>
-                            <button type="submit" :disabled="isUpdating || !updateDevisText"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <span v-if="isUpdating">Envoi en cours...</span>
-                                <span v-else>Envoyer</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Modal Demande Création Devis -->
-            <div v-if="showAddModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
-                aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeAddModal">
-                </div>
-                <div
-                    class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:w-full sm:max-w-xl flex flex-col max-h-[90vh]">
-                    <div class="bg-white px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2" id="modal-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="text-indigo-600">
-                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                                <polyline points="14 2 14 8 20 8" />
-                            </svg>
-                            Demande de création de devis
-                        </h3>
-                        <button @click="closeAddModal"
-                            class="text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-2 rounded-xl transition-colors">
-                            <span class="sr-only">Fermer</span>
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <form v-if="step === 1" @submit.prevent="submitDevisRequest"
-                        class="overflow-y-auto flex-grow p-6 space-y-5 stylised-scrollbar">
-                        <div v-if="addError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ addError }}
-                        </div>
-                        <div>
-                            <label for="devisText" class="block text-sm font-medium text-gray-700 mb-1">Description de
-                                votre
-                                demande <span class="text-red-500">*</span></label>
-                            <textarea id="devisText" v-model="newDevisRequestText" rows="5" required
-                                placeholder="Détaillez les informations nécessaires à la création du devis..."
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm resize-none"></textarea>
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
-                            <button type="button" @click="closeAddModal" :disabled="isSubmitting"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
-                                Annuler
-                            </button>
-                            <button type="submit" :disabled="isSubmitting"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <svg v-if="isSubmitting" class="animate-spin h-4 w-4 text-white"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4">
-                                    </circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                    </path>
-                                </svg>
-                                Continuer
-                            </button>
-                        </div>
-                    </form>
-
-                    <form v-if="step === 2" @submit.prevent="confirmDevis"
-                        class="overflow-y-auto flex-grow p-6 space-y-5 stylised-scrollbar">
-                        <div v-if="addError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ addError }}
-                        </div>
-                        <div v-if="requestSuccess"
-                            class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
-                            Devis lancé avec succès !
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Désignation du devis</label>
-                                <input type="text" v-model="parsedDevisData.designation"
-                                    placeholder="Ex: Prestation de services tech..."
-                                    class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
-                                <input type="text" v-model="parsedDevisData.prenom"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-                                <input type="text" v-model="parsedDevisData.nom"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
-                                <input type="text" v-model="parsedDevisData.entreprise"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="col-span-2 sm:col-span-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">SIRET</label>
-                                <input type="text" v-model="parsedDevisData.siret" maxlength="14"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="col-span-2 sm:col-span-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">TVA
-                                    Intracommunautaire</label>
-                                <input type="text" v-model="parsedDevisData.tva_intra"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Type d'entité</label>
-                                <select v-model="parsedDevisData.type_entite"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
-                                    <option value="B2B">B2B (Professionnel)</option>
-                                    <option value="B2C">B2C (Particulier)</option>
-                                </select>
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email <span
-                                        class="text-red-500">*</span></label>
-                                <input type="email" v-model="parsedDevisData.email" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse Facturation</label>
-                                <input type="text" v-model="parsedDevisData.adresse_facturation"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse Livraison</label>
-                                <input type="text" v-model="parsedDevisData.adresse_livraison"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Note additionnelle</label>
-                                <textarea v-model="parsedDevisData.note" rows="3"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
-                            </div>
-                            <div class="col-span-2 border-t border-gray-100 pt-4 mt-2">
-                                <div class="flex justify-between items-center mb-3">
-                                    <h4 class="font-bold text-gray-800 text-sm">Articles</h4>
-                                    <button type="button"
-                                        @click="parsedDevisData.articles.push({designation: '', quantite: 1, prix_unitaire: 0})"
-                                        class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 font-semibold transition-colors">+
-                                        Ajouter un article</button>
-                                </div>
-                                <div class="space-y-2 max-h-64 overflow-y-auto pr-1 stylised-scrollbar">
-                                    <div v-for="(a, idx) in parsedDevisData.articles" :key="idx"
-                                        class="flex gap-2 items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                        <div class="flex-grow">
-                                            <input type="text" v-model="a.designation"
-                                                placeholder="Désignation de l'article"
-                                                class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2 focus:ring-1 focus:ring-indigo-500 bg-white">
-                                            <div class="flex gap-3">
-                                                <div class="flex items-center gap-2 w-1/4">
-                                                    <span class="text-xs font-medium text-gray-500">Qté:</span>
-                                                    <input type="number" v-model.number="a.quantite" min="1"
-                                                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white">
-                                                </div>
-                                                <div class="flex items-center gap-2 w-2/4">
-                                                    <span class="text-xs font-medium text-gray-500">Prix U. HT
-                                                        (€):</span>
-                                                    <input type="number" v-model.number="a.prix_unitaire" step="0.01"
-                                                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white">
-                                                </div>
-                                                <div class="flex items-center gap-2 w-1/4">
-                                                    <span class="text-xs font-medium text-gray-500">Remise (%):</span>
-                                                    <input type="number" v-model.number="a.remise" min="0" max="100"
-                                                        step="0.1"
-                                                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button type="button" @click="parsedDevisData.articles.splice(idx, 1)"
-                                            class="text-gray-400 hover:text-red-500 p-1.5 hover:bg-white rounded transition-colors"
-                                            title="Retirer">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                stroke-linecap="round" stroke-linejoin="round">
-                                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <div v-if="parsedDevisData.articles.length === 0"
-                                        class="text-sm text-gray-400 italic py-3 text-center border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
-                                        Aucun article enregistré.</div>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                                    <div class="flex flex-col bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                                        <span class="font-bold text-indigo-900 text-sm mb-1">Total HT (€)</span>
-                                        <div class="text-sm font-bold text-indigo-700">
-                                            {{ computedTotalEstime.toFixed(2) }}
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="flex flex-col bg-blue-50 p-3 rounded-lg border border-blue-100 relative">
-                                        <label class="font-bold text-blue-900 text-sm mb-1">TVA (%)</label>
-                                        <input type="number" v-model.number="parsedDevisData.tva_percent" step="0.1"
-                                            min="0"
-                                            class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 bg-white">
-                                        <div class="text-xs text-blue-700 mt-1 font-semibold">TVA: {{
-                                            computedTva.toFixed(2) }} €</div>
-                                    </div>
-                                    <div class="flex flex-col bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                                        <span class="font-bold text-emerald-900 text-sm mb-1">Total TTC (€)</span>
-                                        <div class="text-lg font-bold text-emerald-700">
-                                            {{ computedTtc.toFixed(2) }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4 mt-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Délai estimé</label>
-                                        <input type="text" v-model="parsedDevisData.delai" placeholder="Ex: 4 semaines"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                                    </div>
-                                    <div class="flex flex-col justify-center">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Envoi du devis par
-                                            email</label>
-                                        <label class="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" :checked="parsedDevisData.envoi === 1"
-                                                @change="parsedDevisData.envoi = $event.target.checked ? 1 : 0"
-                                                class="sr-only peer">
-                                            <div
-                                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
-                                            </div>
-                                            <span class="ml-3 text-sm font-medium"
-                                                :class="parsedDevisData.envoi === 1 ? 'text-indigo-600' : 'text-gray-400'">{{
-                                                parsedDevisData.envoi === 1 ? 'Oui' : 'Non' }}</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
-                            <button type="button" @click="closeAddModal" :disabled="isSubmitting"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
-                                Annuler
-                            </button>
-                            <button type="submit" :disabled="isSubmitting"
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <svg v-if="isSubmitting" class="animate-spin h-4 w-4 text-white"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4">
-                                    </circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                    </path>
-                                </svg>
-                                Créer le devis
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- Zone de détails -->
+        <div
+          v-if="selectedDevis"
+          class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 relative overflow-x-auto"
+        >
+          <div
+            class="flex flex-wrap sm:flex-nowrap justify-between items-start mb-4 relative z-10 gap-4"
+          >
+            <div>
+              <h2 class="text-2xl font-bold text-gray-800">
+                {{ selectedDevis.nom }}
+              </h2>
+              <div
+                class="text-sm text-gray-500 mt-2 flex flex-wrap gap-x-5 gap-y-2"
+              >
+                <span
+                  class="flex items-center gap-1.5 font-medium text-gray-700"
+                >
+                  <svg
+                    class="w-4 h-4 text-indigo-500"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                  {{ clientName(selectedDevis.contact) }}
+                </span>
+                <span class="flex items-center gap-1.5">
+                  <svg
+                    class="w-4 h-4 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  {{ formatDate(selectedDevis.date_emission) }}
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div
+                v-if="selectedDevis.montant_ht !== null"
+                class="flex flex-col items-end mr-3"
+              >
+                <span
+                  class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >HT : {{ formatCurrency(selectedDevis.montant_ht) }}</span
+                >
+                <span
+                  class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >TVA : {{ formatCurrency(selectedDevis.montant_tva) }}</span
+                >
+                <span
+                  class="text-lg font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100 mt-1 shadow-sm"
+                >
+                  TTC : {{ formatCurrency(selectedDevis.montant_ttc) }}
+                </span>
+              </div>
+              <button
+                v-if="selectedDevis.statut !== 'Signé'"
+                @click="showUpdateModal = true"
+                class="text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5"
+                title="Modifier"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                  ></path>
+                  <path
+                    d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                  ></path>
+                </svg>
+                Modifier
+              </button>
+              <button
+                @click="selectedDevis = null"
+                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                title="Fermer"
+              >
+                <svg
+                  class="w-5 h-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10 mt-6">
+            <div class="lg:col-span-2">
+              <div
+                class="bg-gray-50 p-5 rounded-xl border border-gray-100 h-full"
+              >
+                <h3
+                  class="font-bold text-gray-800 mb-3 flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-gray-500"
+                  >
+                    <line x1="21" x2="3" y1="6" y2="6" />
+                    <line x1="21" x2="9" y1="12" y2="12" />
+                    <line x1="21" x2="7" y1="18" y2="18" />
+                  </svg>
+                  Description
+                </h3>
+                <div
+                  class="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed"
+                >
+                  {{ selectedDevis.description || 'Aucune description attachée.'
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div
+                class="bg-white p-5 rounded-xl border border-gray-100 h-full shadow-sm flex flex-col justify-center gap-4"
+              >
+                <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-gray-500"
+                  >
+                    <path
+                      d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+                    />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                  Document
+                </h3>
+                <div
+                  v-if="selectedDevis.file_path"
+                  class="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-lg p-3"
+                >
+                  <span
+                    class="text-sm font-medium text-indigo-700 truncate max-w-[150px]"
+                    :title="selectedDevis.file_path"
+                    >{{ selectedDevis.file_path.split('/').pop() }}</span
+                  >
+                  <a
+                    :href="selectedDevis.file_path + '?v=' + Date.now()"
+                    target="_blank"
+                    class="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" x2="12" y1="15" y2="3" />
+                    </svg>
+                    Ouvrir
+                  </a>
+                </div>
+                <p v-else class="text-sm text-gray-500 italic">
+                  Aucun fichier lié à ce devis.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Watermark -->
+          <svg
+            class="absolute -bottom-10 -right-10 w-64 h-64 text-gray-50 rotate-[-15deg] pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+        </div>
+
+        <!-- Modal Ajout Manuel Devis -->
+        <div
+          v-if="showManualAddModal"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+            @click="closeManualModal"
+          ></div>
+          <div
+            class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all sm:max-w-xl w-full relative z-10 flex flex-col max-h-[90vh]"
+          >
+            <div
+              class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50"
+            >
+              <h3
+                class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2"
+              >
+                Ajouter un devis manuel
+              </h3>
+              <button
+                @click="closeManualModal"
+                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                <svg
+                  class="h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <form
+              @submit.prevent="submitManualAdd"
+              class="p-6 space-y-4 overflow-y-auto"
+            >
+              <div
+                v-if="manualError"
+                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200"
+              >
+                {{ manualError }}
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Contact (Client / Fournisseur) *</label
+                >
+                <select
+                  v-model="manualAddForm.client"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="" disabled>Sélectionner un contact...</option>
+                  <option v-for="c in contacts" :key="c.id" :value="c.id">
+                    {{ clientName(c) }}
+                  </option>
+                </select>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Nom (Référence) *</label
+                  >
+                  <input
+                    v-model="manualAddForm.nom"
+                    placeholder="Ex: mrliw_dXXXXXX"
+                    type="text"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Type *</label
+                  >
+                  <select
+                    v-model="manualAddForm.type"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+                  >
+                    <option value="émis">Devis émis</option>
+                    <option value="reçu">Devis reçu</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Montant Total HT *</label
+                  >
+                  <div class="relative">
+                    <div
+                      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                    >
+                      <span class="text-gray-500 sm:text-sm">€</span>
+                    </div>
+                    <input
+                      v-model.number="manualAddForm.montant_ht"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Montant Total TVA</label
+                  >
+                  <div class="relative">
+                    <div
+                      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                    >
+                      <span class="text-gray-500 sm:text-sm">€</span>
+                    </div>
+                    <input
+                      v-model.number="manualAddForm.montant_tva"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div
+                class="flex items-center justify-between bg-emerald-50 p-3 rounded-lg border border-emerald-100"
+              >
+                <span class="font-bold text-emerald-900 text-sm"
+                  >Total TTC calculé :</span
+                >
+                <div class="text-sm font-bold text-emerald-700">
+                  {{ formatCurrency((manualAddForm.montant_ht || 0) +
+                  (manualAddForm.montant_tva || 0)) }}
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Description (Optionnel)</label
+                >
+                <textarea
+                  v-model="manualAddForm.description"
+                  rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"
+                ></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Fichier PDF *</label
+                >
+                <input
+                  type="file"
+                  ref="manualFileInput"
+                  @change="onManualFileChange"
+                  accept="application/pdf"
+                  required
+                  class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+              </div>
+              <div
+                class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2"
+              >
+                <button
+                  type="button"
+                  @click="closeManualModal"
+                  :disabled="isManualSubmitting"
+                  class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  :disabled="isManualSubmitting"
+                  class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <span v-if="isManualSubmitting">Traitement...</span>
+                  <span v-else>Enregistrer</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Upload PDF Signé -->
+        <div
+          v-if="showUploadModal"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+            @click="closeUploadModal"
+          ></div>
+          <div
+            class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all sm:max-w-lg w-full relative z-10 flex flex-col max-h-[90vh]"
+          >
+            <div
+              class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50"
+            >
+              <h3
+                class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2"
+              >
+                Importer le devis signé
+              </h3>
+              <button
+                @click="closeUploadModal"
+                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                <svg
+                  class="h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <form @submit.prevent="submitUploadDevis" class="p-6 space-y-4">
+              <div
+                v-if="uploadError"
+                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200"
+              >
+                {{ uploadError }}
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Sélectionnez le fichier PDF scanné et signé par le client
+                  :</label
+                >
+                <input
+                  type="file"
+                  ref="fileInput"
+                  accept="application/pdf"
+                  required
+                  class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+              </div>
+              <div
+                class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2"
+              >
+                <button
+                  type="button"
+                  @click="closeUploadModal"
+                  :disabled="isUploading"
+                  class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  :disabled="isUploading"
+                  class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <span v-if="isUploading">Import en cours...</span>
+                  <span v-else>Valider</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Modification Devis -->
+        <div
+          v-if="showUpdateModal"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+            @click="closeUpdateModal"
+          ></div>
+          <div
+            class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all sm:max-w-lg w-full relative z-10 flex flex-col max-h-[90vh]"
+          >
+            <div
+              class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50"
+            >
+              <h3
+                class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2"
+              >
+                Modifier le devis
+              </h3>
+              <button
+                @click="closeUpdateModal"
+                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                <svg
+                  class="h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <form @submit.prevent="submitUpdateDevis" class="p-6 space-y-4">
+              <div
+                v-if="updateError"
+                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200"
+              >
+                {{ updateError }}
+              </div>
+              <div
+                v-if="updateSuccess"
+                class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200"
+              >
+                Demande de modification envoyée avec succès !
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Détaillez vos modifications pour n8n</label
+                >
+                <textarea
+                  v-model="updateDevisText"
+                  rows="4"
+                  required
+                  placeholder="Ex: Ajouter une remise de 10% sur le montant HT..."
+                  class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"
+                ></textarea>
+              </div>
+              <div
+                class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2"
+              >
+                <button
+                  type="button"
+                  @click="closeUpdateModal"
+                  :disabled="isUpdating"
+                  class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  :disabled="isUpdating || !updateDevisText"
+                  class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <span v-if="isUpdating">Envoi en cours...</span>
+                  <span v-else>Envoyer</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Demande Création Devis -->
+        <div
+          v-if="showAddModal"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+            @click="closeAddModal"
+          ></div>
+          <div
+            class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:w-full sm:max-w-xl flex flex-col max-h-[90vh]"
+          >
+            <div
+              class="bg-white px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center"
+            >
+              <h3
+                class="text-xl font-bold text-gray-900 flex items-center gap-2"
+                id="modal-title"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="text-indigo-600"
+                >
+                  <path
+                    d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+                  />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+                Demande de création de devis
+              </h3>
+              <button
+                @click="closeAddModal"
+                class="text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-2 rounded-xl transition-colors"
+              >
+                <span class="sr-only">Fermer</span>
+                <svg
+                  class="w-5 h-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <form
+              v-if="step === 1"
+              @submit.prevent="submitDevisRequest"
+              class="overflow-y-auto flex-grow p-6 space-y-5 stylised-scrollbar"
+            >
+              <div
+                v-if="addError"
+                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200"
+              >
+                {{ addError }}
+              </div>
+              <div>
+                <label
+                  for="devisText"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Description de votre demande
+                  <span class="text-red-500">*</span></label
+                >
+                <textarea
+                  id="devisText"
+                  v-model="newDevisRequestText"
+                  rows="5"
+                  required
+                  placeholder="Détaillez les informations nécessaires à la création du devis..."
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm resize-none"
+                ></textarea>
+              </div>
+              <div
+                class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6"
+              >
+                <button
+                  type="button"
+                  @click="closeAddModal"
+                  :disabled="isSubmitting"
+                  class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  :disabled="isSubmitting"
+                  class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <svg
+                    v-if="isSubmitting"
+                    class="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Continuer
+                </button>
+              </div>
+            </form>
+
+            <form
+              v-if="step === 2"
+              @submit.prevent="confirmDevis"
+              class="overflow-y-auto flex-grow p-6 space-y-5 stylised-scrollbar"
+            >
+              <div
+                v-if="addError"
+                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200"
+              >
+                {{ addError }}
+              </div>
+              <div
+                v-if="requestSuccess"
+                class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200"
+              >
+                Devis lancé avec succès !
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Désignation du devis</label
+                  >
+                  <input
+                    type="text"
+                    v-model="parsedDevisData.designation"
+                    placeholder="Ex: Prestation de services tech..."
+                    class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Prénom</label
+                  >
+                  <input
+                    type="text"
+                    v-model="parsedDevisData.prenom"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Nom</label
+                  >
+                  <input
+                    type="text"
+                    v-model="parsedDevisData.nom"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Entreprise</label
+                  >
+                  <input
+                    type="text"
+                    v-model="parsedDevisData.entreprise"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >SIRET</label
+                  >
+                  <input
+                    type="text"
+                    v-model="parsedDevisData.siret"
+                    maxlength="14"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >TVA Intracommunautaire</label
+                  >
+                  <input
+                    type="text"
+                    v-model="parsedDevisData.tva_intra"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Type d'entité</label
+                  >
+                  <select
+                    v-model="parsedDevisData.type_entite"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+                  >
+                    <option value="B2B">B2B (Professionnel)</option>
+                    <option value="B2C">B2C (Particulier)</option>
+                  </select>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Email <span class="text-red-500">*</span></label
+                  >
+                  <input
+                    type="email"
+                    v-model="parsedDevisData.email"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Adresse Facturation</label
+                  >
+                  <input
+                    type="text"
+                    v-model="parsedDevisData.adresse_facturation"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Adresse Livraison</label
+                  >
+                  <input
+                    type="text"
+                    v-model="parsedDevisData.adresse_livraison"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Note additionnelle</label
+                  >
+                  <textarea
+                    v-model="parsedDevisData.note"
+                    rows="3"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"
+                  ></textarea>
+                </div>
+                <div class="col-span-2 border-t border-gray-100 pt-4 mt-2">
+                  <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-bold text-gray-800 text-sm">Articles</h4>
+                    <button
+                      type="button"
+                      @click="parsedDevisData.articles.push({designation: '', quantite: 1, prix_unitaire: 0})"
+                      class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 font-semibold transition-colors"
+                    >
+                      + Ajouter un article
+                    </button>
+                  </div>
+                  <div
+                    class="space-y-2 max-h-64 overflow-y-auto pr-1 stylised-scrollbar"
+                  >
+                    <div
+                      v-for="(a, idx) in parsedDevisData.articles"
+                      :key="idx"
+                      class="flex gap-2 items-start bg-gray-50 p-3 rounded-lg border border-gray-100"
+                    >
+                      <div class="flex-grow">
+                        <input
+                          type="text"
+                          v-model="a.designation"
+                          placeholder="Désignation de l'article"
+                          class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2 focus:ring-1 focus:ring-indigo-500 bg-white"
+                        />
+                        <div class="flex gap-3">
+                          <div class="flex items-center gap-2 w-1/4">
+                            <span class="text-xs font-medium text-gray-500"
+                              >Qté:</span
+                            >
+                            <input
+                              type="number"
+                              v-model.number="a.quantite"
+                              min="1"
+                              class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white"
+                            />
+                          </div>
+                          <div class="flex items-center gap-2 w-2/4">
+                            <span class="text-xs font-medium text-gray-500"
+                              >Prix U. HT (€):</span
+                            >
+                            <input
+                              type="number"
+                              v-model.number="a.prix_unitaire"
+                              step="0.01"
+                              class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white"
+                            />
+                          </div>
+                          <div class="flex items-center gap-2 w-1/4">
+                            <span class="text-xs font-medium text-gray-500"
+                              >Remise (%):</span
+                            >
+                            <input
+                              type="number"
+                              v-model.number="a.remise"
+                              min="0"
+                              max="100"
+                              step="0.1"
+                              class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        @click="parsedDevisData.articles.splice(idx, 1)"
+                        class="text-gray-400 hover:text-red-500 p-1.5 hover:bg-white rounded transition-colors"
+                        title="Retirer"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                    <div
+                      v-if="parsedDevisData.articles.length === 0"
+                      class="text-sm text-gray-400 italic py-3 text-center border border-dashed border-gray-200 rounded-lg bg-gray-50/50"
+                    >
+                      Aucun article enregistré.
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div
+                      class="flex flex-col bg-indigo-50 p-3 rounded-lg border border-indigo-100"
+                    >
+                      <span class="font-bold text-indigo-900 text-sm mb-1"
+                        >Total HT (€)</span
+                      >
+                      <div class="text-sm font-bold text-indigo-700">
+                        {{ computedTotalEstime.toFixed(2) }}
+                      </div>
+                    </div>
+                    <div
+                      class="flex flex-col bg-blue-50 p-3 rounded-lg border border-blue-100 relative"
+                    >
+                      <label class="font-bold text-blue-900 text-sm mb-1"
+                        >TVA (%)</label
+                      >
+                      <input
+                        type="number"
+                        v-model.number="parsedDevisData.tva_percent"
+                        step="0.1"
+                        min="0"
+                        class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 bg-white"
+                      />
+                      <div class="text-xs text-blue-700 mt-1 font-semibold">
+                        TVA: {{ computedTva.toFixed(2) }} €
+                      </div>
+                    </div>
+                    <div
+                      class="flex flex-col bg-emerald-50 p-3 rounded-lg border border-emerald-100"
+                    >
+                      <span class="font-bold text-emerald-900 text-sm mb-1"
+                        >Total TTC (€)</span
+                      >
+                      <div class="text-lg font-bold text-emerald-700">
+                        {{ computedTtc.toFixed(2) }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1"
+                        >Délai estimé</label
+                      >
+                      <input
+                        type="text"
+                        v-model="parsedDevisData.delai"
+                        placeholder="Ex: 4 semaines"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div class="flex flex-col justify-center">
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Envoi du devis par email</label
+                      >
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          :checked="parsedDevisData.envoi === 1"
+                          @change="parsedDevisData.envoi = $event.target.checked ? 1 : 0"
+                          class="sr-only peer"
+                        />
+                        <div
+                          class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"
+                        ></div>
+                        <span
+                          class="ml-3 text-sm font-medium"
+                          :class="parsedDevisData.envoi === 1 ? 'text-indigo-600' : 'text-gray-400'"
+                          >{{ parsedDevisData.envoi === 1 ? 'Oui' : 'Non'
+                          }}</span
+                        >
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6"
+              >
+                <button
+                  type="button"
+                  @click="closeAddModal"
+                  :disabled="isSubmitting"
+                  class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  :disabled="isSubmitting"
+                  class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <svg
+                    v-if="isSubmitting"
+                    class="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Créer le devis
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
     <script>
-        const { createApp, ref, computed, onMounted } = Vue
+      const { createApp, ref, computed, onMounted } = Vue;
 
-        createApp({
-            setup() {
-                const devis = ref([])
-                const searchQuery = ref('')
-                const showSigned = ref(false)
-                const selectedDevis = ref(null)
-                const showAddModal = ref(false)
-                const newDevisRequestText = ref('')
-                const isSubmitting = ref(false)
-                const addError = ref('')
-                const requestSuccess = ref(false)
-                const step = ref(1)
-                const parsedDevisData = ref(null)
+      createApp({
+        setup() {
+          const devis = ref([]);
+          const searchQuery = ref("");
+          const showSigned = ref(false);
+          const selectedDevis = ref(null);
+          const showAddModal = ref(false);
+          const newDevisRequestText = ref("");
+          const isSubmitting = ref(false);
+          const addError = ref("");
+          const requestSuccess = ref(false);
+          const step = ref(1);
+          const parsedDevisData = ref(null);
 
-                const closeAddModal = () => {
-                    showAddModal.value = false
-                    step.value = 1
-                    newDevisRequestText.value = ''
-                    requestSuccess.value = false
-                    addError.value = ''
-                }
+          const closeAddModal = () => {
+            showAddModal.value = false;
+            step.value = 1;
+            newDevisRequestText.value = "";
+            requestSuccess.value = false;
+            addError.value = "";
+          };
 
-                const submitDevisRequest = async () => {
-                    isSubmitting.value = true
-                    addError.value = ''
-                    requestSuccess.value = false
-                    try {
-                        const res = await fetch('/api/devis/webhook', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ texte: newDevisRequestText.value })
-                        })
-                        if (!res.ok) throw new Error("Erreur lors de l'envoi de la demande.")
+          const submitDevisRequest = async () => {
+            isSubmitting.value = true;
+            addError.value = "";
+            requestSuccess.value = false;
+            try {
+              const res = await fetch("/api/devis/webhook", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ texte: newDevisRequestText.value }),
+              });
+              if (!res.ok)
+                throw new Error("Erreur lors de l'envoi de la demande.");
 
-                        const res_json = await res.json()
-                        const mappedData = {
-                            ...res_json,
-                            articles: (res_json.articles || []).map(a => {
-                                const origQty = parseFloat(a.quantite || 0);
-                                const origPrice = parseFloat(a.prix_unitaire || 0);
-                                let newQty = Math.max(1, Math.round(origQty));
-                                let newPrice = origPrice;
-                                if (origQty > 0 && origQty !== newQty) {
-                                    newPrice = (origPrice * origQty) / newQty;
-                                }
-                                return {
-                                    ...a,
-                                    quantite: newQty,
-                                    prix_unitaire: Number(newPrice.toFixed(2)),
-                                    remise: a.remise || 0
-                                };
-                            }),
-                            delai: res_json.delai || '',
-                            type_entite: res_json.type_entite || 'B2B',
-                            envoi: res_json.envoi !== undefined ? res_json.envoi : 1
-                        }
-                        if (!mappedData.designation && mappedData.articles && mappedData.articles.length > 0) {
-                            mappedData.designation = mappedData.articles[0].designation
-                        }
-                        parsedDevisData.value = mappedData
-                        step.value = 2
-                    } catch (e) {
-                        addError.value = e.message
-                    } finally {
-                        isSubmitting.value = false
-                    }
-                }
-
-                const showUpdateModal = ref(false)
-                const updateDevisText = ref('')
-                const isUpdating = ref(false)
-                const updateError = ref('')
-                const updateSuccess = ref(false)
-
-                const closeUpdateModal = () => {
-                    showUpdateModal.value = false
-                    updateDevisText.value = ''
-                    updateError.value = ''
-                    updateSuccess.value = false
-                }
-
-                const submitUpdateDevis = async () => {
-                    isUpdating.value = true
-                    updateError.value = ''
-                    try {
-                        const res = await fetch(`/api/devis/${selectedDevis.value.id}/update_webhook`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ texte: updateDevisText.value })
-                        })
-                        if (!res.ok) throw new Error("Erreur lors de l'envoi de la modification.")
-
-                        const res_json = await res.json()
-                        updateSuccess.value = true
-                        setTimeout(() => {
-                            try {
-                                const activeDevis = selectedDevis.value || {}
-                                const contact = activeDevis.contact || {}
-                                parsedDevisData.value = {
-                                    id: activeDevis.id,
-                                    prenom: contact.prenom || '',
-                                    nom: contact.nom || '',
-                                    entreprise: contact.entreprise || '',
-                                    siret: contact.siret || '',
-                                    tva_intra: contact.tva_intra || '',
-                                    type_entite: contact.type_entite || 'B2B',
-                                    email: contact.email || '',
-                                    adresse_facturation: contact.adresse_facturation || '',
-                                    adresse_livraison: contact.adresse_livraison || '',
-                                    articles: (res_json.articles || []).map(a => {
-                                        const origQty = parseFloat(a.quantite || 0);
-                                        const origPrice = parseFloat(a.prix_unitaire || 0);
-                                        let newQty = Math.max(1, Math.round(origQty));
-                                        let newPrice = origPrice;
-                                        if (origQty > 0 && origQty !== newQty) {
-                                            newPrice = (origPrice * origQty) / newQty;
-                                        }
-                                        return {
-                                            ...a,
-                                            quantite: newQty,
-                                            prix_unitaire: Number(newPrice.toFixed(2)),
-                                            remise: a.remise || 0
-                                        };
-                                    }),
-                                    total_estime: res_json.total_estime || 0.0,
-                                    tva_percent: 0,
-                                    delai: res_json.delai || '',
-                                    envoi: res_json.envoi !== undefined ? res_json.envoi : 1,
-                                    note: res_json.note || '',
-                                    texte: updateDevisText.value,
-                                    designation: res_json.articles && res_json.articles.length > 0 ? res_json.articles[0].designation : ""
-                                }
-                                newDevisRequestText.value = updateDevisText.value
-                                closeUpdateModal()
-                                step.value = 2
-                                showAddModal.value = true
-                            } catch (err) {
-                                console.error("Erreur après coup:", err)
-                                alert("Erreur d'affichage : " + err.message)
-                            }
-                        }, 2000)
-                    } catch (e) {
-                        updateError.value = e.message
-                    } finally {
-                        isUpdating.value = false
-                    }
-                }
-
-                const computedTotalEstime = computed(() => {
-                    if (!parsedDevisData.value || !parsedDevisData.value.articles) return 0;
-                    return parsedDevisData.value.articles.reduce((sum, a) => {
-                        const pu = parseFloat(a.prix_unitaire || 0);
-                        const q = parseInt(a.quantite || 0);
-                        const r = parseFloat(a.remise || 0);
-                        return sum + (pu * q * (1 - r / 100));
-                    }, 0);
-                })
-
-                const computedTva = computed(() => {
-                    const tvaPercent = parseFloat(parsedDevisData.value?.tva_percent || 0);
-                    return computedTotalEstime.value * (tvaPercent / 100);
-                })
-
-                const computedTtc = computed(() => {
-                    return computedTotalEstime.value + computedTva.value;
-                })
-
-                const confirmDevis = async () => {
-                    isSubmitting.value = true
-                    addError.value = ''
-                    parsedDevisData.value.total_estime = computedTotalEstime.value
-                    parsedDevisData.value.montant_tva = computedTva.value
-                    parsedDevisData.value.montant_ttc = computedTtc.value
-                    const reqPayload = { ...parsedDevisData.value, texte: newDevisRequestText.value }
-                    try {
-                        const res = await fetch('/api/devis/confirm', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(reqPayload)
-                        })
-                        if (!res.ok) throw new Error("Erreur lors de la création du devis en base de données.")
-
-                        requestSuccess.value = true
-                        setTimeout(() => {
-                            closeAddModal()
-                            fetchData() // Refresh list
-                        }, 2000)
-                    } catch (e) {
-                        addError.value = e.message
-                    } finally {
-                        isSubmitting.value = false
-                    }
-                }
-
-                const fetchData = async () => {
-                    try {
-                        const res = await fetch('/api/devis')
-                        if (!res.ok) throw new Error('API Error')
-                        devis.value = await res.json()
-                    } catch (e) {
-                        console.error("Erreur lors de la récupération :", e)
-                    }
-                }
-
-                const contacts = ref([])
-                const fetchContacts = async () => {
-                    try {
-                        const res = await fetch('/api/contacts')
-                        if (res.ok) contacts.value = await res.json()
-                    } catch (e) {
-                        console.error('Erreur récupération contacts:', e)
-                    }
-                }
-
-                onMounted(() => {
-                    fetchData()
-                    fetchContacts()
-                    setInterval(fetchData, 30000) // Rafraîchissement automatique
-                })
-
-                const showManualAddModal = ref(false)
-                const manualAddForm = ref({
-                    nom: '',
-                    client: '',
-                    type: 'émis',
-                    description: '',
-                    montant_ht: 0,
-                    montant_tva: 0
-                })
-                const manualFileInput = ref(null)
-                const isManualSubmitting = ref(false)
-                const manualError = ref('')
-
-                const closeManualModal = () => {
-                    showManualAddModal.value = false
-                    manualAddForm.value = { nom: '', client: '', type: 'émis', description: '', montant_ht: 0, montant_tva: 0 }
-                    manualError.value = ''
-                    if (manualFileInput.value) manualFileInput.value.value = ""
-                }
-
-                const onManualFileChange = (event) => {
-                    const file = event.target.files[0]
-                    if (file && file.name) {
-                        const nameWithoutExt = file.name.replace(/\.pdf$/i, "")
-                        manualAddForm.value.nom = nameWithoutExt
-                    }
-                }
-
-                const submitManualAdd = async () => {
-                    if (!manualFileInput.value || !manualFileInput.value.files[0]) {
-                        manualError.value = "Le fichier PDF est obligatoire."
-                        return
-                    }
-                    if (!manualAddForm.value.client) {
-                        manualError.value = "Veuillez sélectionner un contact."
-                        return
-                    }
-
-                    isManualSubmitting.value = true
-                    manualError.value = ''
-
-                    const formData = new FormData()
-                    formData.append('nom', manualAddForm.value.nom)
-                    formData.append('client', manualAddForm.value.client)
-                    formData.append('type', manualAddForm.value.type)
-                    formData.append('description', manualAddForm.value.description)
-                    formData.append('montant_ht', manualAddForm.value.montant_ht)
-                    formData.append('file', manualFileInput.value.files[0])
-
-                    try {
-                        const res = await fetch('/api/devis/manuel', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        if (!res.ok) {
-                            const errObj = await res.json().catch(() => ({}))
-                            throw new Error(errObj.detail || "Erreur lors de l'ajout manuel.")
-                        }
-
-                        closeManualModal()
-                        fetchData()
-                    } catch (e) {
-                        manualError.value = e.message
-                    } finally {
-                        isManualSubmitting.value = false
-                    }
-                }
-
-                const showUploadModal = ref(false)
-                const devisToUpload = ref(null)
-                const isUploading = ref(false)
-                const uploadError = ref('')
-                const fileInput = ref(null)
-
-                const openUploadModal = (dev) => {
-                    devisToUpload.value = dev
-                    showUploadModal.value = true
-                    uploadError.value = ''
-                }
-
-                const closeUploadModal = () => {
-                    showUploadModal.value = false
-                    devisToUpload.value = null
-                    uploadError.value = ''
-                    if (fileInput.value) fileInput.value.value = ""
-                }
-
-                const submitUploadDevis = async () => {
-                    if (!fileInput.value || !fileInput.value.files[0]) return
-                    isUploading.value = true
-                    uploadError.value = ''
-
-                    const formData = new FormData()
-                    formData.append('file', fileInput.value.files[0])
-
-                    try {
-                        const res = await fetch(`/api/devis/${devisToUpload.value.id}/upload_signed`, {
-                            method: 'POST',
-                            body: formData
-                        })
-                        if (!res.ok) {
-                            const errObj = await res.json().catch(() => ({}))
-                            throw new Error(errObj.detail || "Erreur lors de l'upload du fichier.")
-                        }
-
-                        devisToUpload.value.statut = "Signé"
-                        if (selectedDevis.value && selectedDevis.value.id === devisToUpload.value.id) {
-                            selectedDevis.value.statut = "Signé"
-                        }
-                        closeUploadModal()
-                        fetchData()
-                    } catch (e) {
-                        uploadError.value = e.message
-                    } finally {
-                        isUploading.value = false
-                    }
-                }
-
-                const clientName = (contact) => {
-                    if (!contact) return 'Client inconnu'
-                    const prenom = contact.prenom || ''
-                    const nom = contact.nom || ''
-                    const full = `${prenom} ${nom}`.trim()
-                    return full || contact.entreprise || contact.email
-                }
-
-                const filteredDevis = computed(() => {
-                    return devis.value.filter(dev => {
-                        const term = searchQuery.value.toLowerCase()
-                        const nomMatch = dev.nom && dev.nom.toLowerCase().includes(term)
-                        const clientMatch = clientName(dev.contact).toLowerCase().includes(term)
-
-                        const statusMatch = showSigned.value ? true : dev.statut === 'En attente'
-
-                        return (nomMatch || clientMatch) && statusMatch
-                    }).sort((a, b) => new Date(b.date_emission) - new Date(a.date_emission))
-                })
-
-                const stats = computed(() => {
-                    return {
-                        enAttente: devis.value.filter(d => d.statut === 'En attente').length,
-                        signes: devis.value.filter(d => d.statut === 'Signé').length
-                    }
-                })
-
-                const formatCurrency = (val) => {
-                    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(val)
-                }
-
-                const formatDate = (dateStr) => {
-                    if (!dateStr) return '';
-                    const d = new Date(dateStr);
-                    return d.toLocaleDateString('fr-FR', {
-                        day: '2-digit', month: 'short', year: 'numeric'
-                    })
-                }
-
-                return {
-                    devis, searchQuery, showSigned, selectedDevis,
-                    filteredDevis, stats, clientName, formatCurrency, formatDate,
-                    showAddModal, newDevisRequestText, isSubmitting, addError, requestSuccess, submitDevisRequest,
-                    step, parsedDevisData, closeAddModal, confirmDevis, computedTotalEstime, computedTva, computedTtc,
-                    showUpdateModal, updateDevisText, isUpdating, updateError, updateSuccess, closeUpdateModal, submitUpdateDevis,
-                    showUploadModal, devisToUpload, isUploading, uploadError, fileInput, openUploadModal, closeUploadModal, submitUploadDevis,
-                    showManualAddModal, manualAddForm, manualFileInput, isManualSubmitting, manualError, closeManualModal, submitManualAdd, contacts, onManualFileChange
-                }
+              const res_json = await res.json();
+              const mappedData = {
+                ...res_json,
+                articles: (res_json.articles || []).map((a) => {
+                  const origQty = parseFloat(a.quantite || 0);
+                  const origPrice = parseFloat(a.prix_unitaire || 0);
+                  let newQty = Math.max(1, Math.round(origQty));
+                  let newPrice = origPrice;
+                  if (origQty > 0 && origQty !== newQty) {
+                    newPrice = (origPrice * origQty) / newQty;
+                  }
+                  return {
+                    ...a,
+                    quantite: newQty,
+                    prix_unitaire: Number(newPrice.toFixed(2)),
+                    remise: a.remise || 0,
+                  };
+                }),
+                delai: res_json.delai || "",
+                type_entite: res_json.type_entite || "B2B",
+                envoi: res_json.envoi !== undefined ? res_json.envoi : 1,
+              };
+              if (
+                !mappedData.designation &&
+                mappedData.articles &&
+                mappedData.articles.length > 0
+              ) {
+                mappedData.designation = mappedData.articles[0].designation;
+              }
+              parsedDevisData.value = mappedData;
+              step.value = 2;
+            } catch (e) {
+              addError.value = e.message;
+            } finally {
+              isSubmitting.value = false;
             }
-        }).mount('#app')
+          };
+
+          const showUpdateModal = ref(false);
+          const updateDevisText = ref("");
+          const isUpdating = ref(false);
+          const updateError = ref("");
+          const updateSuccess = ref(false);
+
+          const closeUpdateModal = () => {
+            showUpdateModal.value = false;
+            updateDevisText.value = "";
+            updateError.value = "";
+            updateSuccess.value = false;
+          };
+
+          const submitUpdateDevis = async () => {
+            isUpdating.value = true;
+            updateError.value = "";
+            try {
+              const res = await fetch(
+                `/api/devis/${selectedDevis.value.id}/update_webhook`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ texte: updateDevisText.value }),
+                },
+              );
+              if (!res.ok)
+                throw new Error("Erreur lors de l'envoi de la modification.");
+
+              const res_json = await res.json();
+              updateSuccess.value = true;
+              setTimeout(() => {
+                try {
+                  const activeDevis = selectedDevis.value || {};
+                  const contact = activeDevis.contact || {};
+                  parsedDevisData.value = {
+                    id: activeDevis.id,
+                    prenom: contact.prenom || "",
+                    nom: contact.nom || "",
+                    entreprise: contact.entreprise || "",
+                    siret: contact.siret || "",
+                    tva_intra: contact.tva_intra || "",
+                    type_entite: contact.type_entite || "B2B",
+                    email: contact.email || "",
+                    adresse_facturation: contact.adresse_facturation || "",
+                    adresse_livraison: contact.adresse_livraison || "",
+                    articles: (res_json.articles || []).map((a) => {
+                      const origQty = parseFloat(a.quantite || 0);
+                      const origPrice = parseFloat(a.prix_unitaire || 0);
+                      let newQty = Math.max(1, Math.round(origQty));
+                      let newPrice = origPrice;
+                      if (origQty > 0 && origQty !== newQty) {
+                        newPrice = (origPrice * origQty) / newQty;
+                      }
+                      return {
+                        ...a,
+                        quantite: newQty,
+                        prix_unitaire: Number(newPrice.toFixed(2)),
+                        remise: a.remise || 0,
+                      };
+                    }),
+                    total_estime: res_json.total_estime || 0.0,
+                    tva_percent: 0,
+                    delai: res_json.delai || "",
+                    envoi: res_json.envoi !== undefined ? res_json.envoi : 1,
+                    note: res_json.note || "",
+                    texte: updateDevisText.value,
+                    designation:
+                      res_json.articles && res_json.articles.length > 0
+                        ? res_json.articles[0].designation
+                        : "",
+                  };
+                  newDevisRequestText.value = updateDevisText.value;
+                  closeUpdateModal();
+                  step.value = 2;
+                  showAddModal.value = true;
+                } catch (err) {
+                  console.error("Erreur après coup:", err);
+                  alert("Erreur d'affichage : " + err.message);
+                }
+              }, 2000);
+            } catch (e) {
+              updateError.value = e.message;
+            } finally {
+              isUpdating.value = false;
+            }
+          };
+
+          const computedTotalEstime = computed(() => {
+            if (!parsedDevisData.value || !parsedDevisData.value.articles)
+              return 0;
+            return parsedDevisData.value.articles.reduce((sum, a) => {
+              const pu = parseFloat(a.prix_unitaire || 0);
+              const q = parseInt(a.quantite || 0);
+              const r = parseFloat(a.remise || 0);
+              return sum + pu * q * (1 - r / 100);
+            }, 0);
+          });
+
+          const computedTva = computed(() => {
+            const tvaPercent = parseFloat(
+              parsedDevisData.value?.tva_percent || 0,
+            );
+            return computedTotalEstime.value * (tvaPercent / 100);
+          });
+
+          const computedTtc = computed(() => {
+            return computedTotalEstime.value + computedTva.value;
+          });
+
+          const confirmDevis = async () => {
+            isSubmitting.value = true;
+            addError.value = "";
+            parsedDevisData.value.total_estime = computedTotalEstime.value;
+            parsedDevisData.value.montant_tva = computedTva.value;
+            parsedDevisData.value.montant_ttc = computedTtc.value;
+            const reqPayload = {
+              ...parsedDevisData.value,
+              texte: newDevisRequestText.value,
+            };
+            try {
+              const res = await fetch("/api/devis/confirm", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(reqPayload),
+              });
+              if (!res.ok)
+                throw new Error(
+                  "Erreur lors de la création du devis en base de données.",
+                );
+
+              requestSuccess.value = true;
+              setTimeout(() => {
+                closeAddModal();
+                fetchData(); // Refresh list
+              }, 2000);
+            } catch (e) {
+              addError.value = e.message;
+            } finally {
+              isSubmitting.value = false;
+            }
+          };
+
+          const fetchData = async () => {
+            try {
+              const res = await fetch("/api/devis");
+              if (!res.ok) throw new Error("API Error");
+              devis.value = await res.json();
+            } catch (e) {
+              console.error("Erreur lors de la récupération :", e);
+            }
+          };
+
+          const contacts = ref([]);
+          const fetchContacts = async () => {
+            try {
+              const res = await fetch("/api/contacts");
+              if (res.ok) contacts.value = await res.json();
+            } catch (e) {
+              console.error("Erreur récupération contacts:", e);
+            }
+          };
+
+          onMounted(() => {
+            fetchData();
+            fetchContacts();
+            setInterval(fetchData, 30000); // Rafraîchissement automatique
+          });
+
+          const showManualAddModal = ref(false);
+          const manualAddForm = ref({
+            nom: "",
+            client: "",
+            type: "émis",
+            description: "",
+            montant_ht: 0,
+            montant_tva: 0,
+          });
+          const manualFileInput = ref(null);
+          const isManualSubmitting = ref(false);
+          const manualError = ref("");
+
+          const closeManualModal = () => {
+            showManualAddModal.value = false;
+            manualAddForm.value = {
+              nom: "",
+              client: "",
+              type: "émis",
+              description: "",
+              montant_ht: 0,
+              montant_tva: 0,
+            };
+            manualError.value = "";
+            if (manualFileInput.value) manualFileInput.value.value = "";
+          };
+
+          const onManualFileChange = (event) => {
+            const file = event.target.files[0];
+            if (file && file.name) {
+              const nameWithoutExt = file.name.replace(/\.pdf$/i, "");
+              manualAddForm.value.nom = nameWithoutExt;
+            }
+          };
+
+          const submitManualAdd = async () => {
+            if (!manualFileInput.value || !manualFileInput.value.files[0]) {
+              manualError.value = "Le fichier PDF est obligatoire.";
+              return;
+            }
+            if (!manualAddForm.value.client) {
+              manualError.value = "Veuillez sélectionner un contact.";
+              return;
+            }
+
+            isManualSubmitting.value = true;
+            manualError.value = "";
+
+            const formData = new FormData();
+            formData.append("nom", manualAddForm.value.nom);
+            formData.append("client", manualAddForm.value.client);
+            formData.append("type", manualAddForm.value.type);
+            formData.append("description", manualAddForm.value.description);
+            formData.append("montant_ht", manualAddForm.value.montant_ht);
+            formData.append("file", manualFileInput.value.files[0]);
+
+            try {
+              const res = await fetch("/api/devis/manuel", {
+                method: "POST",
+                body: formData,
+              });
+              if (!res.ok) {
+                const errObj = await res.json().catch(() => ({}));
+                throw new Error(
+                  errObj.detail || "Erreur lors de l'ajout manuel.",
+                );
+              }
+
+              closeManualModal();
+              fetchData();
+            } catch (e) {
+              manualError.value = e.message;
+            } finally {
+              isManualSubmitting.value = false;
+            }
+          };
+
+          const showUploadModal = ref(false);
+          const devisToUpload = ref(null);
+          const isUploading = ref(false);
+          const uploadError = ref("");
+          const fileInput = ref(null);
+
+          const openUploadModal = (dev) => {
+            devisToUpload.value = dev;
+            showUploadModal.value = true;
+            uploadError.value = "";
+          };
+
+          const closeUploadModal = () => {
+            showUploadModal.value = false;
+            devisToUpload.value = null;
+            uploadError.value = "";
+            if (fileInput.value) fileInput.value.value = "";
+          };
+
+          const submitUploadDevis = async () => {
+            if (!fileInput.value || !fileInput.value.files[0]) return;
+            isUploading.value = true;
+            uploadError.value = "";
+
+            const formData = new FormData();
+            formData.append("file", fileInput.value.files[0]);
+
+            try {
+              const res = await fetch(
+                `/api/devis/${devisToUpload.value.id}/upload_signed`,
+                {
+                  method: "POST",
+                  body: formData,
+                },
+              );
+              if (!res.ok) {
+                const errObj = await res.json().catch(() => ({}));
+                throw new Error(
+                  errObj.detail || "Erreur lors de l'upload du fichier.",
+                );
+              }
+
+              devisToUpload.value.statut = "Signé";
+              if (
+                selectedDevis.value &&
+                selectedDevis.value.id === devisToUpload.value.id
+              ) {
+                selectedDevis.value.statut = "Signé";
+              }
+              closeUploadModal();
+              fetchData();
+            } catch (e) {
+              uploadError.value = e.message;
+            } finally {
+              isUploading.value = false;
+            }
+          };
+
+          const clientName = (contact) => {
+            if (!contact) return "Client inconnu";
+            const prenom = contact.prenom || "";
+            const nom = contact.nom || "";
+            const full = `${prenom} ${nom}`.trim();
+            return full || contact.entreprise || contact.email;
+          };
+
+          const filteredDevis = computed(() => {
+            return devis.value
+              .filter((dev) => {
+                const term = searchQuery.value.toLowerCase();
+                const nomMatch =
+                  dev.nom && dev.nom.toLowerCase().includes(term);
+                const clientMatch = clientName(dev.contact)
+                  .toLowerCase()
+                  .includes(term);
+
+                const statusMatch = showSigned.value
+                  ? true
+                  : dev.statut === "En attente";
+
+                return (nomMatch || clientMatch) && statusMatch;
+              })
+              .sort(
+                (a, b) => new Date(b.date_emission) - new Date(a.date_emission),
+              );
+          });
+
+          const stats = computed(() => {
+            return {
+              enAttente: devis.value.filter((d) => d.statut === "En attente")
+                .length,
+              signes: devis.value.filter((d) => d.statut === "Signé").length,
+            };
+          });
+
+          const formatCurrency = (val) => {
+            return new Intl.NumberFormat("fr-FR", {
+              style: "currency",
+              currency: "EUR",
+            }).format(val);
+          };
+
+          const formatDate = (dateStr) => {
+            if (!dateStr) return "";
+            const d = new Date(dateStr);
+            return d.toLocaleDateString("fr-FR", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            });
+          };
+
+          return {
+            devis,
+            searchQuery,
+            showSigned,
+            selectedDevis,
+            filteredDevis,
+            stats,
+            clientName,
+            formatCurrency,
+            formatDate,
+            showAddModal,
+            newDevisRequestText,
+            isSubmitting,
+            addError,
+            requestSuccess,
+            submitDevisRequest,
+            step,
+            parsedDevisData,
+            closeAddModal,
+            confirmDevis,
+            computedTotalEstime,
+            computedTva,
+            computedTtc,
+            showUpdateModal,
+            updateDevisText,
+            isUpdating,
+            updateError,
+            updateSuccess,
+            closeUpdateModal,
+            submitUpdateDevis,
+            showUploadModal,
+            devisToUpload,
+            isUploading,
+            uploadError,
+            fileInput,
+            openUploadModal,
+            closeUploadModal,
+            submitUploadDevis,
+            showManualAddModal,
+            manualAddForm,
+            manualFileInput,
+            isManualSubmitting,
+            manualError,
+            closeManualModal,
+            submitManualAdd,
+            contacts,
+            onManualFileChange,
+          };
+        },
+      }).mount("#app");
     </script>
     {% endraw %}
-</body>
-
+  </body>
 </html>

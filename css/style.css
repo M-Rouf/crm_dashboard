@@ -1,30 +1,30 @@
 /* /css/style.css */
 
 body {
-    font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 [v-cloak] {
-    display: none;
+  display: none;
 }
 
 /* Scrollbar personnalisée élégante pour le tableau (SaaS Style) */
 .stylised-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  width: 6px;
+  height: 6px;
 }
 
 .stylised-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .stylised-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    /* Tailwind slate-300 */
-    border-radius: 10px;
+  background: #cbd5e1;
+  /* Tailwind slate-300 */
+  border-radius: 10px;
 }
 
 .stylised-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-    /* Tailwind slate-400 */
+  background: #94a3b8;
+  /* Tailwind slate-400 */
 }
