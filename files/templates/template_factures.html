@@ -1,162 +1,320 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <style>
-      @page {
-        size: A4;
-        margin: 20mm;
-      }
 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facture - MRLIW</title>
+  <style>
+    :root {
+      --primary-color: #0076b3;
+      --text-dark: #333;
+      --text-light: #666;
+      --border-color: #ccc;
+      --bg-gray: #f2f2f2;
+      --accent-invoice: #000;
+      /* Noir pour un aspect plus formel */
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: var(--text-dark);
+      background-color: #e0e0e0;
+    }
+
+    .page {
+      max-width: 210mm;
+      min-height: 297mm;
+      padding: 5mm 15mm;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 40px;
+    }
+
+    .logo-container img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    .company-info {
+      font-size: 11pt;
+      line-height: 1.4;
+      text-align: left;
+      flex-grow: 1;
+      margin-left: 40px;
+    }
+
+    .company-name {
+      font-weight: bold;
+      font-size: 14pt;
+    }
+
+    .reference-block {
+      text-align: right;
+    }
+
+    .ref-label {
+      color: var(--text-light);
+      font-size: 11pt;
+      text-transform: uppercase;
+    }
+
+    .ref-value {
+      font-weight: bold;
+      font-size: 16pt;
+      color: var(--accent-invoice);
+    }
+
+    .summary-header {
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 15px 0;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .title-invoice {
+      font-size: 32pt;
+      font-weight: bold;
+      margin: 0;
+      color: var(--accent-invoice);
+    }
+
+    .client-info-box {
+      font-size: 10pt;
+    }
+
+    .label-small {
+      color: var(--text-light);
+      font-size: 9pt;
+      margin-bottom: 4px;
+    }
+
+    .meta-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      padding: 10px;
+      background-color: #fafafa;
+      border-radius: 4px;
+    }
+
+    .ref-cross {
+      font-size: 9pt;
+      color: var(--text-light);
+      margin-top: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    thead th {
+      background-color: var(--bg-gray);
+      color: var(--text-light);
+      font-size: 9pt;
+      font-weight: normal;
+      padding: 8px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    tbody td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 10pt;
+      vertical-align: top;
+    }
+
+    .totals-section {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+
+    .totals-table {
+      width: 300px;
+      border: none;
+    }
+
+    .totals-table td {
+      border: none;
+      padding: 4px 8px;
+    }
+
+    .totals-table .label {
+      color: var(--text-light);
+      text-align: left;
+    }
+
+    .totals-table .value {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .payment-info {
+      margin-top: 40px;
+      font-size: 9pt;
+      color: var(--text-light);
+      border-top: 1px solid #eee;
+      padding-top: 15px;
+    }
+
+    .bank-details {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #eee;
+      background-color: #fff;
+      color: var(--text-dark);
+    }
+
+    @media print {
       body {
-        font-family: "Helvetica", sans-serif;
-        color: #333;
-        font-size: 12pt;
+        background: none;
         margin: 0;
+        padding: 0;
       }
 
-      .header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 50px;
-      }
-
-      .company-info {
-        width: 45%;
-      }
-
-      .client-info {
-        width: 45%;
-        text-align: right;
-        background: #f9f9f9;
-        padding: 15px;
-        border-radius: 5px;
-      }
-
-      .invoice-details {
-        margin-bottom: 30px;
-      }
-
-      .invoice-details h1 {
-        color: #004a99;
+      .page {
+        width: 100%;
+        max-width: none;
         margin: 0;
-        font-size: 24pt;
+        box-shadow: none;
+        padding: 10mm 15mm;
       }
+    }
+  </style>
+</head>
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-
-      th {
-        background: #004a99;
-        color: white;
-        padding: 10px;
-        text-align: left;
-      }
-
-      td {
-        padding: 10px;
-        border-bottom: 1px solid #eee;
-      }
-
-      .totals {
-        margin-top: 30px;
-        float: right;
-        width: 300px;
-      }
-
-      .totals-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px 0;
-      }
-
-      .totals-row.grand-total {
-        font-weight: bold;
-        font-size: 14pt;
-        border-top: 2px solid #333;
-        margin-top: 10px;
-        padding-top: 10px;
-      }
-
-      .footer {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        font-size: 8pt;
-        color: #777;
-        text-align: center;
-        border-top: 1px solid #eee;
-        padding-top: 10px;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="header">
-      <div class="company-info">
-        <strong>{{ data.ma_societe_nom }}</strong><br />
-        {{ data.ma_societe_adresse }}<br />
-        SIRET : {{ data.ma_societe_siret }}<br />
-        TVA : {{ data.ma_societe_tva_intra }}
+<body>
+  <div class="page">
+    <header>
+      <div class="logo-container">
+        <img src="logo_devis.png" alt="Logo MRLIW" width="80" height="80" />
       </div>
-      <div class="client-info">
-        <small>Facturer à :</small><br />
-        <strong>{{ data.client_nom }}</strong><br />
-        {% if data.client_siret %}SIRET : {{ data.client_siret }}{% endif %}<br />
-        {{ data.client_adresse }}
+      <div class="company-info">
+        <div class="company-name">MRLIW - Matthieu ROUFFY EI</div>
+        46 Mas de Bessac, 46320 Brengues<br />
+        06 34 38 74 27 |
+        <span style="color: var(--primary-color)">contact@mrliw.fr</span><br />
+        SIRET : 900 577 933 000 22
+      </div>
+      <div class="reference-block">
+        <div class="ref-label">Facture N°</div>
+        <div class="ref-value">#ref_facture</div>
+        <div class="ref-cross">
+          Devis : #ref_devis <br />
+          Commande : #ref_commande
+        </div>
+      </div>
+    </header>
+
+    <div class="summary-header">
+      <div>
+        <h1 class="title-invoice">Facture</h1>
+      </div>
+      <div class="client-info-box">
+        <div class="label-small">Facturé à :</div>
+        <strong>#nom_client</strong><br />
+        #adresse_client<br />
+        #contact_client
+      </div>
+      <div style="text-align: right">
+        <div class="label-small">Date d'émission :</div>
+        <strong>#date_facture</strong><br />
+        <div class="label-small" style="margin-top:5px">Date d'échéance :</div>
+        <strong style="color: #d32f2f;">#date_echeance</strong>
       </div>
     </div>
 
-    <div class="invoice-details">
-      <h1>FACTURE</h1>
-      <p>
-        N° : <strong>{{ data.numero_facture }}</strong><br />
-        Date : {{ data.date_emission_visuelle }}<br />
-        Échéance : {{ data.date_echeance_visuelle }}
-      </p>
+    <div class="meta-info">
+      <div>
+        <div class="label-small">Mode de règlement</div>
+        <strong>#mode_reglement</strong>
+      </div>
+      <div style="text-align: right">
+        <div class="label-small">Conditions de paiement</div>
+        <strong>Net à réception</strong>
+      </div>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Description</th>
-          <th style="text-align: right">Montant HT</th>
+          <th style="width: 50%">Désignation des prestations / articles</th>
+          <th style="width: 10%">Qté</th>
+          <th style="width: 15%">Prix Unit. HT</th>
+          <th style="width: 10%">Remise</th>
+          <th style="width: 15%">Montant HT</th>
         </tr>
       </thead>
       <tbody>
-        {# Ici tu pourras looper sur tes lignes si tu en as plusieurs #}
         <tr>
-          <td>{{ data.description }}</td>
-          <td style="text-align: right">
-            {{ "{:,.2f}".format(data.montant_ht) }} €
+          <td>
+            <div style="font-weight: bold;">#Nom_article</div>
+            <div style="font-size: 9pt; color: var(--text-light); margin-top: 4px; white-space: pre-line;">
+              #description_detaillee
+            </div>
           </td>
+          <td>#nb_article</td>
+          <td>#UHT</td>
+          <td>#remise</td>
+          <td>#THT</td>
         </tr>
       </tbody>
     </table>
 
-    <div class="totals">
-      <div class="totals-row">
-        <span>Total HT</span>
-        <span>{{ "{:,.2f}".format(data.montant_ht) }} €</span>
-      </div>
-      <div class="totals-row">
-        <span>TVA (20%)</span>
-        <span>{{ "{:,.2f}".format(data.montant_tva) }} €</span>
-      </div>
-      <div class="totals-row grand-total">
-        <span>Total TTC</span>
-        <span>{{ "{:,.2f}".format(data.montant_ttc) }} €</span>
-      </div>
+    <div class="totals-section">
+      <table class="totals-table">
+        <tr>
+          <td class="label">Total HT</td>
+          <td class="value">#Tot_HT</td>
+        </tr>
+        <tr>
+          <td class="label">TVA (0%)</td>
+          <td class="value">0,00 €</td>
+        </tr>
+        <tr style="border-top: 2px solid var(--accent-invoice)">
+          <td class="label" style="font-size: 12pt;"><strong>NET À PAYER</strong></td>
+          <td class="value" style="font-size: 14pt;"><strong>#Tot_TTC</strong></td>
+        </tr>
+        <tr>
+          <td colspan="2" style="font-size: 8pt; color: var(--text-light); padding-top: 10px;">
+            TVA non applicable, art 293B du CGI
+          </td>
+        </tr>
+      </table>
     </div>
 
-    <div class="footer">
-      {{ data.ma_societe_nom }} - SIRET {{ data.ma_societe_siret }} - Numéro TVA
-      {{ data.ma_societe_tva_intra }}<br />
-      Dispense d'immatriculation au registre du commerce et des sociétés (RCS)
-      et au répertoire des métiers (RM).
+    <div class="payment-info">
+      <strong>Informations de règlement :</strong><br />
+      Merci de libeller votre règlement à l'ordre de <strong>Matthieu ROUFFY (MRLIW)</strong>.
+      <div class="bank-details">
+        <strong>RIB / IBAN :</strong> #iban_mrliw <br />
+        <strong>BIC :</strong> #bic_mrliw <br />
+        <strong>Référence à rappeler :</strong> Facture #ref_facture
+      </div>
+      <p style="font-size: 8pt; margin-top: 15px;">
+        En cas de retard de paiement, une indemnité forfaitaire pour frais de recouvrement de 40€ sera due (Art. L.
+        441-6 du code de commerce).
+        Pénalités de retard : 3 fois le taux d'intérêt légal. Pas d'escompte pour paiement anticipé.
+      </p>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
