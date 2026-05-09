@@ -605,6 +605,24 @@
             <!-- Sidebar (25% sur Desktop) -->
             <aside class="md:w-1/4 flex flex-col gap-6 order-1 md:order-2">
 
+                <!-- Bloc Total Non Terminées -->
+                <div
+                    class="bg-indigo-600 p-6 rounded-2xl shadow-xl shadow-indigo-200 text-white relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h3 class="text-indigo-100 font-medium text-sm mb-1 uppercase tracking-wider">
+                            Total non terminées
+                        </h3>
+                        <div class="text-5xl font-bold tracking-tight">
+                            {{ stats.total_non_terminees }}
+                        </div>
+                    </div>
+                    <svg class="absolute -bottom-6 -right-6 w-36 h-36 text-indigo-500 opacity-40 transform -rotate-12"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                </div>
+
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
                     <h3 class="text-gray-800 font-bold mb-1">Commandes par statut</h3>
 
@@ -921,7 +939,9 @@
                 });
 
                 const stats = computed(() => {
+                    const actives = commandes.value.filter((a) => a.statut !== "terminee");
                     return {
+                        total_non_terminees: actives.length,
                         en_attente: commandes.value.filter(
                             (a) => a.statut === "en_attente",
                         ).length,
@@ -929,14 +949,14 @@
                             .length,
                         terminee: commandes.value.filter((a) => a.statut === "terminee")
                             .length,
-                        basse: commandes.value.filter((a) => a.priorite === "basse")
+                        basse: actives.filter((a) => a.priorite === "basse")
                             .length,
-                        normale: commandes.value.filter(
+                        normale: actives.filter(
                             (a) => a.priorite === "normale" || !a.priorite,
                         ).length,
-                        haute: commandes.value.filter((a) => a.priorite === "haute")
+                        haute: actives.filter((a) => a.priorite === "haute")
                             .length,
-                        urgente: commandes.value.filter((a) => a.priorite === "urgente")
+                        urgente: actives.filter((a) => a.priorite === "urgente")
                             .length,
                     };
                 });
