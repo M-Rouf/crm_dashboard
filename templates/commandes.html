@@ -29,6 +29,143 @@
 <body class="bg-gray-50 text-gray-900 leading-normal tracking-normal min-h-screen">
     {% raw %}
     <div id="app" v-cloak class="min-h-screen flex flex-col">
+        <!-- Modal Ajout Manuel Commande -->
+        <div v-if="showManualAddModal" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title"
+            role="dialog" aria-modal="true">
+            <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeManualModal"
+                    aria-hidden="true">
+                </div>
+                <div class="bg-white rounded-2xl shadow-xl sm:max-w-2xl w-full relative z-10 text-left my-8">
+                    <div
+                        class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">
+                            Ajouter une commande manuellement
+                        </h3>
+                        <button @click="closeManualModal"
+                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="submitManualAdd" class="p-6 space-y-4">
+                        <div v-if="manualError"
+                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                            {{ manualError }}
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Référence *</label>
+                                <input v-model="manualAddForm.reference" placeholder="Ex: CMD-2026-001" type="text"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Priorité</label>
+                                <select v-model="manualAddForm.priorite" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                    <option value="basse">Basse</option>
+                                    <option value="normale">Normale</option>
+                                    <option value="haute">Haute</option>
+                                    <option value="urgente">Urgente</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact (Client / Fournisseur)
+                                *</label>
+                            <select v-model="manualAddForm.contact_id" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                <option value="" disabled>Sélectionner un contact...</option>
+                                <option v-for="c in contacts" :key="c.id" :value="c.id">
+                                    {{ clientName(c) }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Devis associé
+                                (Optionnel)</label>
+                            <select v-model="manualAddForm.devis_id"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                <option value="">Aucun devis</option>
+                                <option v-for="d in devisList" :key="d.id" :value="d.id">
+                                    {{ d.nom || d.id }} ({{ d.montant_ttc ? Number(d.montant_ttc).toFixed(2) + ' €' :
+                                    '-' }})
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant HT *</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input v-model.number="manualAddForm.montant_ht" type="number" step="0.01" min="0"
+                                        required
+                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant TTC *</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input v-model.number="manualAddForm.montant_ttc" type="number" step="0.01" min="0"
+                                        required
+                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de livraison prévue</label>
+                            <input v-model="manualAddForm.date_livraison_prevue" type="date"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea v-model="manualAddForm.description" rows="2"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Notes internes</label>
+                            <textarea v-model="manualAddForm.notes_internes" rows="2"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Fichier de la commande *</label>
+                            <input type="file" ref="manualFileInput" @change="onManualFileChange" required
+                                class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+                            <button type="button" @click="closeManualModal" :disabled="isManualSubmitting"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                Annuler
+                            </button>
+                            <button type="submit" :disabled="isManualSubmitting"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                <span v-if="isManualSubmitting">Enregistrement...</span>
+                                <span v-else>Enregistrer</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- En-tête Global -->
         <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
             <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
@@ -107,6 +244,16 @@
                             <option value="vente">Vente</option>
                             <option value="achat">Achat</option>
                         </select>
+                        <button @click="openManualModal"
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 whitespace-nowrap">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Ajout manuel
+                        </button>
                     </div>
                 </div>
 
@@ -382,6 +529,37 @@
                 const fluxFilter = ref("");
                 const selectedCommande = ref(null);
 
+                const contacts = ref([]);
+                const devisList = ref([]);
+                const showManualAddModal = ref(false);
+                const manualAddForm = ref({
+                    reference: "",
+                    description: "",
+                    contact_id: "",
+                    devis_id: "",
+                    priorite: "normale",
+                    montant_ht: 0,
+                    montant_ttc: 0,
+                    date_livraison_prevue: "",
+                    notes_internes: ""
+                });
+                const isManualSubmitting = ref(false);
+                const manualError = ref("");
+                const manualFileInput = ref(null);
+
+                const fetchDropdownData = async () => {
+                    try {
+                        const [resContacts, resDevis] = await Promise.all([
+                            fetch("/api/contacts"),
+                            fetch("/api/devis")
+                        ]);
+                        if (resContacts.ok) contacts.value = await resContacts.json();
+                        if (resDevis.ok) devisList.value = await resDevis.json();
+                    } catch (e) {
+                        console.error("Erreur chargement listes", e);
+                    }
+                };
+
                 const fetchData = async () => {
                     try {
                         const res = await fetch("/api/commandes");
@@ -394,8 +572,71 @@
 
                 onMounted(() => {
                     fetchData();
+                    fetchDropdownData();
                     setInterval(fetchData, 30000); // Rafraîchissement automatique toutes les 30s
                 });
+
+                const openManualModal = () => {
+                    manualAddForm.value = {
+                        reference: "",
+                        description: "",
+                        contact_id: "",
+                        devis_id: "",
+                        priorite: "normale",
+                        montant_ht: 0,
+                        montant_ttc: 0,
+                        date_livraison_prevue: "",
+                        notes_internes: ""
+                    };
+                    manualError.value = "";
+                    showManualAddModal.value = true;
+                };
+
+                const closeManualModal = () => {
+                    showManualAddModal.value = false;
+                };
+
+                const onManualFileChange = () => {
+                    // input ref is enough
+                };
+
+                const submitManualAdd = async () => {
+                    if (!manualFileInput.value || !manualFileInput.value.files[0]) {
+                        manualError.value = "Veuillez sélectionner un fichier.";
+                        return;
+                    }
+                    isManualSubmitting.value = true;
+                    manualError.value = "";
+
+                    const formData = new FormData();
+                    formData.append("reference", manualAddForm.value.reference);
+                    formData.append("description", manualAddForm.value.description || "");
+                    formData.append("contact_id", manualAddForm.value.contact_id);
+                    if (manualAddForm.value.devis_id) formData.append("devis_id", manualAddForm.value.devis_id);
+                    formData.append("priorite", manualAddForm.value.priorite);
+                    formData.append("montant_ht", manualAddForm.value.montant_ht);
+                    formData.append("montant_ttc", manualAddForm.value.montant_ttc);
+                    if (manualAddForm.value.date_livraison_prevue) formData.append("date_livraison_prevue", manualAddForm.value.date_livraison_prevue);
+                    if (manualAddForm.value.notes_internes) formData.append("notes_internes", manualAddForm.value.notes_internes);
+                    formData.append("file", manualFileInput.value.files[0]);
+
+                    try {
+                        const res = await fetch("/api/commandes/manuel", {
+                            method: "POST",
+                            body: formData
+                        });
+                        if (!res.ok) {
+                            const data = await res.json();
+                            throw new Error(data.detail || "Erreur lors de la création.");
+                        }
+                        closeManualModal();
+                        fetchData();
+                    } catch (e) {
+                        manualError.value = e.message;
+                    } finally {
+                        isManualSubmitting.value = false;
+                    }
+                };
 
                 const updateStatus = async (cmd) => {
                     try {
@@ -522,6 +763,17 @@
                     statusSelectClass,
                     badgeClass,
                     clientName,
+                    contacts,
+                    devisList,
+                    showManualAddModal,
+                    manualAddForm,
+                    isManualSubmitting,
+                    manualError,
+                    manualFileInput,
+                    openManualModal,
+                    closeManualModal,
+                    onManualFileChange,
+                    submitManualAdd,
                 };
             },
         }).mount("#app");

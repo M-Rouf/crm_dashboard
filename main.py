@@ -398,6 +398,72 @@ def update_commande_statut(
     return commande
 
 
+@app.post("/api/commandes/manuel")
+def create_manual_commande(
+    reference: str = Form(...),
+    description: str = Form(""),
+    contact_id: int = Form(...),
+    devis_id: Optional[int] = Form(None),
+    priorite: str = Form("normale"),
+    montant_ht: float = Form(0.0),
+    montant_ttc: float = Form(0.0),
+    date_livraison_prevue: str = Form(""),
+    notes_internes: str = Form(""),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact introuvable")
+
+    if devis_id:
+        devis = db.query(Devis).filter(Devis.id == devis_id).first()
+        if not devis:
+            raise HTTPException(status_code=404, detail="Devis introuvable")
+
+    os.makedirs("./files/commandes", exist_ok=True)
+    filename = file.filename
+    safe_ref = "".join([c if c.isalnum() else "_" for c in reference]) if reference else "manuel"
+    import time
+    unix_time = str(int(time.time()))
+    safe_filename = f"{safe_ref}_{unix_time}_{filename}"
+
+    file_system_path = f"./files/commandes/{safe_filename}"
+    file_path = f"/files/commandes/{safe_filename}"
+
+    try:
+        with open(file_system_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur système fichier: {e}")
+
+    dlp = None
+    if date_livraison_prevue:
+        try:
+            dlp = datetime.datetime.strptime(date_livraison_prevue, "%Y-%m-%d")
+        except ValueError:
+            pass
+
+    commande = Commande(
+        reference=reference,
+        description=description,
+        contact_id=contact_id,
+        devis_id=devis_id,
+        flux="achat",
+        statut="en_attente",
+        priorite=priorite,
+        montant_ht=montant_ht,
+        montant_ttc=montant_ttc,
+        file_path=file_path,
+        date_livraison_prevue=dlp,
+        notes_internes=notes_internes,
+    )
+    db.add(commande)
+    db.commit()
+    db.refresh(commande)
+    return {"status": "success", "id": commande.id}
+
+
 class WebhookPayload(BaseModel):
     texte: str
 
