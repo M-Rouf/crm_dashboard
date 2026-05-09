@@ -133,6 +133,13 @@
                         </div>
 
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Lien de suivi colis
+                                (Optionnel)</label>
+                            <input v-model="manualAddForm.url_suivi_colis" type="url" placeholder="https://..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea v-model="manualAddForm.description" rows="2"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
@@ -269,6 +276,13 @@
                         </div>
 
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Lien de suivi colis
+                                (Optionnel)</label>
+                            <input v-model="editForm.url_suivi_colis" type="url" placeholder="https://..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea v-model="editForm.description" rows="2"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
@@ -368,12 +382,27 @@
                             <option value="en_cours">En cours</option>
                             <option value="terminee">Terminée</option>
                         </select>
-                        <select v-model="fluxFilter"
-                            class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
-                            <option value="">Tous les flux</option>
-                            <option value="vente">Vente</option>
-                            <option value="achat">Achat</option>
-                        </select>
+                        <button @click="showTerminees = !showTerminees"
+                            :class="showTerminees ? 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                            class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                            <svg v-if="!showTerminees" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                                <path
+                                    d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                                <line x1="2" x2="22" y1="2" y2="22" />
+                            </svg>
+                            <span class="hidden sm:inline">{{ showTerminees ? 'Masquer terminées' : 'Afficher terminées'
+                                }}</span>
+                        </button>
                         <button @click="openManualModal"
                             class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 whitespace-nowrap">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -402,7 +431,6 @@
                                     <th class="px-6 py-4 font-semibold">
                                         Client / Fournisseur
                                     </th>
-                                    <th class="px-6 py-4 font-semibold text-center">Flux</th>
                                     <th class="px-6 py-4 font-semibold text-right">
                                         Montant TTC
                                     </th>
@@ -434,11 +462,6 @@
                                         </template>
                                         <template v-else> - </template>
                                     </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <span :class="fluxClass(cmd.flux)"
-                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                                            {{ cmd.flux }}
-                                        </span>
                                     </td>
                                     <td class="px-6 py-4 text-right text-gray-900 font-semibold">
                                         {{ cmd.montant_ttc ? Number(cmd.montant_ttc).toFixed(2) +
@@ -667,7 +690,7 @@
                 const commandes = ref([]);
                 const searchQuery = ref("");
                 const statusFilter = ref("");
-                const fluxFilter = ref("");
+                const showTerminees = ref(false);
                 const selectedCommande = ref(null);
 
                 const contacts = ref([]);
@@ -724,9 +747,9 @@
                         contact_id: "",
                         devis_id: "",
                         priorite: "normale",
-                        montant_ht: 0,
                         montant_ttc: 0,
                         date_livraison_prevue: "",
+                        url_suivi_colis: "",
                         notes_internes: ""
                     };
                     manualError.value = "";
@@ -758,6 +781,7 @@
                     formData.append("montant_ht", manualAddForm.value.montant_ht);
                     formData.append("montant_ttc", manualAddForm.value.montant_ttc);
                     if (manualAddForm.value.date_livraison_prevue) formData.append("date_livraison_prevue", manualAddForm.value.date_livraison_prevue);
+                    if (manualAddForm.value.url_suivi_colis) formData.append("url_suivi_colis", manualAddForm.value.url_suivi_colis);
                     if (manualAddForm.value.notes_internes) formData.append("notes_internes", manualAddForm.value.notes_internes);
                     formData.append("file", manualFileInput.value.files[0]);
 
@@ -792,6 +816,7 @@
                     montant_ht: 0,
                     montant_ttc: 0,
                     date_livraison_prevue: "",
+                    url_suivi_colis: "",
                     notes_internes: ""
                 });
 
@@ -813,6 +838,7 @@
                         montant_ht: cmd.montant_ht || 0,
                         montant_ttc: cmd.montant_ttc || 0,
                         date_livraison_prevue: dlp,
+                        url_suivi_colis: cmd.url_suivi_colis || "",
                         notes_internes: cmd.notes_internes || ""
                     };
                     editError.value = "";
@@ -834,6 +860,7 @@
                             devis_id: editForm.value.devis_id || null,
                             priorite: editForm.value.priorite,
                             date_livraison_prevue: editForm.value.date_livraison_prevue || null,
+                            url_suivi_colis: editForm.value.url_suivi_colis || null,
                             notes_internes: editForm.value.notes_internes || null
                         };
                         const res = await fetch(`/api/commandes/${editForm.value.id}`, {
@@ -884,11 +911,12 @@
                             const matchStatus = statusFilter.value
                                 ? cmd.statut === statusFilter.value
                                 : true;
-                            const matchFlux = fluxFilter.value
-                                ? cmd.flux === fluxFilter.value
-                                : true;
 
-                            return matchSearch && matchStatus && matchFlux;
+                            const matchTerminee = showTerminees.value
+                                ? true
+                                : cmd.statut !== "terminee";
+
+                            return matchSearch && matchStatus && matchTerminee;
                         })
                         .sort(
                             (a, b) => new Date(b.date_commande) - new Date(a.date_commande),

@@ -270,6 +270,7 @@ class CommandeUpdate(BaseModel):
     devis_id: Optional[int] = None
     priorite: str
     date_livraison_prevue: Optional[str] = None
+    url_suivi_colis: Optional[str] = None
     notes_internes: Optional[str] = None
 
 
@@ -430,6 +431,7 @@ def update_commande(
     commande.contact_id = payload.contact_id
     commande.devis_id = payload.devis_id
     commande.priorite = payload.priorite
+    commande.url_suivi_colis = payload.url_suivi_colis
     commande.notes_internes = payload.notes_internes
 
     if payload.date_livraison_prevue:
@@ -457,6 +459,7 @@ def create_manual_commande(
     montant_ht: float = Form(0.0),
     montant_ttc: float = Form(0.0),
     date_livraison_prevue: str = Form(""),
+    url_suivi_colis: str = Form(""),
     notes_internes: str = Form(""),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -505,6 +508,7 @@ def create_manual_commande(
         montant_ttc=montant_ttc,
         file_path=file_path,
         date_livraison_prevue=dlp,
+        url_suivi_colis=url_suivi_colis,
         notes_internes=notes_internes,
     )
     db.add(commande)
