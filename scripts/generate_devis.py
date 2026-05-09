@@ -1,7 +1,6 @@
 import os
 import re
 from datetime import datetime, timedelta
-
 import pdfkit
 
 
