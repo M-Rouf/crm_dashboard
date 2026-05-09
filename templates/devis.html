@@ -471,466 +471,497 @@
             </div>
 
             <!-- Modal Ajout Manuel Devis -->
-            <div v-if="showManualAddModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
-                aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeManualModal">
-                </div>
-                <div
-                    class="bg-white rounded-2xl shadow-xl sm:max-w-xl w-full relative z-10 flex flex-col max-h-[90vh]">
-                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
-                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">
-                            Ajouter un devis manuel
-                        </h3>
-                        <button @click="closeManualModal"
-                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+            <div v-if="showManualAddModal" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
+                <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                    <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+                        @click="closeManualModal" aria-hidden="true">
                     </div>
-                    <form @submit.prevent="submitManualAdd" class="p-6 space-y-4 overflow-y-auto">
-                        <div v-if="manualError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ manualError }}
+                    <div class="bg-white rounded-2xl shadow-xl sm:max-w-xl w-full relative z-10 text-left my-8">
+                        <div
+                            class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
+                            <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">
+                                Ajouter un devis manuel
+                            </h3>
+                            <button @click="closeManualModal"
+                                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact (Client / Fournisseur)
-                                *</label>
-                            <select v-model="manualAddForm.client" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
-                                <option value="" disabled>Sélectionner un contact...</option>
-                                <option v-for="c in contacts" :key="c.id" :value="c.id">
-                                    {{ clientName(c) }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nom (Référence) *</label>
-                                <input v-model="manualAddForm.nom" placeholder="Ex: mrliw_dXXXXXX" type="text" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        <form @submit.prevent="submitManualAdd" class="p-6 space-y-4">
+                            <div v-if="manualError"
+                                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                                {{ manualError }}
                             </div>
+
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-                                <select v-model="manualAddForm.type" required
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Contact (Client /
+                                    Fournisseur)
+                                    *</label>
+                                <select v-model="manualAddForm.client" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
-                                    <option value="émis">Devis émis</option>
-                                    <option value="reçu">Devis reçu</option>
+                                    <option value="" disabled>Sélectionner un contact...</option>
+                                    <option v-for="c in contacts" :key="c.id" :value="c.id">
+                                        {{ clientName(c) }}
+                                    </option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant Total HT *</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">€</span>
-                                    </div>
-                                    <input v-model.number="manualAddForm.montant_ht" type="number" step="0.01" min="0"
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom (Référence)
+                                        *</label>
+                                    <input v-model="manualAddForm.nom" placeholder="Ex: mrliw_dXXXXXX" type="text"
                                         required
-                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                                    <select v-model="manualAddForm.type" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                        <option value="émis">Devis émis</option>
+                                        <option value="reçu">Devis reçu</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Montant Total HT
+                                        *</label>
+                                    <div class="relative">
+                                        <div
+                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 sm:text-sm">€</span>
+                                        </div>
+                                        <input v-model.number="manualAddForm.montant_ht" type="number" step="0.01"
+                                            min="0" required
+                                            class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Montant Total
+                                        TVA</label>
+                                    <div class="relative">
+                                        <div
+                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 sm:text-sm">€</span>
+                                        </div>
+                                        <input v-model.number="manualAddForm.montant_tva" type="number" step="0.01"
+                                            min="0"
+                                            class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                class="flex items-center justify-between bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                <span class="font-bold text-emerald-900 text-sm">Total TTC calculé :</span>
+                                <div class="text-sm font-bold text-emerald-700">
+                                    {{ formatCurrency((manualAddForm.montant_ht || 0) +
+                                    (manualAddForm.montant_tva || 0)) }}
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant Total TVA</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">€</span>
-                                    </div>
-                                    <input v-model.number="manualAddForm.montant_tva" type="number" step="0.01" min="0"
-                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
-                                </div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Description
+                                    (Optionnel)</label>
+                                <textarea v-model="manualAddForm.description" rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
                             </div>
-                        </div>
-                        <div
-                            class="flex items-center justify-between bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                            <span class="font-bold text-emerald-900 text-sm">Total TTC calculé :</span>
-                            <div class="text-sm font-bold text-emerald-700">
-                                {{ formatCurrency((manualAddForm.montant_ht || 0) +
-                                (manualAddForm.montant_tva || 0)) }}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Fichier PDF *</label>
+                                <input type="file" ref="manualFileInput" @change="onManualFileChange"
+                                    accept="application/pdf" required
+                                    class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                             </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optionnel)</label>
-                            <textarea v-model="manualAddForm.description" rows="3"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Fichier PDF *</label>
-                            <input type="file" ref="manualFileInput" @change="onManualFileChange"
-                                accept="application/pdf" required
-                                class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
-                            <button type="button" @click="closeManualModal" :disabled="isManualSubmitting"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
-                                Annuler
-                            </button>
-                            <button type="submit" :disabled="isManualSubmitting"
-                                class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <span v-if="isManualSubmitting">Traitement...</span>
-                                <span v-else>Enregistrer</span>
-                            </button>
-                        </div>
-                    </form>
+                            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+                                <button type="button" @click="closeManualModal" :disabled="isManualSubmitting"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    Annuler
+                                </button>
+                                <button type="submit" :disabled="isManualSubmitting"
+                                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                    <span v-if="isManualSubmitting">Traitement...</span>
+                                    <span v-else>Enregistrer</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
             <!-- Modal Upload PDF Signé -->
-            <div v-if="showUploadModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
-                aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeUploadModal">
-                </div>
-                <div
-                    class="bg-white rounded-2xl shadow-xl sm:max-w-lg w-full relative z-10 flex flex-col max-h-[90vh]">
-                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
-                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">
-                            Importer le devis signé
-                        </h3>
-                        <button @click="closeUploadModal"
-                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+            <div v-if="showUploadModal" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
+                <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                    <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+                        @click="closeUploadModal" aria-hidden="true">
                     </div>
-                    <form @submit.prevent="submitUploadDevis" class="p-6 space-y-4">
-                        <div v-if="uploadError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ uploadError }}
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionnez le fichier PDF
-                                scanné et signé par le client
-                                :</label>
-                            <input type="file" ref="fileInput" accept="application/pdf" required
-                                class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
-                            <button type="button" @click="closeUploadModal" :disabled="isUploading"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
-                                Annuler
-                            </button>
-                            <button type="submit" :disabled="isUploading"
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <span v-if="isUploading">Import en cours...</span>
-                                <span v-else>Valider</span>
+                    <div class="bg-white rounded-2xl shadow-xl sm:max-w-lg w-full relative z-10 text-left my-8">
+                        <div
+                            class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
+                            <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">
+                                Importer le devis signé
+                            </h3>
+                            <button @click="closeUploadModal"
+                                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
                             </button>
                         </div>
-                    </form>
+                        <form @submit.prevent="submitUploadDevis" class="p-6 space-y-4">
+                            <div v-if="uploadError"
+                                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                                {{ uploadError }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionnez le fichier PDF
+                                    scanné et signé par le client
+                                    :</label>
+                                <input type="file" ref="fileInput" accept="application/pdf" required
+                                    class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                            </div>
+                            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+                                <button type="button" @click="closeUploadModal" :disabled="isUploading"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    Annuler
+                                </button>
+                                <button type="submit" :disabled="isUploading"
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                    <span v-if="isUploading">Import en cours...</span>
+                                    <span v-else>Valider</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
             <!-- Modal Modification Devis -->
-            <div v-if="showUpdateModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
-                aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeUpdateModal">
-                </div>
-                <div
-                    class="bg-white rounded-2xl shadow-xl sm:max-w-lg w-full relative z-10 flex flex-col max-h-[90vh]">
-                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
-                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">
-                            Modifier le devis
-                        </h3>
-                        <button @click="closeUpdateModal"
-                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+            <div v-if="showUpdateModal" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
+                <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                    <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+                        @click="closeUpdateModal" aria-hidden="true">
                     </div>
-                    <form @submit.prevent="submitUpdateDevis" class="p-6 space-y-4">
-                        <div v-if="updateError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ updateError }}
-                        </div>
-                        <div v-if="updateSuccess"
-                            class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
-                            Demande de modification envoyée avec succès !
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Détaillez vos modifications pour
-                                n8n</label>
-                            <textarea v-model="updateDevisText" rows="4" required
-                                placeholder="Ex: Ajouter une remise de 10% sur le montant HT..."
-                                class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
-                            <button type="button" @click="closeUpdateModal" :disabled="isUpdating"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
-                                Annuler
-                            </button>
-                            <button type="submit" :disabled="isUpdating || !updateDevisText"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <span v-if="isUpdating">Envoi en cours...</span>
-                                <span v-else>Envoyer</span>
+                    <div class="bg-white rounded-2xl shadow-xl sm:max-w-lg w-full relative z-10 text-left my-8">
+                        <div
+                            class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
+                            <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">
+                                Modifier le devis
+                            </h3>
+                            <button @click="closeUpdateModal"
+                                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
                             </button>
                         </div>
-                    </form>
+                        <form @submit.prevent="submitUpdateDevis" class="p-6 space-y-4">
+                            <div v-if="updateError"
+                                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                                {{ updateError }}
+                            </div>
+                            <div v-if="updateSuccess"
+                                class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+                                Demande de modification envoyée avec succès !
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Détaillez vos modifications
+                                    pour
+                                    n8n</label>
+                                <textarea v-model="updateDevisText" rows="4" required
+                                    placeholder="Ex: Ajouter une remise de 10% sur le montant HT..."
+                                    class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                            </div>
+                            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+                                <button type="button" @click="closeUpdateModal" :disabled="isUpdating"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    Annuler
+                                </button>
+                                <button type="submit" :disabled="isUpdating || !updateDevisText"
+                                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                    <span v-if="isUpdating">Envoi en cours...</span>
+                                    <span v-else>Envoyer</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
             <!-- Modal Demande Création Devis -->
-            <div v-if="showAddModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
-                aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeAddModal">
-                </div>
-                <div
-                    class="relative rounded-2xl bg-white text-left shadow-xl sm:w-full sm:max-w-xl flex flex-col max-h-[90vh]">
-                    <div class="bg-white px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center rounded-t-2xl">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2" id="modal-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="text-indigo-600">
-                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                                <polyline points="14 2 14 8 20 8" />
-                            </svg>
-                            Demande de création de devis
-                        </h3>
-                        <button @click="closeAddModal"
-                            class="text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-2 rounded-xl transition-colors">
-                            <span class="sr-only">Fermer</span>
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+            <div v-if="showAddModal" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
+                <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                    <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeAddModal"
+                        aria-hidden="true">
                     </div>
-
-                    <form v-if="step === 1" @submit.prevent="submitDevisRequest"
-                        class="overflow-y-auto flex-grow p-6 space-y-5 stylised-scrollbar">
-                        <div v-if="addError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ addError }}
-                        </div>
-                        <div>
-                            <label for="devisText" class="block text-sm font-medium text-gray-700 mb-1">Description de
-                                votre demande
-                                <span class="text-red-500">*</span></label>
-                            <textarea id="devisText" v-model="newDevisRequestText" rows="5" required
-                                placeholder="Détaillez les informations nécessaires à la création du devis..."
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm resize-none"></textarea>
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
-                            <button type="button" @click="closeAddModal" :disabled="isSubmitting"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
-                                Annuler
-                            </button>
-                            <button type="submit" :disabled="isSubmitting"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <svg v-if="isSubmitting" class="animate-spin h-4 w-4 text-white"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                    </path>
+                    <div class="relative bg-white rounded-2xl shadow-xl sm:w-full sm:max-w-xl text-left my-8">
+                        <div
+                            class="bg-white px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center rounded-t-2xl">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2" id="modal-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="text-indigo-600">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                                    <polyline points="14 2 14 8 20 8" />
                                 </svg>
-                                Continuer
+                                Demande de création de devis
+                            </h3>
+                            <button @click="closeAddModal"
+                                class="text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-2 rounded-xl transition-colors">
+                                <span class="sr-only">Fermer</span>
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
                             </button>
                         </div>
-                    </form>
 
-                    <form v-if="step === 2" @submit.prevent="confirmDevis"
-                        class="overflow-y-auto flex-grow p-6 space-y-5 stylised-scrollbar">
-                        <div v-if="addError"
-                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                            {{ addError }}
-                        </div>
-                        <div v-if="requestSuccess"
-                            class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
-                            Devis lancé avec succès !
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Désignation du devis</label>
-                                <input type="text" v-model="parsedDevisData.designation"
-                                    placeholder="Ex: Prestation de services tech..."
-                                    class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        <form v-if="step === 1" @submit.prevent="submitDevisRequest" class="p-6 space-y-5">
+                            <div v-if="addError"
+                                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                                {{ addError }}
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
-                                <input type="text" v-model="parsedDevisData.prenom"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                <label for="devisText" class="block text-sm font-medium text-gray-700 mb-1">Description
+                                    de
+                                    votre demande
+                                    <span class="text-red-500">*</span></label>
+                                <textarea id="devisText" v-model="newDevisRequestText" rows="5" required
+                                    placeholder="Détaillez les informations nécessaires à la création du devis..."
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm resize-none"></textarea>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-                                <input type="text" v-model="parsedDevisData.nom"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+                                <button type="button" @click="closeAddModal" :disabled="isSubmitting"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    Annuler
+                                </button>
+                                <button type="submit" :disabled="isSubmitting"
+                                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                    <svg v-if="isSubmitting" class="animate-spin h-4 w-4 text-white"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg>
+                                    Continuer
+                                </button>
                             </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
-                                <input type="text" v-model="parsedDevisData.entreprise"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        </form>
+
+                        <form v-if="step === 2" @submit.prevent="confirmDevis" class="p-6 space-y-5">
+                            <div v-if="addError"
+                                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                                {{ addError }}
                             </div>
-                            <div class="col-span-2 sm:col-span-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">SIRET</label>
-                                <input type="text" v-model="parsedDevisData.siret" maxlength="14"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                            <div v-if="requestSuccess"
+                                class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+                                Devis lancé avec succès !
                             </div>
-                            <div class="col-span-2 sm:col-span-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">TVA
-                                    Intracommunautaire</label>
-                                <input type="text" v-model="parsedDevisData.tva_intra"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Type d'entité</label>
-                                <select v-model="parsedDevisData.type_entite"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
-                                    <option value="B2B">B2B (Professionnel)</option>
-                                    <option value="B2C">B2C (Particulier)</option>
-                                </select>
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email <span
-                                        class="text-red-500">*</span></label>
-                                <input type="email" v-model="parsedDevisData.email" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse Facturation</label>
-                                <input type="text" v-model="parsedDevisData.adresse_facturation"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse Livraison</label>
-                                <input type="text" v-model="parsedDevisData.adresse_livraison"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Note additionnelle</label>
-                                <textarea v-model="parsedDevisData.note" rows="3"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
-                            </div>
-                            <div class="col-span-2 border-t border-gray-100 pt-4 mt-2">
-                                <div class="flex justify-between items-center mb-3">
-                                    <h4 class="font-bold text-gray-800 text-sm">Articles</h4>
-                                    <button type="button"
-                                        @click="parsedDevisData.articles.push({designation: '', quantite: 1, prix_unitaire: 0})"
-                                        class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 font-semibold transition-colors">
-                                        + Ajouter un article
-                                    </button>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Désignation du
+                                        devis</label>
+                                    <input type="text" v-model="parsedDevisData.designation"
+                                        placeholder="Ex: Prestation de services tech..."
+                                        class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
                                 </div>
-                                <div class="space-y-2 max-h-64 overflow-y-auto pr-1 stylised-scrollbar">
-                                    <div v-for="(a, idx) in parsedDevisData.articles" :key="idx"
-                                        class="flex gap-2 items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                        <div class="flex-grow">
-                                            <input type="text" v-model="a.designation"
-                                                placeholder="Désignation de l'article"
-                                                class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2 focus:ring-1 focus:ring-indigo-500 bg-white" />
-                                            <div class="flex gap-3">
-                                                <div class="flex items-center gap-2 w-1/4">
-                                                    <span class="text-xs font-medium text-gray-500">Qté:</span>
-                                                    <input type="number" v-model.number="a.quantite" min="1"
-                                                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white" />
-                                                </div>
-                                                <div class="flex items-center gap-2 w-2/4">
-                                                    <span class="text-xs font-medium text-gray-500">Prix U. HT
-                                                        (€):</span>
-                                                    <input type="number" v-model.number="a.prix_unitaire" step="0.01"
-                                                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white" />
-                                                </div>
-                                                <div class="flex items-center gap-2 w-1/4">
-                                                    <span class="text-xs font-medium text-gray-500">Remise (%):</span>
-                                                    <input type="number" v-model.number="a.remise" min="0" max="100"
-                                                        step="0.1"
-                                                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button type="button" @click="parsedDevisData.articles.splice(idx, 1)"
-                                            class="text-gray-400 hover:text-red-500 p-1.5 hover:bg-white rounded transition-colors"
-                                            title="Retirer">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                stroke-linecap="round" stroke-linejoin="round">
-                                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                                            </svg>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                                    <input type="text" v-model="parsedDevisData.prenom"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                                    <input type="text" v-model="parsedDevisData.nom"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
+                                    <input type="text" v-model="parsedDevisData.entreprise"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="col-span-2 sm:col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">SIRET</label>
+                                    <input type="text" v-model="parsedDevisData.siret" maxlength="14"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="col-span-2 sm:col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">TVA
+                                        Intracommunautaire</label>
+                                    <input type="text" v-model="parsedDevisData.tva_intra"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Type d'entité</label>
+                                    <select v-model="parsedDevisData.type_entite"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                        <option value="B2B">B2B (Professionnel)</option>
+                                        <option value="B2C">B2C (Particulier)</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="email" v-model="parsedDevisData.email" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse
+                                        Facturation</label>
+                                    <input type="text" v-model="parsedDevisData.adresse_facturation"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse
+                                        Livraison</label>
+                                    <input type="text" v-model="parsedDevisData.adresse_livraison"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Note
+                                        additionnelle</label>
+                                    <textarea v-model="parsedDevisData.note" rows="3"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                                </div>
+                                <div class="col-span-2 border-t border-gray-100 pt-4 mt-2">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="font-bold text-gray-800 text-sm">Articles</h4>
+                                        <button type="button"
+                                            @click="parsedDevisData.articles.push({designation: '', quantite: 1, prix_unitaire: 0})"
+                                            class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 font-semibold transition-colors">
+                                            + Ajouter un article
                                         </button>
                                     </div>
-                                    <div v-if="parsedDevisData.articles.length === 0"
-                                        class="text-sm text-gray-400 italic py-3 text-center border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
-                                        Aucun article enregistré.
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                                    <div class="flex flex-col bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                                        <span class="font-bold text-indigo-900 text-sm mb-1">Total HT (€)</span>
-                                        <div class="text-sm font-bold text-indigo-700">
-                                            {{ computedTotalEstime.toFixed(2) }}
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="flex flex-col bg-blue-50 p-3 rounded-lg border border-blue-100 relative">
-                                        <label class="font-bold text-blue-900 text-sm mb-1">TVA (%)</label>
-                                        <input type="number" v-model.number="parsedDevisData.tva_percent" step="0.1"
-                                            min="0"
-                                            class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 bg-white" />
-                                        <div class="text-xs text-blue-700 mt-1 font-semibold">
-                                            TVA: {{ computedTva.toFixed(2) }} €
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                                        <span class="font-bold text-emerald-900 text-sm mb-1">Total TTC (€)</span>
-                                        <div class="text-lg font-bold text-emerald-700">
-                                            {{ computedTtc.toFixed(2) }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4 mt-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Délai estimé</label>
-                                        <input type="text" v-model="parsedDevisData.delai" placeholder="Ex: 4 semaines"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
-                                    </div>
-                                    <div class="flex flex-col justify-center">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Envoi du devis par
-                                            email</label>
-                                        <label class="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" :checked="parsedDevisData.envoi === 1"
-                                                @change="parsedDevisData.envoi = $event.target.checked ? 1 : 0"
-                                                class="sr-only peer" />
-                                            <div
-                                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
+                                    <div class="space-y-2 max-h-64 overflow-y-auto pr-1 stylised-scrollbar">
+                                        <div v-for="(a, idx) in parsedDevisData.articles" :key="idx"
+                                            class="flex gap-2 items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                            <div class="flex-grow">
+                                                <input type="text" v-model="a.designation"
+                                                    placeholder="Désignation de l'article"
+                                                    class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2 focus:ring-1 focus:ring-indigo-500 bg-white" />
+                                                <div class="flex gap-3">
+                                                    <div class="flex items-center gap-2 w-1/4">
+                                                        <span class="text-xs font-medium text-gray-500">Qté:</span>
+                                                        <input type="number" v-model.number="a.quantite" min="1"
+                                                            class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white" />
+                                                    </div>
+                                                    <div class="flex items-center gap-2 w-2/4">
+                                                        <span class="text-xs font-medium text-gray-500">Prix U. HT
+                                                            (€):</span>
+                                                        <input type="number" v-model.number="a.prix_unitaire"
+                                                            step="0.01"
+                                                            class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white" />
+                                                    </div>
+                                                    <div class="flex items-center gap-2 w-1/4">
+                                                        <span class="text-xs font-medium text-gray-500">Remise
+                                                            (%):</span>
+                                                        <input type="number" v-model.number="a.remise" min="0" max="100"
+                                                            step="0.1"
+                                                            class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white" />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <span class="ml-3 text-sm font-medium"
-                                                :class="parsedDevisData.envoi === 1 ? 'text-indigo-600' : 'text-gray-400'">{{
-                                                parsedDevisData.envoi === 1 ? 'Oui' : 'Non'
-                                                }}</span>
-                                        </label>
+                                            <button type="button" @click="parsedDevisData.articles.splice(idx, 1)"
+                                                class="text-gray-400 hover:text-red-500 p-1.5 hover:bg-white rounded transition-colors"
+                                                title="Retirer">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div v-if="parsedDevisData.articles.length === 0"
+                                            class="text-sm text-gray-400 italic py-3 text-center border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+                                            Aucun article enregistré.
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                        <div class="flex flex-col bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                                            <span class="font-bold text-indigo-900 text-sm mb-1">Total HT (€)</span>
+                                            <div class="text-sm font-bold text-indigo-700">
+                                                {{ computedTotalEstime.toFixed(2) }}
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="flex flex-col bg-blue-50 p-3 rounded-lg border border-blue-100 relative">
+                                            <label class="font-bold text-blue-900 text-sm mb-1">TVA (%)</label>
+                                            <input type="number" v-model.number="parsedDevisData.tva_percent" step="0.1"
+                                                min="0"
+                                                class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 bg-white" />
+                                            <div class="text-xs text-blue-700 mt-1 font-semibold">
+                                                TVA: {{ computedTva.toFixed(2) }} €
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="flex flex-col bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                            <span class="font-bold text-emerald-900 text-sm mb-1">Total TTC (€)</span>
+                                            <div class="text-lg font-bold text-emerald-700">
+                                                {{ computedTtc.toFixed(2) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 mt-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Délai
+                                                estimé</label>
+                                            <input type="text" v-model="parsedDevisData.delai"
+                                                placeholder="Ex: 4 semaines"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div class="flex flex-col justify-center">
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Envoi du devis
+                                                par
+                                                email</label>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" :checked="parsedDevisData.envoi === 1"
+                                                    @change="parsedDevisData.envoi = $event.target.checked ? 1 : 0"
+                                                    class="sr-only peer" />
+                                                <div
+                                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
+                                                </div>
+                                                <span class="ml-3 text-sm font-medium"
+                                                    :class="parsedDevisData.envoi === 1 ? 'text-indigo-600' : 'text-gray-400'">{{
+                                                    parsedDevisData.envoi === 1 ? 'Oui' : 'Non'
+                                                    }}</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
-                            <button type="button" @click="closeAddModal" :disabled="isSubmitting"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
-                                Annuler
-                            </button>
-                            <button type="submit" :disabled="isSubmitting"
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                <svg v-if="isSubmitting" class="animate-spin h-4 w-4 text-white"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                    </path>
-                                </svg>
-                                Créer le devis
-                            </button>
-                        </div>
-                    </form>
+                            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+                                <button type="button" @click="closeAddModal" :disabled="isSubmitting"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    Annuler
+                                </button>
+                                <button type="submit" :disabled="isSubmitting"
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                    <svg v-if="isSubmitting" class="animate-spin h-4 w-4 text-white"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg>
+                                    Créer le devis
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
