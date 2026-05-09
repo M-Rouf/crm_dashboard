@@ -263,6 +263,16 @@ class StatutCommandeUpdate(BaseModel):
     statut: str
 
 
+class CommandeUpdate(BaseModel):
+    reference: str
+    description: Optional[str] = None
+    contact_id: int
+    devis_id: Optional[int] = None
+    priorite: str
+    date_livraison_prevue: Optional[str] = None
+    notes_internes: Optional[str] = None
+
+
 # --- Initialisation FastAPI ---
 app = FastAPI(
     title="Dashboard CRM personnel", description="API pour CRM dashboard.mrliw.fr"
@@ -393,6 +403,45 @@ def update_commande_statut(
         raise HTTPException(status_code=404, detail="Commande non trouvée")
 
     commande.statut = statut_update.statut
+    db.commit()
+    db.refresh(commande)
+    return commande
+
+
+@app.patch("/api/commandes/{commande_id}", response_model=CommandeSchema)
+def update_commande(
+    commande_id: int, payload: CommandeUpdate, db: Session = Depends(get_db)
+):
+    commande = db.query(Commande).filter(Commande.id == commande_id).first()
+    if not commande:
+        raise HTTPException(status_code=404, detail="Commande non trouvée")
+
+    contact = db.query(Contact).filter(Contact.id == payload.contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact introuvable")
+
+    if payload.devis_id:
+        devis = db.query(Devis).filter(Devis.id == payload.devis_id).first()
+        if not devis:
+            raise HTTPException(status_code=404, detail="Devis introuvable")
+
+    commande.reference = payload.reference
+    commande.description = payload.description
+    commande.contact_id = payload.contact_id
+    commande.devis_id = payload.devis_id
+    commande.priorite = payload.priorite
+    commande.notes_internes = payload.notes_internes
+
+    if payload.date_livraison_prevue:
+        try:
+            commande.date_livraison_prevue = datetime.datetime.strptime(
+                payload.date_livraison_prevue, "%Y-%m-%d"
+            )
+        except ValueError:
+            pass
+    else:
+        commande.date_livraison_prevue = None
+
     db.commit()
     db.refresh(commande)
     return commande

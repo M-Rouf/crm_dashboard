@@ -166,6 +166,136 @@
             </div>
         </div>
 
+        <!-- Modal Modification Commande -->
+        <div v-if="showEditModal" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title"
+            role="dialog" aria-modal="true">
+            <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" @click="closeEditModal"
+                    aria-hidden="true">
+                </div>
+                <div class="bg-white rounded-2xl shadow-xl sm:max-w-2xl w-full relative z-10 text-left my-8">
+                    <div
+                        class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">
+                            Modifier la commande
+                        </h3>
+                        <button @click="closeEditModal"
+                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="submitEdit" class="p-6 space-y-4">
+                        <div v-if="editError"
+                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                            {{ editError }}
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Référence *</label>
+                                <input v-model="editForm.reference" placeholder="Ex: CMD-2026-001" type="text" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Priorité</label>
+                                <select v-model="editForm.priorite" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                    <option value="basse">Basse</option>
+                                    <option value="normale">Normale</option>
+                                    <option value="haute">Haute</option>
+                                    <option value="urgente">Urgente</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact (Client / Fournisseur)
+                                *</label>
+                            <select v-model="editForm.contact_id" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                <option value="" disabled>Sélectionner un contact...</option>
+                                <option v-for="c in contacts" :key="c.id" :value="c.id">
+                                    {{ clientName(c) }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Devis associé
+                                (Optionnel)</label>
+                            <select v-model="editForm.devis_id"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                <option value="">Aucun devis</option>
+                                <option v-for="d in devisList" :key="d.id" :value="d.id">
+                                    {{ d.nom || d.id }} ({{ d.montant_ttc ? Number(d.montant_ttc).toFixed(2) + ' €' :
+                                    '-' }})
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 opacity-75">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant HT (Lecture
+                                    seule)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input v-model.number="editForm.montant_ht" type="number" readonly disabled
+                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant TTC (Lecture
+                                    seule)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input v-model.number="editForm.montant_ttc" type="number" readonly disabled
+                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de livraison prévue</label>
+                            <input v-model="editForm.date_livraison_prevue" type="date"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea v-model="editForm.description" rows="2"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Notes internes</label>
+                            <textarea v-model="editForm.notes_internes" rows="2"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+                            <button type="button" @click="closeEditModal" :disabled="isEditSubmitting"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                Annuler
+                            </button>
+                            <button type="submit" :disabled="isEditSubmitting"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                <span v-if="isEditSubmitting">Enregistrement...</span>
+                                <span v-else>Enregistrer</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- En-tête Global -->
         <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
             <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
@@ -382,15 +512,26 @@
                                 </span>
                             </div>
                         </div>
-                        <button @click="selectedCommande = null"
-                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100 transition-colors"
-                            title="Fermer">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button @click="openEditModal(selectedCommande)"
+                                class="text-gray-400 hover:text-indigo-600 p-2 rounded-xl hover:bg-indigo-50 transition-colors"
+                                title="Modifier">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                            <button @click="selectedCommande = null"
+                                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                                title="Fermer">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div v-if="selectedCommande.description"
@@ -399,7 +540,7 @@
                     </div>
 
                     <div v-if="selectedCommande.file_path" class="mb-5">
-                        <a :href="'/' + selectedCommande.file_path" target="_blank"
+                        <a :href="selectedCommande.file_path" target="_blank"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors font-medium text-sm border border-indigo-100 shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
@@ -638,6 +779,83 @@
                     }
                 };
 
+                const showEditModal = ref(false);
+                const isEditSubmitting = ref(false);
+                const editError = ref("");
+                const editForm = ref({
+                    id: null,
+                    reference: "",
+                    description: "",
+                    contact_id: "",
+                    devis_id: "",
+                    priorite: "normale",
+                    montant_ht: 0,
+                    montant_ttc: 0,
+                    date_livraison_prevue: "",
+                    notes_internes: ""
+                });
+
+                const openEditModal = (cmd) => {
+                    let dlp = "";
+                    if (cmd.date_livraison_prevue) {
+                        const d = new Date(cmd.date_livraison_prevue);
+                        if (!isNaN(d)) {
+                            dlp = d.toISOString().split('T')[0];
+                        }
+                    }
+                    editForm.value = {
+                        id: cmd.id,
+                        reference: cmd.reference || "",
+                        description: cmd.description || "",
+                        contact_id: cmd.contact ? cmd.contact.id : "",
+                        devis_id: cmd.devis ? cmd.devis.id : "",
+                        priorite: cmd.priorite || "normale",
+                        montant_ht: cmd.montant_ht || 0,
+                        montant_ttc: cmd.montant_ttc || 0,
+                        date_livraison_prevue: dlp,
+                        notes_internes: cmd.notes_internes || ""
+                    };
+                    editError.value = "";
+                    showEditModal.value = true;
+                };
+
+                const closeEditModal = () => {
+                    showEditModal.value = false;
+                };
+
+                const submitEdit = async () => {
+                    isEditSubmitting.value = true;
+                    editError.value = "";
+                    try {
+                        const payload = {
+                            reference: editForm.value.reference,
+                            description: editForm.value.description || null,
+                            contact_id: editForm.value.contact_id,
+                            devis_id: editForm.value.devis_id || null,
+                            priorite: editForm.value.priorite,
+                            date_livraison_prevue: editForm.value.date_livraison_prevue || null,
+                            notes_internes: editForm.value.notes_internes || null
+                        };
+                        const res = await fetch(`/api/commandes/${editForm.value.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!res.ok) {
+                            const data = await res.json();
+                            throw new Error(data.detail || "Erreur lors de la modification.");
+                        }
+                        const updatedCmd = await res.json();
+                        selectedCommande.value = updatedCmd;
+                        closeEditModal();
+                        fetchData();
+                    } catch (e) {
+                        editError.value = e.message;
+                    } finally {
+                        isEditSubmitting.value = false;
+                    }
+                };
+
                 const updateStatus = async (cmd) => {
                     try {
                         await fetch(`/api/commandes/${cmd.id}/statut`, {
@@ -774,6 +992,13 @@
                     closeManualModal,
                     onManualFileChange,
                     submitManualAdd,
+                    showEditModal,
+                    editForm,
+                    isEditSubmitting,
+                    editError,
+                    openEditModal,
+                    closeEditModal,
+                    submitEdit,
                 };
             },
         }).mount("#app");
