@@ -426,7 +426,6 @@ def update_commande(
         if not devis:
             raise HTTPException(status_code=404, detail="Devis introuvable")
 
-    commande.reference = payload.reference
     commande.description = payload.description
     commande.contact_id = payload.contact_id
     commande.devis_id = payload.devis_id
