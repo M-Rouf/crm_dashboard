@@ -727,6 +727,153 @@ def update_facture_statut_paiement(
     return facture
 
 
+@app.post("/api/factures/manuel")
+def create_manual_facture(
+    contact_id: int = Form(...),
+    flux: str = Form("envoyée"),
+    montant_ht: float = Form(...),
+    montant_tva: float = Form(0.0),
+    montant_ttc: float = Form(...),
+    numero_facture: str = Form(""),
+    devise: str = Form("EUR"),
+    external_id: str = Form(""),
+    statut_plateforme: str = Form("draft"),
+    statut_paiement: str = Form("non_paye"),
+    devis_id: str = Form(""),
+    commande_id: str = Form(""),
+    date_emission: str = Form(""),
+    date_echeance: str = Form(""),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact introuvable")
+
+    flux_clean = (flux or "").strip()
+    if flux_clean in ("envoyee", "envoyée"):
+        flux_db = "envoyée"
+    elif flux_clean in ("receptionnee", "réceptionnée"):
+        flux_db = "réceptionnée"
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="flux doit être « envoyée » ou « réceptionnée ».",
+        )
+
+    if statut_paiement not in ("paye", "non_paye"):
+        raise HTTPException(
+            status_code=400,
+            detail="statut_paiement doit être 'paye' ou 'non_paye'.",
+        )
+
+    d_id: Optional[int] = None
+    if devis_id and str(devis_id).strip():
+        try:
+            d_id = int(devis_id)
+        except ValueError:
+            d_id = None
+        if d_id is not None:
+            if not db.query(Devis).filter(Devis.id == d_id).first():
+                raise HTTPException(status_code=404, detail="Devis introuvable")
+
+    c_id: Optional[int] = None
+    if commande_id and str(commande_id).strip():
+        try:
+            c_id = int(commande_id)
+        except ValueError:
+            c_id = None
+        if c_id is not None:
+            if not db.query(Commande).filter(Commande.id == c_id).first():
+                raise HTTPException(status_code=404, detail="Commande introuvable")
+
+    def _parse_day(s: str) -> Optional[datetime.datetime]:
+        if not s or not str(s).strip():
+            return None
+        try:
+            d = datetime.datetime.strptime(str(s).strip()[:10], "%Y-%m-%d")
+            return d.replace(tzinfo=datetime.timezone.utc)
+        except ValueError:
+            return None
+
+    emission = _parse_day(date_emission) or datetime.datetime.now(
+        datetime.timezone.utc
+    )
+    echeance = _parse_day(date_echeance)
+
+    import time
+
+    os.makedirs("./files/factures", exist_ok=True)
+    filename = file.filename or "facture.pdf"
+    safe_stem = "".join(
+        c if c.isalnum() or c in ("-", "_", ".") else "_" for c in (numero_facture or "facture")
+    ).strip("_") or "facture"
+    if len(safe_stem) > 40:
+        safe_stem = safe_stem[:40]
+    unix_time = str(int(time.time()))
+    safe_filename = f"{safe_stem}_{unix_time}_{filename}"
+    file_system_path = f"./files/factures/{safe_filename}"
+    web_path = f"/files/factures/{safe_filename}"
+
+    try:
+        with open(file_system_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur écriture fichier: {e}")
+
+    base_num = (numero_facture or "").strip()
+    if not base_num:
+        if "." in filename:
+            base_num = filename.rsplit(".", 1)[0]
+        else:
+            base_num = filename
+        base_num = base_num.strip() or f"FAC-{unix_time}"
+    if len(base_num) > 50:
+        base_num = base_num[:50]
+
+    num = base_num
+    n = 0
+    while db.query(Facture).filter(Facture.numero_facture == num).first():
+        n += 1
+        suf = f"-{n}"
+        num = (base_num[: 50 - len(suf)] + suf) if len(base_num) + len(suf) > 50 else base_num + suf
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    pay_dt = now if statut_paiement == "paye" else None
+
+    facture = Facture(
+        numero_facture=num,
+        contact_id=contact_id,
+        devis_id=d_id,
+        commande_id=c_id,
+        flux=flux_db,
+        montant_ht=montant_ht,
+        montant_tva=montant_tva,
+        montant_ttc=montant_ttc,
+        devise=(devise or "EUR")[:3],
+        file_path=web_path,
+        external_id=(external_id or None) or None,
+        statut_plateforme=(statut_plateforme or "draft")[:100],
+        statut_paiement=statut_paiement,
+        date_emission=emission,
+        date_echeance=echeance,
+        date_paiement=pay_dt,
+    )
+    db.add(facture)
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        try:
+            if os.path.isfile(file_system_path):
+                os.remove(file_system_path)
+        except OSError:
+            pass
+        raise HTTPException(status_code=400, detail=str(e))
+    db.refresh(facture)
+    return {"status": "success", "id": facture.id, "numero_facture": facture.numero_facture}
+
+
 class WebhookPayload(BaseModel):
     texte: str
 

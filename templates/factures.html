@@ -23,6 +23,152 @@
 <body class="bg-gray-50 text-gray-900 leading-normal tracking-normal min-h-screen">
     {% raw %}
     <div id="app" v-cloak class="min-h-screen flex flex-col">
+        <div v-if="showManualModal" class="fixed inset-0 z-[100] overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="flex min-h-screen items-center justify-center p-4 sm:p-0">
+                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" @click="closeManualModal" aria-hidden="true">
+                </div>
+                <div
+                    class="bg-white rounded-2xl shadow-xl max-w-2xl w-full relative z-10 text-left my-8 max-h-[90vh] overflow-y-auto">
+                    <div
+                        class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl sticky top-0 z-10">
+                        <h3 class="text-lg font-bold text-gray-900">Ajouter une facture manuellement</h3>
+                        <button type="button" @click="closeManualModal"
+                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="submitManualAdd" class="p-6 space-y-4">
+                        <div v-if="manualError"
+                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">{{ manualError }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">N° facture *</label>
+                            <input v-model="manualAddForm.numero_facture" type="text" maxlength="50" required
+                                placeholder="Renseigné auto depuis le fichier (.pdf)"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact (client /
+                                fournisseur) *</label>
+                            <select v-model="manualAddForm.contact_id" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500">
+                                <option value="" disabled>Sélectionner…</option>
+                                <option v-for="c in contacts" :key="c.id" :value="c.id">{{ clientName(c) }}</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Flux *</label>
+                                <select v-model="manualAddForm.flux" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+                                    <option value="envoyée">Envoyée</option>
+                                    <option value="réceptionnée">Réceptionnée</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Devise</label>
+                                <input v-model="manualAddForm.devise" type="text" maxlength="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm uppercase" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant HT *</label>
+                                <input v-model.number="manualAddForm.montant_ht" type="number" step="0.01" min="0"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">TVA *</label>
+                                <input v-model.number="manualAddForm.montant_tva" type="number" step="0.01" min="0"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Montant TTC *</label>
+                                <input v-model.number="manualAddForm.montant_ttc" type="number" step="0.01" min="0"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Devis associé</label>
+                                <select v-model="manualAddForm.devis_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+                                    <option value="">—</option>
+                                    <option v-for="d in devisList" :key="d.id" :value="d.id">{{ d.nom }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Commande associée</label>
+                                <select v-model="manualAddForm.commande_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+                                    <option value="">—</option>
+                                    <option v-for="cmd in commandesList" :key="cmd.id" :value="cmd.id">{{
+                                        cmd.reference || ('#' + cmd.id) }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ID externe</label>
+                            <input v-model="manualAddForm.external_id" type="text"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Statut plateforme</label>
+                                <select v-model="manualAddForm.statut_plateforme"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+                                    <option value="draft">draft</option>
+                                    <option value="pending">pending</option>
+                                    <option value="sent">sent</option>
+                                    <option value="validated">validated</option>
+                                    <option value="rejected">rejected</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Statut paiement</label>
+                                <select v-model="manualAddForm.statut_paiement"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+                                    <option value="non_paye">Non payé</option>
+                                    <option value="paye">Payé</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Date d'émission</label>
+                                <input v-model="manualAddForm.date_emission" type="date"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Date d'échéance</label>
+                                <input v-model="manualAddForm.date_echeance" type="date"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Fichier facture *</label>
+                            <input type="file" ref="manualFileInput" accept=".pdf,application/pdf" required
+                                @change="onManualFileChange"
+                                class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                        </div>
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <button type="button" @click="closeManualModal" :disabled="isManualSubmitting"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Annuler</button>
+                            <button type="submit" :disabled="isManualSubmitting"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+                                {{ isManualSubmitting ? 'Enregistrement…' : 'Enregistrer' }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
             <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
                 <div class="flex items-center gap-6">
@@ -72,6 +218,10 @@
                         <input type="checkbox" v-model="includePaid" class="rounded border-gray-300 text-indigo-600" />
                         Afficher les factures payées
                     </label>
+                    <button type="button" @click="openManualModal"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 whitespace-nowrap">
+                        Ajout manuel
+                    </button>
                 </div>
             </div>
 
@@ -245,6 +395,125 @@
                 const detail = ref(null);
                 let debounceTimer = null;
 
+                const contacts = ref([]);
+                const devisList = ref([]);
+                const commandesList = ref([]);
+                const showManualModal = ref(false);
+                const manualAddForm = ref({
+                    numero_facture: "",
+                    contact_id: "",
+                    flux: "envoyée",
+                    montant_ht: 0,
+                    montant_tva: 0,
+                    montant_ttc: 0,
+                    devise: "EUR",
+                    external_id: "",
+                    statut_plateforme: "draft",
+                    statut_paiement: "non_paye",
+                    devis_id: "",
+                    commande_id: "",
+                    date_emission: "",
+                    date_echeance: "",
+                });
+                const manualFileInput = ref(null);
+                const manualError = ref("");
+                const isManualSubmitting = ref(false);
+
+                const fetchDropdownData = async () => {
+                    try {
+                        const [rC, rD, rCmd] = await Promise.all([
+                            fetch("/api/contacts"),
+                            fetch("/api/devis"),
+                            fetch("/api/commandes"),
+                        ]);
+                        if (rC.ok) contacts.value = await rC.json();
+                        if (rD.ok) devisList.value = await rD.json();
+                        if (rCmd.ok) commandesList.value = await rCmd.json();
+                    } catch (e) {
+                        console.error(e);
+                    }
+                };
+
+                const openManualModal = () => {
+                    manualAddForm.value = {
+                        numero_facture: "",
+                        contact_id: "",
+                        flux: "envoyée",
+                        montant_ht: 0,
+                        montant_tva: 0,
+                        montant_ttc: 0,
+                        devise: "EUR",
+                        external_id: "",
+                        statut_plateforme: "draft",
+                        statut_paiement: "non_paye",
+                        devis_id: "",
+                        commande_id: "",
+                        date_emission: "",
+                        date_echeance: "",
+                    };
+                    manualError.value = "";
+                    if (manualFileInput.value) manualFileInput.value.value = "";
+                    showManualModal.value = true;
+                };
+
+                const closeManualModal = () => {
+                    showManualModal.value = false;
+                };
+
+                const onManualFileChange = () => {
+                    const el = manualFileInput.value;
+                    if (!el || !el.files || !el.files[0]) return;
+                    const name = el.files[0].name;
+                    let base = name;
+                    const lower = name.toLowerCase();
+                    if (lower.endsWith(".pdf")) {
+                        base = name.slice(0, -4);
+                    } else if (name.includes(".")) {
+                        base = name.substring(0, name.lastIndexOf("."));
+                    }
+                    manualAddForm.value.numero_facture = base.trim();
+                };
+
+                const submitManualAdd = async () => {
+                    if (!manualFileInput.value || !manualFileInput.value.files[0]) {
+                        manualError.value = "Veuillez sélectionner un fichier.";
+                        return;
+                    }
+                    isManualSubmitting.value = true;
+                    manualError.value = "";
+                    const fd = new FormData();
+                    fd.append("contact_id", manualAddForm.value.contact_id);
+                    fd.append("flux", manualAddForm.value.flux);
+                    fd.append("montant_ht", String(manualAddForm.value.montant_ht));
+                    fd.append("montant_tva", String(manualAddForm.value.montant_tva ?? 0));
+                    fd.append("montant_ttc", String(manualAddForm.value.montant_ttc));
+                    fd.append("numero_facture", manualAddForm.value.numero_facture || "");
+                    fd.append("devise", (manualAddForm.value.devise || "EUR").toUpperCase().slice(0, 3));
+                    fd.append("external_id", manualAddForm.value.external_id || "");
+                    fd.append("statut_plateforme", manualAddForm.value.statut_plateforme || "draft");
+                    fd.append("statut_paiement", manualAddForm.value.statut_paiement || "non_paye");
+                    if (manualAddForm.value.devis_id) fd.append("devis_id", String(manualAddForm.value.devis_id));
+                    if (manualAddForm.value.commande_id) fd.append("commande_id", String(manualAddForm.value.commande_id));
+                    if (manualAddForm.value.date_emission) fd.append("date_emission", manualAddForm.value.date_emission);
+                    if (manualAddForm.value.date_echeance) fd.append("date_echeance", manualAddForm.value.date_echeance);
+                    fd.append("file", manualFileInput.value.files[0]);
+                    try {
+                        const res = await fetch("/api/factures/manuel", { method: "POST", body: fd });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            const msg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+                            throw new Error(msg || "Erreur à l'enregistrement.");
+                        }
+                        closeManualModal();
+                        await refreshAll();
+                        if (data.id) await openDetail(data.id);
+                    } catch (e) {
+                        manualError.value = e.message || "Erreur";
+                    } finally {
+                        isManualSubmitting.value = false;
+                    }
+                };
+
                 const fetchStats = async () => {
                     try {
                         const res = await fetch("/api/factures/stats-unpaid");
@@ -371,6 +640,7 @@
 
                 onMounted(() => {
                     refreshAll();
+                    fetchDropdownData();
                     setInterval(fetchStats, 45000);
                 });
 
@@ -379,6 +649,9 @@
                     selectedId, detail, openDetail, updatePaiement,
                     clientName, formatMoney, formatDate, fluxLabel, fluxClass,
                     platformLabel, platformBadgeClass, paiementSelectClass, fileHref,
+                    contacts, devisList, commandesList,
+                    showManualModal, manualAddForm, manualFileInput, manualError, isManualSubmitting,
+                    openManualModal, closeManualModal, onManualFileChange, submitManualAdd,
                 };
             },
         }).mount("#app");
