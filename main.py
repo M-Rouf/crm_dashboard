@@ -20,8 +20,9 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    or_,
 )
-from sqlalchemy.orm import Session, declarative_base, relationship, sessionmaker
+from sqlalchemy.orm import Session, declarative_base, joinedload, relationship, sessionmaker
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from scripts.generate_devis import generate_devis_files
@@ -60,6 +61,7 @@ class Contact(Base):
     devis = relationship("Devis", back_populates="contact")
     actions = relationship("Action", back_populates="contact")
     commandes = relationship("Commande", back_populates="contact")
+    factures = relationship("Facture", back_populates="contact")
 
 
 class Requete(Base):
@@ -137,6 +139,48 @@ class Commande(Base):
 
     contact = relationship("Contact", back_populates="commandes")
     devis = relationship("Devis", back_populates="commandes")
+
+
+class Facture(Base):
+    __tablename__ = "factures"
+    id = Column(Integer, primary_key=True, index=True)
+    numero_facture = Column(String(50), unique=True, nullable=False)
+    contact_id = Column(
+        Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
+    )
+    devis_id = Column(Integer, ForeignKey("devis.id", ondelete="SET NULL"), nullable=True)
+    commande_id = Column(
+        Integer, ForeignKey("commandes.id", ondelete="SET NULL"), nullable=True
+    )
+    flux = Column(String(20), nullable=False)
+    montant_ht = Column(Numeric(12, 2), nullable=False)
+    montant_tva = Column(Numeric(12, 2), nullable=False)
+    montant_ttc = Column(Numeric(12, 2), nullable=False)
+    devise = Column(String(3), default="EUR")
+    file_path = Column(Text)
+    external_id = Column(String(255))
+    statut_plateforme = Column(String(100), default="draft")
+    statut_paiement = Column(String(50), default="non_paye")
+    date_emission = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+    date_echeance = Column(DateTime(timezone=True))
+    date_paiement = Column(DateTime(timezone=True))
+
+    contact = relationship("Contact", back_populates="factures")
+    devis = relationship("Devis", foreign_keys=[devis_id])
+    commande = relationship("Commande", foreign_keys=[commande_id])
+
+
+def _facture_platform_bucket(statut_plateforme: Optional[str]) -> str:
+    s = (statut_plateforme or "").strip().lower() or "draft"
+    if s == "draft":
+        return "draft"
+    if s in ("pending", "sent"):
+        return "pending"
+    if s == "validated":
+        return "validated"
+    if s == "rejected":
+        return "rejected"
+    return "pending"
 
 
 # --- Schémas Pydantic ---
@@ -272,6 +316,52 @@ class CommandeUpdate(BaseModel):
     date_livraison_prevue: Optional[str] = None
     url_suivi_colis: Optional[str] = None
     notes_internes: Optional[str] = None
+
+
+class FactureDevisMini(BaseModel):
+    id: int
+    nom: str
+
+    class Config:
+        from_attributes = True
+
+
+class FactureCommandeMini(BaseModel):
+    id: int
+    reference: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class FactureSchema(BaseModel):
+    id: int
+    numero_facture: str
+    contact_id: int
+    devis_id: Optional[int] = None
+    commande_id: Optional[int] = None
+    flux: str
+    montant_ht: Optional[float] = None
+    montant_tva: Optional[float] = None
+    montant_ttc: Optional[float] = None
+    devise: Optional[str] = "EUR"
+    file_path: Optional[str] = None
+    external_id: Optional[str] = None
+    statut_plateforme: Optional[str] = "draft"
+    statut_paiement: Optional[str] = "non_paye"
+    date_emission: Optional[datetime.datetime] = None
+    date_echeance: Optional[datetime.datetime] = None
+    date_paiement: Optional[datetime.datetime] = None
+    contact: Optional[ContactSchema] = None
+    devis: Optional[FactureDevisMini] = None
+    commande: Optional[FactureCommandeMini] = None
+
+    class Config:
+        from_attributes = True
+
+
+class FacturePaiementUpdate(BaseModel):
+    statut_paiement: str
 
 
 # --- Initialisation FastAPI ---
@@ -516,6 +606,127 @@ def create_manual_commande(
     return {"status": "success", "id": commande.id}
 
 
+@app.get("/api/factures/stats-unpaid")
+def factures_unpaid_stats(db: Session = Depends(get_db)):
+    unpaid = (
+        db.query(Facture)
+        .filter(
+            or_(
+                Facture.statut_paiement != "paye",
+                Facture.statut_paiement.is_(None),
+            )
+        )
+        .all()
+    )
+    out = {"total": len(unpaid), "draft": 0, "pending": 0, "validated": 0, "rejected": 0}
+    for f in unpaid:
+        b = _facture_platform_bucket(f.statut_plateforme)
+        if b in out:
+            out[b] += 1
+    return out
+
+
+@app.get("/api/factures", response_model=List[FactureSchema])
+def list_factures(
+    ref: Optional[str] = None,
+    client: Optional[str] = None,
+    include_paid: bool = True,
+    db: Session = Depends(get_db),
+):
+    q = db.query(Facture).options(
+        joinedload(Facture.contact),
+        joinedload(Facture.devis),
+        joinedload(Facture.commande),
+    )
+    if not include_paid:
+        q = q.filter(
+            or_(
+                Facture.statut_paiement != "paye",
+                Facture.statut_paiement.is_(None),
+            )
+        )
+    if ref and ref.strip():
+        term = f"%{ref.strip()}%"
+        q = q.filter(
+            or_(
+                Facture.numero_facture.ilike(term),
+                Facture.external_id.ilike(term),
+            )
+        )
+    if client and client.strip():
+        cterm = f"%{client.strip()}%"
+        contact_ids = [
+            row[0]
+            for row in db.query(Contact.id)
+            .filter(
+                or_(
+                    Contact.prenom.ilike(cterm),
+                    Contact.nom.ilike(cterm),
+                    Contact.entreprise.ilike(cterm),
+                    Contact.email.ilike(cterm),
+                )
+            )
+            .distinct()
+            .all()
+        ]
+        if not contact_ids:
+            return []
+        q = q.filter(Facture.contact_id.in_(contact_ids))
+    return q.order_by(Facture.date_emission.desc()).all()
+
+
+@app.get("/api/factures/{facture_id}", response_model=FactureSchema)
+def get_facture(facture_id: int, db: Session = Depends(get_db)):
+    facture = (
+        db.query(Facture)
+        .options(
+            joinedload(Facture.contact),
+            joinedload(Facture.devis),
+            joinedload(Facture.commande),
+        )
+        .filter(Facture.id == facture_id)
+        .first()
+    )
+    if not facture:
+        raise HTTPException(status_code=404, detail="Facture non trouvée")
+    return facture
+
+
+@app.patch("/api/factures/{facture_id}/statut-paiement", response_model=FactureSchema)
+def update_facture_statut_paiement(
+    facture_id: int,
+    body: FacturePaiementUpdate,
+    db: Session = Depends(get_db),
+):
+    if body.statut_paiement not in ("paye", "non_paye"):
+        raise HTTPException(
+            status_code=400,
+            detail="statut_paiement doit être 'paye' ou 'non_paye'.",
+        )
+    facture = (
+        db.query(Facture)
+        .options(
+            joinedload(Facture.contact),
+            joinedload(Facture.devis),
+            joinedload(Facture.commande),
+        )
+        .filter(Facture.id == facture_id)
+        .first()
+    )
+    if not facture:
+        raise HTTPException(status_code=404, detail="Facture non trouvée")
+    facture.statut_paiement = body.statut_paiement
+    now = datetime.datetime.now(datetime.timezone.utc)
+    if body.statut_paiement == "paye":
+        if not facture.date_paiement:
+            facture.date_paiement = now
+    else:
+        facture.date_paiement = None
+    db.commit()
+    db.refresh(facture)
+    return facture
+
+
 class WebhookPayload(BaseModel):
     texte: str
 
@@ -629,6 +840,13 @@ def page_actions(request: Request):
 def page_commandes(request: Request):
     return templates.TemplateResponse(
         request=request, name="commandes.html", context={}
+    )
+
+
+@app.get("/factures", response_class=HTMLResponse)
+def page_factures(request: Request):
+    return templates.TemplateResponse(
+        request=request, name="factures.html", context={}
     )
 
 

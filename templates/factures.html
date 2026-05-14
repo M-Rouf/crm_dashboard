@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Factures CRM | mrliw.fr</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ["Inter", "sans-serif"] },
+                },
+            },
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-900 leading-normal tracking-normal min-h-screen">
+    {% raw %}
+    <div id="app" v-cloak class="min-h-screen flex flex-col">
+        <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+            <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
+                <div class="flex items-center gap-6">
+                    <a href="/" class="flex items-center gap-2">
+                        <img src="/img/logo_mrliw.png" alt="MRLIW Logo" class="h-8 w-auto" />
+                        <span class="font-bold text-gray-800 text-lg hidden sm:block tracking-tight">Dashboard</span>
+                    </a>
+                    <nav class="flex items-center gap-1 flex-wrap">
+                        <a href="/"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
+                        <a href="/contacts"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
+                        <a href="/actions"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
+                        <a href="/devis"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Devis</a>
+                        <a href="/commandes"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Commandes</a>
+                        <a href="/factures"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Factures</a>
+                    </nav>
+                </div>
+                <div
+                    class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shadow-sm border border-indigo-200">
+                    MR</div>
+            </div>
+        </header>
+
+        <div class="container mx-auto p-4 md:p-8 max-w-7xl flex flex-col gap-6 flex-grow">
+            <div
+                class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" class="text-indigo-600">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+                    </svg>
+                    Factures
+                </h1>
+                <div class="flex flex-col sm:flex-row flex-wrap gap-3 w-full lg:w-auto">
+                    <input v-model="filterRef" type="text" placeholder="Réf. facture ou ID externe…"
+                        class="w-full sm:w-48 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                    <input v-model="filterClient" type="text" placeholder="Client / fournisseur…"
+                        class="w-full sm:w-48 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                    <label
+                        class="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm cursor-pointer bg-white">
+                        <input type="checkbox" v-model="includePaid" class="rounded border-gray-300 text-indigo-600" />
+                        Afficher les factures payées
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <div class="text-xs font-semibold uppercase text-gray-500">Non payées (total)</div>
+                    <div class="text-2xl font-bold text-gray-900 mt-1">{{ unpaidStats.total }}</div>
+                </div>
+                <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                    <div class="text-xs font-semibold uppercase text-amber-800">Brouillon</div>
+                    <div class="text-2xl font-bold text-amber-900 mt-1">{{ unpaidStats.draft }}</div>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <div class="text-xs font-semibold uppercase text-blue-800">En attente / envoyée</div>
+                    <div class="text-2xl font-bold text-blue-900 mt-1">{{ unpaidStats.pending }}</div>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                    <div class="text-xs font-semibold uppercase text-emerald-800">Validée</div>
+                    <div class="text-2xl font-bold text-emerald-900 mt-1">{{ unpaidStats.validated }}</div>
+                </div>
+                <div class="bg-red-50 p-4 rounded-xl border border-red-100 col-span-2 sm:col-span-1">
+                    <div class="text-xs font-semibold uppercase text-red-800">Rejetée</div>
+                    <div class="text-2xl font-bold text-red-900 mt-1">{{ unpaidStats.rejected }}</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div
+                    class="overflow-x-auto overflow-y-auto max-h-[560px] lg:max-h-[60vh] stylised-scrollbar relative">
+                    <table class="w-full text-left border-collapse">
+                        <thead
+                            class="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                            <tr class="text-xs uppercase tracking-wider text-gray-600 border-b border-gray-200">
+                                <th class="px-4 py-3 font-semibold">N° facture</th>
+                                <th class="px-4 py-3 font-semibold">Client / fournisseur</th>
+                                <th class="px-4 py-3 font-semibold text-center">Flux</th>
+                                <th class="px-4 py-3 font-semibold text-right">HT</th>
+                                <th class="px-4 py-3 font-semibold text-right">TTC</th>
+                                <th class="px-4 py-3 font-semibold text-center">Émission</th>
+                                <th class="px-4 py-3 font-semibold text-center">Plateforme</th>
+                                <th class="px-4 py-3 font-semibold text-center">Paiement</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-gray-100">
+                            <tr v-for="f in factures" :key="f.id" @click="openDetail(f.id)"
+                                class="hover:bg-gray-50/80 cursor-pointer transition-colors"
+                                :class="{ 'bg-indigo-50/60 border-l-4 border-indigo-500': selectedId === f.id, 'border-l-4 border-transparent': selectedId !== f.id, 'opacity-60': f.statut_paiement === 'paye' }">
+                                <td class="px-4 py-3 font-semibold text-gray-900">{{ f.numero_facture }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ clientName(f.contact) }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <span :class="fluxClass(f.flux)"
+                                        class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
+                                        fluxLabel(f.flux) }}</span>
+                                </td>
+                                <td class="px-4 py-3 text-right tabular-nums">{{ formatMoney(f.montant_ht) }}</td>
+                                <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ formatMoney(f.montant_ttc)
+                                    }}</td>
+                                <td class="px-4 py-3 text-center text-gray-500 whitespace-nowrap">{{
+                                    formatDate(f.date_emission) }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <span :class="platformBadgeClass(f.statut_plateforme)"
+                                        class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
+                                        platformLabel(f.statut_plateforme) }}</span>
+                                </td>
+                                <td class="px-4 py-3 text-center" @click.stop>
+                                    <select v-model="f.statut_paiement" @change="updatePaiement(f)"
+                                        class="text-xs font-semibold rounded-full px-2 py-1 border-0 ring-1 ring-inset cursor-pointer"
+                                        :class="paiementSelectClass(f.statut_paiement)">
+                                        <option value="non_paye">Non payé</option>
+                                        <option value="paye">Payé</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr v-if="!factures.length">
+                                <td colspan="8" class="py-12 text-center text-gray-400">Aucune facture ne correspond aux
+                                    filtres.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div v-if="detail" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Facture {{ detail.numero_facture }}</h2>
+                        <p class="text-sm text-gray-500 mt-1">{{ clientName(detail.contact) }}</p>
+                    </div>
+                    <a v-if="fileHref(detail.file_path)" :href="fileHref(detail.file_path)" target="_blank"
+                        rel="noopener"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+                        Ouvrir le fichier
+                    </a>
+                    <span v-else class="text-sm text-gray-400">Aucun fichier joint</span>
+                </div>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <div>
+                        <dt class="text-gray-500 font-medium">Flux</dt>
+                        <dd class="mt-0.5">{{ fluxLabel(detail.flux) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Devise</dt>
+                        <dd class="mt-0.5">{{ detail.devise || 'EUR' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Montant HT</dt>
+                        <dd class="mt-0.5 font-semibold">{{ formatMoney(detail.montant_ht) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">TVA</dt>
+                        <dd class="mt-0.5 font-semibold">{{ formatMoney(detail.montant_tva) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Montant TTC</dt>
+                        <dd class="mt-0.5 font-semibold">{{ formatMoney(detail.montant_ttc) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Statut plateforme</dt>
+                        <dd class="mt-0.5">{{ platformLabel(detail.statut_plateforme) }} <span
+                                class="text-gray-400">({{ detail.statut_plateforme || '—' }})</span></dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Statut paiement</dt>
+                        <dd class="mt-0.5">{{ detail.statut_paiement === 'paye' ? 'Payé' : 'Non payé' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">ID externe</dt>
+                        <dd class="mt-0.5 break-all">{{ detail.external_id || '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Date d'émission</dt>
+                        <dd class="mt-0.5">{{ formatDate(detail.date_emission) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Date d'échéance</dt>
+                        <dd class="mt-0.5">{{ formatDate(detail.date_echeance) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Date de paiement</dt>
+                        <dd class="mt-0.5">{{ formatDate(detail.date_paiement) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Devis lié</dt>
+                        <dd class="mt-0.5">{{ detail.devis ? detail.devis.nom : '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Commande liée</dt>
+                        <dd class="mt-0.5">{{ detail.commande ? (detail.commande.reference || '#' +
+                            detail.commande.id) : '—' }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-gray-500 font-medium">Chemin fichier</dt>
+                        <dd class="mt-0.5 font-mono text-xs break-all">{{ detail.file_path || '—' }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, watch, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const factures = ref([]);
+                const unpaidStats = ref({ total: 0, draft: 0, pending: 0, validated: 0, rejected: 0 });
+                const filterRef = ref("");
+                const filterClient = ref("");
+                const includePaid = ref(true);
+                const selectedId = ref(null);
+                const detail = ref(null);
+                let debounceTimer = null;
+
+                const fetchStats = async () => {
+                    try {
+                        const res = await fetch("/api/factures/stats-unpaid");
+                        if (res.ok) unpaidStats.value = await res.json();
+                    } catch (e) { console.error(e); }
+                };
+
+                const fetchList = async () => {
+                    try {
+                        const q = new URLSearchParams();
+                        if (filterRef.value.trim()) q.set("ref", filterRef.value.trim());
+                        if (filterClient.value.trim()) q.set("client", filterClient.value.trim());
+                        q.set("include_paid", includePaid.value ? "true" : "false");
+                        const res = await fetch("/api/factures?" + q.toString());
+                        if (!res.ok) throw new Error("API");
+                        factures.value = await res.json();
+                    } catch (e) { console.error(e); }
+                };
+
+                const refreshAll = async () => {
+                    await Promise.all([fetchStats(), fetchList()]);
+                };
+
+                watch([filterRef, filterClient], () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(fetchList, 350);
+                });
+
+                watch(includePaid, () => { fetchList(); });
+
+                const openDetail = async (id) => {
+                    selectedId.value = id;
+                    try {
+                        const res = await fetch("/api/factures/" + id);
+                        if (res.ok) detail.value = await res.json();
+                        else detail.value = null;
+                    } catch (e) { detail.value = null; }
+                };
+
+                const updatePaiement = async (f) => {
+                    try {
+                        const res = await fetch("/api/factures/" + f.id + "/statut-paiement", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ statut_paiement: f.statut_paiement }),
+                        });
+                        if (!res.ok) {
+                            await refreshAll();
+                            return;
+                        }
+                        const updated = await res.json();
+                        const i = factures.value.findIndex((x) => x.id === f.id);
+                        if (i >= 0) factures.value[i] = updated;
+                        if (selectedId.value === f.id) detail.value = updated;
+                        fetchStats();
+                    } catch (e) { await refreshAll(); }
+                };
+
+                const clientName = (c) => {
+                    if (!c) return "—";
+                    const full = `${c.prenom || ""} ${c.nom || ""}`.trim();
+                    return full || c.entreprise || c.email || "—";
+                };
+
+                const formatMoney = (v) => {
+                    if (v === null || v === undefined) return "—";
+                    return Number(v).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+                };
+
+                const formatDate = (d) => {
+                    if (!d) return "—";
+                    const x = new Date(d);
+                    if (isNaN(x)) return "—";
+                    return x.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
+                };
+
+                const fluxLabel = (flux) => {
+                    if (flux === "réceptionnée" || flux === "receptionnee") return "Réceptionnée";
+                    if (flux === "envoyée" || flux === "envoyee") return "Envoyée";
+                    return flux || "—";
+                };
+
+                const fluxClass = (flux) => {
+                    if (flux === "envoyée" || flux === "envoyee") return "bg-sky-100 text-sky-800";
+                    if (flux === "réceptionnée" || flux === "receptionnee") return "bg-violet-100 text-violet-800";
+                    return "bg-gray-100 text-gray-700";
+                };
+
+                const platformKey = (s) => {
+                    const x = (s || "").toString().trim().toLowerCase() || "draft";
+                    if (x === "draft") return "draft";
+                    if (x === "pending" || x === "sent") return "pending";
+                    if (x === "validated") return "validated";
+                    if (x === "rejected") return "rejected";
+                    return "pending";
+                };
+
+                const platformLabel = (s) => {
+                    const k = platformKey(s);
+                    const map = { draft: "Brouillon", pending: "En attente / envoyée", validated: "Validée", rejected: "Rejetée" };
+                    return map[k] || s || "—";
+                };
+
+                const platformBadgeClass = (s) => {
+                    const k = platformKey(s);
+                    if (k === "draft") return "bg-amber-100 text-amber-900";
+                    if (k === "pending") return "bg-blue-100 text-blue-900";
+                    if (k === "validated") return "bg-emerald-100 text-emerald-900";
+                    if (k === "rejected") return "bg-red-100 text-red-900";
+                    return "bg-gray-100 text-gray-800";
+                };
+
+                const paiementSelectClass = (p) => {
+                    if (p === "paye") return "bg-emerald-50 text-emerald-800 ring-emerald-200";
+                    return "bg-orange-50 text-orange-800 ring-orange-200";
+                };
+
+                const fileHref = (fp) => {
+                    if (!fp || !String(fp).trim()) return "";
+                    const s = String(fp).trim();
+                    if (s.startsWith("http://") || s.startsWith("https://")) return s;
+                    return s.startsWith("/") ? s : "/" + s;
+                };
+
+                onMounted(() => {
+                    refreshAll();
+                    setInterval(fetchStats, 45000);
+                });
+
+                return {
+                    factures, unpaidStats, filterRef, filterClient, includePaid,
+                    selectedId, detail, openDetail, updatePaiement,
+                    clientName, formatMoney, formatDate, fluxLabel, fluxClass,
+                    platformLabel, platformBadgeClass, paiementSelectClass, fileHref,
+                };
+            },
+        }).mount("#app");
+    </script>
+    {% endraw %}
+</body>
+
+</html>

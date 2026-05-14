@@ -30,11 +30,10 @@ Dès que je valide une modif ou que je dis "déploie", enchaîne :
 
 ## 4. Debugging & Logs
 
-- **No Local Run**: Ne tente jamais de lancer le projet ou de débugger en local sur Fedora.
-- **Remote Debug**: Connecte-toi toujours au VPS pour voir ce qui se passe :
-  `ssh root@mrliw.fr "cd /root/crm-stack/dashboard/crm_dashboard && docker compose logs -f --tail=50"`
+- **Référence d’exécution** : le projet doit **fonctionner sur le VPS** (Docker + PostgreSQL + `.env`). Ne perds pas de temps à faire tourner ou réparer l’environnement local Fedora pour valider l’app : pousse le code, déploie, vérifie sur le serveur.
+- **Logs** : `ssh root@mrliw.fr "cd /root/crm-stack/dashboard/crm_dashboard && docker compose logs -f --tail=50"`
 
 ## 5. Coding Style
 
-- **Stack**: Python 3.11, **FastAPI** servi par **Uvicorn**, **Jinja2** (`templates/`), fichiers statiques (`static/`), **SQLAlchemy 2** + PostgreSQL en prod (`DATABASE_URL` sur le VPS). PDF : **pdfkit** + **wkhtmltopdf** (image Docker). UI : **Tailwind CSS** via CDN dans les templates HTML (pas de React/Next.js).
+- **Stack** : **FastAPI** + **Uvicorn**, **Jinja2** (`templates/`), fichiers statiques (`static/`), **SQLAlchemy 2** + PostgreSQL sur le VPS. PDF : **pdfkit** + **wkhtmltopdf** (image Docker). UI : **Tailwind CSS** via CDN dans les templates HTML.
 - **Output**: Donne le code directement, sois concis.
