@@ -8,7 +8,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -795,6 +795,12 @@ def list_factures(
             return []
         q = q.filter(Facture.contact_id.in_(contact_ids))
     return q.order_by(Facture.date_emission.desc()).all()
+
+
+@app.head("/api/factures")
+def head_list_factures():
+    """Sondes HEAD (healthcheck Docker, proxy) : pas de corps, évite 405 sur GET /api/factures."""
+    return Response(status_code=200)
 
 
 @app.get("/api/factures/{facture_id}", response_model=FactureSchema)
