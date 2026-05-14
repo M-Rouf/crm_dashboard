@@ -330,9 +330,6 @@
                     <div class="text-2xl font-bold text-emerald-900 mt-1">{{ unpaidStats.validated }}</div>
                 </div>
             </div>
-            <p class="text-xs text-gray-500 -mt-4 max-w-4xl">
-                Le total « non payées » compte les factures avec un reste au TTC (hors rejetées), y compris une ligne marquée « payé » si le montant payé est encore inférieur au TTC (données à corriger à l’ouverture du détail).
-            </p>
 
             <div class="overflow-hidden rounded-lg border border-slate-300/80 bg-white shadow-sm ring-1 ring-slate-900/10">
                 <div
@@ -483,6 +480,25 @@
                         <dd class="mt-0.5">{{ platformLabel(detail.statut_plateforme) }} <span
                                 class="text-gray-400">({{ detail.statut_plateforme || '—' }})</span></dd>
                     </div>
+                    <div v-if="detailPlateformeBrouillon(detail)" class="sm:col-span-2">
+                        <dt class="text-gray-500 font-medium">Validation plateforme</dt>
+                        <dd class="mt-0.5 flex flex-wrap items-center gap-2">
+                            <button type="button" @click="setFacturePlateforme('validated')"
+                                :disabled="plateformeActionsLoading"
+                                class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 shadow-sm">Valider</button>
+                            <button type="button" @click="setFacturePlateforme('rejected')"
+                                :disabled="plateformeActionsLoading"
+                                class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 shadow-sm">Rejeter</button>
+                        </dd>
+                    </div>
+                    <div v-if="facturePlateformeValideePourEnvoi(detail)" class="sm:col-span-2">
+                        <dt class="text-gray-500 font-medium">Envoi (plateforme)</dt>
+                        <dd class="mt-0.5 flex flex-wrap items-center gap-2">
+                            <button type="button" @click="setFacturePlateforme('sent')"
+                                :disabled="plateformeActionsLoading"
+                                class="px-4 py-2 bg-sky-600 text-white rounded-lg text-sm font-medium hover:bg-sky-700 disabled:opacity-50 shadow-sm">Envoyer</button>
+                        </dd>
+                    </div>
                     <div>
                         <dt class="text-gray-500 font-medium">Statut paiement</dt>
                         <dd class="mt-0.5">{{ paiementLabel(detail.statut_paiement) }}</dd>
@@ -535,9 +551,10 @@
                 const listError = ref("");
                 const filterRef = ref("");
                 const filterClient = ref("");
-                const includePaid = ref(true);
+                const includePaid = ref(false);
                 const selectedId = ref(null);
                 const detail = ref(null);
+                const plateformeActionsLoading = ref(false);
                 let debounceTimer = null;
 
                 const contacts = ref([]);
@@ -926,9 +943,11 @@
                 };
 
                 const platformKey = (s) => {
-                    const x = (s || "").toString().trim().toLowerCase() || "draft";
+                    let x = (s || "").toString().trim().toLowerCase() || "draft";
+                    if (x === "brouillon") x = "draft";
                     if (x === "draft") return "draft";
-                    if (x === "pending" || x === "sent") return "pending";
+                    if (x === "sent") return "sent";
+                    if (x === "pending") return "pending";
                     if (x === "validated") return "validated";
                     if (x === "rejected") return "rejected";
                     return "pending";
@@ -936,7 +955,13 @@
 
                 const platformLabel = (s) => {
                     const k = platformKey(s);
-                    const map = { draft: "Brouillon", pending: "En attente / envoyée", validated: "Validée", rejected: "Rejetée" };
+                    const map = {
+                        draft: "Brouillon",
+                        pending: "En attente",
+                        sent: "Envoyée",
+                        validated: "Validée",
+                        rejected: "Rejetée",
+                    };
                     return map[k] || s || "—";
                 };
 
@@ -944,9 +969,46 @@
                     const k = platformKey(s);
                     if (k === "draft") return "bg-amber-100 text-amber-900";
                     if (k === "pending") return "bg-blue-100 text-blue-900";
+                    if (k === "sent") return "bg-sky-100 text-sky-900";
                     if (k === "validated") return "bg-emerald-100 text-emerald-900";
                     if (k === "rejected") return "bg-red-100 text-red-900";
                     return "bg-gray-100 text-gray-800";
+                };
+
+                const detailPlateformeBrouillon = (d) =>
+                    Boolean(d && platformKey(d.statut_plateforme) === "draft");
+
+                const facturePlateformeValideePourEnvoi = (d) => {
+                    if (!d) return false;
+                    const x = (d.statut_plateforme || "").toString().trim().toLowerCase();
+                    return x === "validated";
+                };
+
+                const setFacturePlateforme = async (statut_plateforme) => {
+                    const id = detail.value && detail.value.id;
+                    if (!id) return;
+                    plateformeActionsLoading.value = true;
+                    try {
+                        const res = await fetch(`/api/factures/${id}/statut-plateforme`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ statut_plateforme }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            const msg =
+                                typeof data.detail === "string"
+                                    ? data.detail
+                                    : JSON.stringify(data.detail || data);
+                            throw new Error(msg || "Erreur");
+                        }
+                        detail.value = data;
+                        await refreshAll();
+                    } catch (e) {
+                        alert(e.message || "Erreur");
+                    } finally {
+                        plateformeActionsLoading.value = false;
+                    }
                 };
 
                 const paiementLabel = (p) => {
@@ -978,6 +1040,8 @@
                     factures, unpaidStats, filterRef, filterClient, includePaid,
                     listLoading, listError, refreshAll,
                     selectedId, detail, openDetail,
+                    plateformeActionsLoading,
+                    detailPlateformeBrouillon, facturePlateformeValideePourEnvoi, setFacturePlateforme,
                     versementMontant, versementError, versementSubmitting, submitVersement,
                     isFullyPaid, detailCanAddVersement, montantRestantVersement,
                     clientName, formatMoney, formatDate, fluxLabel, fluxClass,

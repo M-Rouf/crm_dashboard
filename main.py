@@ -403,6 +403,7 @@ class CommandeUpdate(BaseModel):
 class FactureDevisMini(BaseModel):
     id: int
     nom: Optional[str] = None
+    statut: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -456,6 +457,10 @@ class FactureSchema(BaseModel):
 
 class FactureVersementBody(BaseModel):
     montant: float
+
+
+class FacturePlateformeUpdate(BaseModel):
+    statut_plateforme: str
 
 
 # --- Initialisation FastAPI ---
@@ -795,6 +800,53 @@ def list_factures(
             return []
         q = q.filter(Facture.contact_id.in_(contact_ids))
     return q.order_by(Facture.date_emission.desc()).all()
+
+
+@app.patch(
+    "/api/factures/{facture_id}/statut-plateforme",
+    response_model=FactureSchema,
+)
+def update_facture_statut_plateforme(
+    facture_id: int,
+    body: FacturePlateformeUpdate,
+    db: Session = Depends(get_db),
+):
+    raw = (body.statut_plateforme or "").strip().lower()
+    if raw not in ("validated", "rejected", "sent"):
+        raise HTTPException(
+            status_code=400,
+            detail="statut_plateforme doit être « validated », « rejected » ou « sent ».",
+        )
+    facture = (
+        db.query(Facture)
+        .options(
+            joinedload(Facture.contact),
+            joinedload(Facture.devis),
+            joinedload(Facture.commande),
+            joinedload(Facture.facture_associee),
+        )
+        .filter(Facture.id == facture_id)
+        .first()
+    )
+    if not facture:
+        raise HTTPException(status_code=404, detail="Facture non trouvée")
+    bucket = _facture_platform_bucket(facture.statut_plateforme)
+    if raw in ("validated", "rejected"):
+        if bucket != "draft":
+            raise HTTPException(
+                status_code=400,
+                detail="Seules les factures en brouillon peuvent être validées ou rejetées.",
+            )
+    else:  # sent
+        if bucket != "validated":
+            raise HTTPException(
+                status_code=400,
+                detail="Seules les factures validées sur la plateforme peuvent être marquées comme envoyées.",
+            )
+    facture.statut_plateforme = raw[:100]
+    db.commit()
+    db.refresh(facture)
+    return facture
 
 
 @app.head("/api/factures")
