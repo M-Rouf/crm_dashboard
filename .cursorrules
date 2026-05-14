@@ -1,0 +1,40 @@
+# CRM Project Rules - Local Code / Remote Stack
+
+## 1. Project Structure & Context
+
+- **Local Root (Fedora)**: Tu es actuellement dans le dossier source du Dashboard (le code).
+- **Remote Root (VPS)**: Le projet est déployé dans `/root/crm-stack/dashboard/crm-dashboard` sur `mrliw.fr`.
+- **Note**: Le dossier `crm-stack` n'existe que sur le VPS.
+
+## 2. Secrets & Environment
+
+- **Source of Truth**: Le fichier `.env` est EXCLUSIVEMENT sur le VPS dans `/root/crm-stack/dashboard/crm-dashboard/.env`.
+- **AI Policy**: Pour toute question sur les variables d'env, connecte-toi en SSH sur `mrliw.fr` pour lire le fichier distant. Ne crée jamais de `.env` localement.
+
+## 3. Deployment Protocol (Command: "déploie")
+
+Dès que je valide une modif ou que je dis "déploie", enchaîne :
+
+1. **Local (Fedora)**:
+   - `git add .`
+   - Commit avec un message technique et pertinent.
+   - `git push`.
+
+2. **Remote (SSH root@mrliw.fr)**:
+   - `cd /root/crm-stack/dashboard/crm-dashboard`
+   - `git pull`
+   - `docker compose up -d --build`
+
+3. **Status Check**:
+   - `docker ps` pour confirmer que le container est "Up".
+
+## 4. Debugging & Logs
+
+- **No Local Run**: Ne tente jamais de lancer le projet ou de débugger en local sur Fedora.
+- **Remote Debug**: Connecte-toi toujours au VPS pour voir ce qui se passe :
+  `ssh root@mrliw.fr "cd /root/crm-stack/dashboard/crm-dashboard && docker compose logs -f --tail=50"`
+
+## 5. Coding Style
+
+- **Stack**: React/Next.js, Tailwind CSS.
+- **Output**: Donne le code directement, sois concis.
