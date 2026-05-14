@@ -8,6 +8,14 @@ body {
   display: none;
 }
 
+.mobile-nav-summary {
+  list-style: none;
+}
+
+.mobile-nav-summary::-webkit-details-marker {
+  display: none;
+}
+
 /* Scrollbar personnalisée élégante pour le tableau (SaaS Style) */
 .stylised-scrollbar::-webkit-scrollbar {
   width: 6px;

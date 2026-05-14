@@ -323,7 +323,7 @@
                     </a>
 
                     <!-- Navigation -->
-                    <nav class="flex items-center gap-1">
+                    <nav class="hidden md:flex items-center gap-1">
                         <a href="/"
                             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
                         <a href="/contacts"
@@ -332,11 +332,29 @@
                             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
                         <a href="/devis"
                             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Devis</a>
-                        <a href="/commandes"
+                        <a href="/commandes" aria-current="page"
                             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Commandes</a>
                         <a href="/factures"
                             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Factures</a>
                     </nav>
+                    <details class="relative md:hidden group">
+                        <summary
+                            class="mobile-nav-summary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900">
+                            <span>Menu</span>
+                            <svg class="h-4 w-4 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </summary>
+                        <div
+                            class="absolute left-0 top-full z-50 mt-2 flex w-56 flex-col gap-1 rounded-xl border border-gray-100 bg-white p-2 shadow-xl">
+                            <a href="/" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
+                            <a href="/contacts" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
+                            <a href="/actions" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
+                            <a href="/devis" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Devis</a>
+                            <a href="/commandes" aria-current="page" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Commandes</a>
+                            <a href="/factures" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Factures</a>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="flex items-center">
