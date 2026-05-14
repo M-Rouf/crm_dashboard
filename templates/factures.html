@@ -339,10 +339,10 @@
                         <thead
                             class="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                             <tr class="text-xs uppercase tracking-wider text-gray-600 border-b border-gray-200">
+                                <th class="px-4 py-3 font-semibold text-left">Type</th>
                                 <th class="px-4 py-3 font-semibold">N° facture</th>
                                 <th class="px-4 py-3 font-semibold">Client / fournisseur</th>
                                 <th class="px-4 py-3 font-semibold text-center">Flux</th>
-                                <th class="px-4 py-3 font-semibold text-right">HT</th>
                                 <th class="px-4 py-3 font-semibold text-right">TTC</th>
                                 <th class="px-4 py-3 font-semibold text-center">Émission</th>
                                 <th class="px-4 py-3 font-semibold text-center">Plateforme</th>
@@ -353,6 +353,11 @@
                             <tr v-for="f in factures" :key="f.id" @click="openDetail(f.id)"
                                 class="hover:bg-gray-50/80 cursor-pointer transition-colors"
                                 :class="{ 'bg-sky-50/80 border-l-4 border-sky-600': selectedId === f.id, 'border-l-4 border-transparent': selectedId !== f.id, 'opacity-60': f.statut_paiement === 'paye' || platformKey(f.statut_plateforme) === 'rejected' }">
+                                <td class="px-4 py-3">
+                                    <span :class="typeFactureClass(f.type_facture)"
+                                        class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
+                                        typeFactureLabel(f.type_facture) }}</span>
+                                </td>
                                 <td class="px-4 py-3 font-semibold text-gray-900">{{ f.numero_facture }}</td>
                                 <td class="px-4 py-3 text-gray-700">{{ clientName(f.contact) }}</td>
                                 <td class="px-4 py-3 text-center">
@@ -360,7 +365,6 @@
                                         class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
                                         fluxLabel(f.flux) }}</span>
                                 </td>
-                                <td class="px-4 py-3 text-right tabular-nums">{{ formatMoney(f.montant_ht) }}</td>
                                 <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ formatMoney(f.montant_ttc)
                                     }}</td>
                                 <td class="px-4 py-3 text-center text-gray-500 whitespace-nowrap">{{
@@ -391,7 +395,7 @@
             <div v-if="detail" class="rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
                 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">Facture {{ detail.numero_facture }}</h2>
+                        <h2 class="text-xl font-bold text-gray-900">{{ docTypeTitle(detail) }} {{ detail.numero_facture }}</h2>
                         <p class="text-sm text-gray-500 mt-1">{{ clientName(detail.contact) }}</p>
                     </div>
                     <a v-if="fileHref(detail.file_path)" :href="fileHref(detail.file_path)" target="_blank"
@@ -402,6 +406,34 @@
                     <span v-else class="text-sm text-gray-400">Aucun fichier joint</span>
                 </div>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <div>
+                        <dt class="text-gray-500 font-medium">Type de document</dt>
+                        <dd class="mt-0.5">
+                            <span :class="typeFactureClass(detail.type_facture)"
+                                class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
+                                typeFactureLabel(detail.type_facture) }}</span>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Montant payé</dt>
+                        <dd class="mt-0.5 font-semibold tabular-nums">{{ formatMoney(detail.montant_paye) }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-gray-500 font-medium">Facture associée</dt>
+                        <dd class="mt-0.5">
+                            <template v-if="detail.facture_associee">
+                                <button type="button" @click="openDetail(detail.facture_associee.id)"
+                                    class="text-sky-700 hover:text-sky-900 font-medium underline decoration-sky-300 underline-offset-2">
+                                    {{ detail.facture_associee.numero_facture }} (#{{ detail.facture_associee.id }})
+                                </button>
+                            </template>
+                            <template v-else-if="detail.id_facture_associee">
+                                <span class="text-amber-800 text-sm">Réf. interne n° {{ detail.id_facture_associee }} (lien
+                                    indisponible)</span>
+                            </template>
+                            <span v-else class="text-gray-400">—</span>
+                        </dd>
+                    </div>
                     <div>
                         <dt class="text-gray-500 font-medium">Flux</dt>
                         <dd class="mt-0.5">{{ fluxLabel(detail.flux) }}</dd>
@@ -774,6 +806,22 @@
                     return "bg-gray-100 text-gray-700";
                 };
 
+                const typeFactureLabel = (t) => {
+                    const x = (t || "Facture").toString().trim();
+                    return x === "Avoir" ? "Avoir" : "Facture";
+                };
+
+                const typeFactureClass = (t) => {
+                    const x = (t || "Facture").toString().trim();
+                    if (x === "Avoir") return "bg-violet-100 text-violet-900";
+                    return "bg-slate-200 text-slate-800";
+                };
+
+                const docTypeTitle = (d) => {
+                    if (!d) return "Facture";
+                    return typeFactureLabel(d.type_facture);
+                };
+
                 const platformKey = (s) => {
                     const x = (s || "").toString().trim().toLowerCase() || "draft";
                     if (x === "draft") return "draft";
@@ -820,6 +868,7 @@
                     factures, unpaidStats, filterRef, filterClient, includePaid,
                     selectedId, detail, openDetail, updatePaiement,
                     clientName, formatMoney, formatDate, fluxLabel, fluxClass,
+                    typeFactureLabel, typeFactureClass, docTypeTitle,
                     platformLabel, platformBadgeClass, paiementSelectClass, fileHref,
                     contacts, devisList, commandesList,
                     showManualModal, manualAddForm, manualFileInput, manualError, isManualSubmitting,

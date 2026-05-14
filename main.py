@@ -174,10 +174,21 @@ class Facture(Base):
     date_emission = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     date_echeance = Column(DateTime(timezone=True))
     date_paiement = Column(DateTime(timezone=True))
+    type_facture = Column("type", String(20), default="Facture")
+    id_facture_associee = Column(
+        Integer, ForeignKey("factures.id", ondelete="SET NULL"), nullable=True
+    )
+    montant_paye = Column(Numeric(12, 2), default=0)
 
     contact = relationship("Contact", back_populates="factures")
     devis = relationship("Devis", foreign_keys=[devis_id])
     commande = relationship("Commande", foreign_keys=[commande_id])
+    facture_associee = relationship(
+        "Facture",
+        remote_side=[id],
+        foreign_keys=[id_facture_associee],
+        uselist=False,
+    )
 
 
 def _facture_platform_bucket(statut_plateforme: Optional[str]) -> str:
@@ -344,6 +355,14 @@ class FactureCommandeMini(BaseModel):
         from_attributes = True
 
 
+class FactureLieeMini(BaseModel):
+    id: int
+    numero_facture: str
+
+    class Config:
+        from_attributes = True
+
+
 class FactureSchema(BaseModel):
     id: int
     numero_facture: str
@@ -359,12 +378,16 @@ class FactureSchema(BaseModel):
     external_id: Optional[str] = None
     statut_plateforme: Optional[str] = "draft"
     statut_paiement: Optional[str] = "non_paye"
+    type_facture: Optional[str] = "Facture"
+    montant_paye: Optional[float] = 0
+    id_facture_associee: Optional[int] = None
     date_emission: Optional[datetime.datetime] = None
     date_echeance: Optional[datetime.datetime] = None
     date_paiement: Optional[datetime.datetime] = None
     contact: Optional[ContactSchema] = None
     devis: Optional[FactureDevisMini] = None
     commande: Optional[FactureCommandeMini] = None
+    facture_associee: Optional[FactureLieeMini] = None
 
     class Config:
         from_attributes = True
@@ -661,6 +684,7 @@ def list_factures(
         joinedload(Facture.contact),
         joinedload(Facture.devis),
         joinedload(Facture.commande),
+        joinedload(Facture.facture_associee),
     )
     if not include_paid:
         q = q.filter(
@@ -711,6 +735,7 @@ def get_facture(facture_id: int, db: Session = Depends(get_db)):
             joinedload(Facture.contact),
             joinedload(Facture.devis),
             joinedload(Facture.commande),
+            joinedload(Facture.facture_associee),
         )
         .filter(Facture.id == facture_id)
         .first()
@@ -737,6 +762,7 @@ def update_facture_statut_paiement(
             joinedload(Facture.contact),
             joinedload(Facture.devis),
             joinedload(Facture.commande),
+            joinedload(Facture.facture_associee),
         )
         .filter(Facture.id == facture_id)
         .first()
@@ -892,6 +918,9 @@ def create_manual_facture(
         date_emission=emission,
         date_echeance=echeance,
         date_paiement=pay_dt,
+        type_facture="Facture",
+        montant_paye=0,
+        id_facture_associee=None,
     )
     db.add(facture)
     try:
