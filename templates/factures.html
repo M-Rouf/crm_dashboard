@@ -711,6 +711,7 @@
                         versementMontant.value = null;
                         const i = factures.value.findIndex((x) => x.id === data.id);
                         if (i >= 0) factures.value[i] = data;
+                        await fetchList();
                         await fetchStats();
                     } catch (e) {
                         versementError.value = e.message || "Erreur";
@@ -805,9 +806,13 @@
                         const q = new URLSearchParams();
                         if (filterRef.value.trim()) q.set("ref", filterRef.value.trim());
                         if (filterClient.value.trim()) q.set("client", filterClient.value.trim());
-                        q.set("include_paid", includePaid.value ? "true" : "false");
+                        q.set("include_paid", includePaid.value === true ? "true" : "false");
                         const res = await fetch("/api/factures?" + q.toString());
-                        if (!res.ok) throw new Error("API");
+                        if (!res.ok) {
+                            const t = await res.text().catch(() => "");
+                            console.error("GET /api/factures", res.status, t);
+                            throw new Error("API");
+                        }
                         factures.value = await res.json();
                     } catch (e) { console.error(e); }
                 };

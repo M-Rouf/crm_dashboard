@@ -221,6 +221,11 @@ def _statut_paiement_from_montants(montant_paye: Decimal, montant_ttc: Decimal) 
     return "partiel"
 
 
+def _facture_non_soldee_sql():
+    """Facture non marquée « payée » (NULL et « partiel » inclus). SQL robuste NULL."""
+    return Facture.statut_paiement.is_distinct_from("paye")
+
+
 # --- Schémas Pydantic ---
 class ContactSchema(BaseModel):
     id: int
@@ -358,7 +363,7 @@ class CommandeUpdate(BaseModel):
 
 class FactureDevisMini(BaseModel):
     id: int
-    nom: str
+    nom: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -374,7 +379,7 @@ class FactureCommandeMini(BaseModel):
 
 class FactureLieeMini(BaseModel):
     id: int
-    numero_facture: str
+    numero_facture: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -667,10 +672,7 @@ def factures_unpaid_stats(db: Session = Depends(get_db)):
         db.query(Facture)
         .filter(
             and_(
-                or_(
-                    Facture.statut_paiement != "paye",
-                    Facture.statut_paiement.is_(None),
-                ),
+                _facture_non_soldee_sql(),
                 func.lower(func.trim(func.coalesce(Facture.statut_plateforme, "")))
                 != "rejected",
             )
@@ -721,10 +723,7 @@ def list_factures(
     if not include_paid:
         q = q.filter(
             and_(
-                or_(
-                    Facture.statut_paiement != "paye",
-                    Facture.statut_paiement.is_(None),
-                ),
+                _facture_non_soldee_sql(),
                 func.lower(func.trim(func.coalesce(Facture.statut_plateforme, "")))
                 != "rejected",
             )
