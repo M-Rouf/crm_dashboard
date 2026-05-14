@@ -13,18 +13,18 @@
 
 ## 3. Deployment Protocol (Command: "déploie")
 
-Dès que je valide une modif ou que je dis "déploie", enchaîne **uniquement côté dépôt Git** (le déploiement sur le VPS est assuré par un **workflow GitHub Actions** déclenché au `git push`) :
+Dès que je valide une modif ou que je dis "déploie", enchaîne **uniquement côté dépôt Git** (le déploiement sur le VPS est assuré par un **workflow n8n** déclenché au `git push`) :
 
 1. **Local (Fedora)**:
    - `git add .`
    - Commit avec un message technique et pertinent.
-   - `git push` (vers la branche / remote utilisé par le workflow).
+   - `git push` (vers la branche / remote attendu par n8n).
 
-Ne pas exécuter de commandes SSH manuelles sur le VPS ni `docker compose` depuis l’agent pour ce flux : le pipeline CI/CD s’en charge après le push.
+Ne pas exécuter de commandes SSH manuelles sur le VPS ni `docker compose` depuis l’agent pour ce flux : n8n s’en charge après le push.
 
 ## 4. Debugging & Logs
 
-- **Référence d’exécution** : le projet tourne sur le VPS (Docker + PostgreSQL + `.env`) après déploiement automatique. Ne perds pas de temps à faire tourner ou réparer l’environnement local Fedora pour valider l’app : pousse le code (commit + push) et laisse le workflow déployer ; vérifier sur le serveur si besoin.
+- **Référence d’exécution** : le projet tourne sur le VPS (Docker + PostgreSQL + `.env`) après déploiement automatique (n8n au push). Ne perds pas de temps à faire tourner ou réparer l’environnement local Fedora pour valider l’app : pousse le code (commit + push) et laisse n8n déployer ; vérifier sur le serveur si besoin.
 - **Logs** : `ssh root@mrliw.fr "cd /root/crm-stack/dashboard/crm_dashboard && docker compose logs -f --tail=50"`
 
 ## 5. Coding Style
