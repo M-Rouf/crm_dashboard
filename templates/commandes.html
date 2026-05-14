@@ -26,7 +26,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 
-<body class="bg-gray-50 text-gray-900 antialiased leading-normal tracking-normal min-h-screen">
+<body class="min-h-screen text-slate-900 antialiased leading-normal tracking-normal">
     {% raw %}
     <div id="app" v-cloak class="min-h-screen flex flex-col">
         <!-- Modal Ajout Manuel Commande -->
@@ -62,12 +62,12 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Référence *</label>
                                 <input v-model="manualAddForm.reference" placeholder="Ex: CMD-2026-001" type="text"
                                     required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Priorité</label>
                                 <select v-model="manualAddForm.priorite" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 bg-white text-gray-900">
                                     <option value="basse">Basse</option>
                                     <option value="normale">Normale</option>
                                     <option value="haute">Haute</option>
@@ -80,7 +80,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Contact (Client / Fournisseur)
                                 *</label>
                             <select v-model="manualAddForm.contact_id" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 bg-white text-gray-900">
                                 <option value="" disabled>Sélectionner un contact...</option>
                                 <option v-for="c in contacts" :key="c.id" :value="c.id">
                                     {{ clientName(c) }}
@@ -92,7 +92,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Devis associé
                                 (Optionnel)</label>
                             <select v-model="manualAddForm.devis_id"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 bg-white text-gray-900">
                                 <option value="">Aucun devis</option>
                                 <option v-for="d in devisList" :key="d.id" :value="d.id">
                                     {{ d.nom || d.id }} ({{ d.montant_ttc ? Number(d.montant_ttc).toFixed(2) + ' €' :
@@ -110,7 +110,7 @@
                                     </div>
                                     <input v-model.number="manualAddForm.montant_ht" type="number" step="0.01" min="0"
                                         required
-                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                             </div>
                             <div>
@@ -121,7 +121,7 @@
                                     </div>
                                     <input v-model.number="manualAddForm.montant_ttc" type="number" step="0.01" min="0"
                                         required
-                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                             </div>
                         </div>
@@ -129,41 +129,41 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Date de livraison prévue</label>
                             <input v-model="manualAddForm.date_livraison_prevue" type="date"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Lien de suivi colis
                                 (Optionnel)</label>
                             <input v-model="manualAddForm.url_suivi_colis" type="url" placeholder="https://..."
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea v-model="manualAddForm.description" rows="2"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Notes internes</label>
                             <textarea v-model="manualAddForm.notes_internes" rows="2"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Fichier de la commande *</label>
                             <input type="file" ref="manualFileInput" @change="onManualFileChange" required
-                                class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                                class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-900 hover:file:bg-sky-100" />
                         </div>
 
                         <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
                             <button type="button" @click="closeManualModal" :disabled="isManualSubmitting"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors disabled:opacity-50">
                                 Annuler
                             </button>
                             <button type="submit" :disabled="isManualSubmitting"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors flex items-center gap-2 disabled:opacity-50">
                                 <span v-if="isManualSubmitting">Enregistrement...</span>
                                 <span v-else>Enregistrer</span>
                             </button>
@@ -212,7 +212,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Priorité</label>
                                 <select v-model="editForm.priorite" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 bg-white text-gray-900">
                                     <option value="basse">Basse</option>
                                     <option value="normale">Normale</option>
                                     <option value="haute">Haute</option>
@@ -225,7 +225,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Contact (Client / Fournisseur)
                                 *</label>
                             <select v-model="editForm.contact_id" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 bg-white text-gray-900">
                                 <option value="" disabled>Sélectionner un contact...</option>
                                 <option v-for="c in contacts" :key="c.id" :value="c.id">
                                     {{ clientName(c) }}
@@ -237,7 +237,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Devis associé
                                 (Optionnel)</label>
                             <select v-model="editForm.devis_id"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 bg-white text-gray-900">
                                 <option value="">Aucun devis</option>
                                 <option v-for="d in devisList" :key="d.id" :value="d.id">
                                     {{ d.nom || d.id }} ({{ d.montant_ttc ? Number(d.montant_ttc).toFixed(2) + ' €' :
@@ -274,35 +274,35 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Date de livraison prévue</label>
                             <input v-model="editForm.date_livraison_prevue" type="date"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Lien de suivi colis
                                 (Optionnel)</label>
                             <input v-model="editForm.url_suivi_colis" type="url" placeholder="https://..."
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea v-model="editForm.description" rows="2"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Notes internes</label>
                             <textarea v-model="editForm.notes_internes" rows="2"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
                         </div>
 
                         <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
                             <button type="button" @click="closeEditModal" :disabled="isEditSubmitting"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors disabled:opacity-50">
                                 Annuler
                             </button>
                             <button type="submit" :disabled="isEditSubmitting"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors flex items-center gap-2 disabled:opacity-50">
                                 <span v-if="isEditSubmitting">Enregistrement...</span>
                                 <span v-else>Enregistrer</span>
                             </button>
@@ -313,53 +313,53 @@
         </div>
 
         <!-- En-tête Global -->
-        <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-sm">
+        <header class="sticky top-0 z-50 border-b border-slate-700 bg-slate-900/95 shadow-lg shadow-slate-950/40 backdrop-blur-md">
             <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
                 <div class="flex items-center gap-6">
                     <!-- Logo -->
                     <a href="/" class="flex items-center gap-2">
                         <img src="/img/logo_mrliw.png" alt="MRLIW Logo" class="h-8 w-auto" />
-                        <span class="font-bold text-gray-800 text-lg hidden sm:block tracking-tight">Dashboard</span>
+                        <span class="font-semibold text-slate-100 text-lg hidden sm:block tracking-tight">Dashboard</span>
                     </a>
 
                     <!-- Navigation -->
                     <nav class="hidden md:flex items-center gap-1">
                         <a href="/"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Requêtes</a>
                         <a href="/contacts"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Contacts</a>
                         <a href="/actions"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Actions</a>
                         <a href="/devis"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Devis</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Devis</a>
                         <a href="/commandes" aria-current="page"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Commandes</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium border border-sky-500/40 bg-slate-800 text-sky-400 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">Commandes</a>
                         <a href="/factures"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Factures</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Factures</a>
                     </nav>
                     <details class="relative md:hidden group">
                         <summary
-                            class="mobile-nav-summary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900">
+                            class="mobile-nav-summary flex cursor-pointer items-center gap-2 rounded-md border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800 hover:text-white">
                             <span>Menu</span>
                             <svg class="h-4 w-4 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </summary>
                         <div
-                            class="absolute left-0 top-full z-50 mt-2 flex w-56 flex-col gap-1 rounded-xl border border-gray-100 bg-white p-2 shadow-xl">
-                            <a href="/" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
-                            <a href="/contacts" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
-                            <a href="/actions" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
-                            <a href="/devis" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Devis</a>
-                            <a href="/commandes" aria-current="page" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Commandes</a>
-                            <a href="/factures" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Factures</a>
+                            class="absolute left-0 top-full z-50 mt-2 flex w-56 flex-col gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/20">
+                            <a href="/" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Requêtes</a>
+                            <a href="/contacts" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Contacts</a>
+                            <a href="/actions" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Actions</a>
+                            <a href="/devis" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Devis</a>
+                            <a href="/commandes" aria-current="page" class="block rounded-md px-4 py-2 text-sm font-medium border-l-2 border-sky-500 bg-slate-100 text-slate-900">Commandes</a>
+                            <a href="/factures" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Factures</a>
                         </div>
                     </details>
                 </div>
 
                 <div class="flex items-center">
                     <div
-                        class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shadow-sm border border-indigo-200">
+                        class="h-8 w-8 rounded-md bg-slate-800 flex items-center justify-center text-sky-400 font-bold text-xs font-mono tracking-widest shadow-inner border border-slate-600">
                         MR
                     </div>
                 </div>
@@ -371,11 +371,11 @@
             <main class="order-2 flex w-full flex-col gap-8 lg:order-1 lg:w-3/4 lg:min-w-0">
                 <!-- Header / Filtres -->
                 <div
-                    class="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-gray-900/5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-                    <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    class="flex flex-col gap-4 rounded-lg border border-slate-300/80 bg-white p-5 shadow-sm ring-1 ring-slate-900/10 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                    <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="text-indigo-600">
+                            class="text-sky-600">
                             <path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"></path>
                             <path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3"></path>
                             <path d="M4 12H20"></path>
@@ -394,18 +394,18 @@
                                 </svg>
                             </span>
                             <input v-model="searchQuery" type="text" placeholder="Chercher par référence, client..."
-                                class="w-full sm:w-56 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" />
+                                class="w-full sm:w-56 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-colors" />
                         </div>
 
                         <select v-model="statusFilter"
-                            class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
+                            class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors">
                             <option value="">Tous les statuts</option>
                             <option value="en_attente">En attente</option>
                             <option value="en_cours">En cours</option>
                             <option value="terminee">Terminée</option>
                         </select>
                         <button @click="showTerminees = !showTerminees"
-                            :class="showTerminees ? 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                            :class="showTerminees ? 'bg-sky-700 text-white border-sky-600 hover:bg-sky-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
                             class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
                             <svg v-if="!showTerminees" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -426,7 +426,7 @@
                                 }}</span>
                         </button>
                         <button @click="openManualModal"
-                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 whitespace-nowrap">
+                            class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors flex items-center gap-2 whitespace-nowrap">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -439,7 +439,7 @@
                 </div>
 
                 <!-- Tableau élégant avec scroll -->
-                <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-gray-900/5">
+                <div class="overflow-hidden rounded-lg border border-slate-300/80 bg-white shadow-sm ring-1 ring-slate-900/10">
                     <div
                         class="relative max-h-[min(36rem,72vh)] overflow-x-auto overflow-y-auto stylised-scrollbar lg:max-h-[65vh]">
                         <table class="w-full text-left border-collapse">
@@ -464,7 +464,7 @@
                                 <tr v-for="cmd in filteredCommandes" :key="cmd.id" @click="selectedCommande = cmd"
                                     class="hover:bg-gray-50/50 transition-colors group cursor-pointer" :class="{
                                     'opacity-75 grayscale hover:grayscale-0': cmd.statut === 'terminee',
-                                    'bg-indigo-50/50 border-l-4 border-indigo-500': selectedCommande && selectedCommande.id === cmd.id,
+                                    'bg-sky-50/90 border-l-4 border-sky-600': selectedCommande && selectedCommande.id === cmd.id,
                                     'border-l-4 border-transparent': !(selectedCommande && selectedCommande.id === cmd.id)
                                 }">
                                     <td class="px-6 py-4">
@@ -493,7 +493,7 @@
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <select @click.stop v-model="cmd.statut" @change="updateStatus(cmd)"
-                                            class="text-xs font-semibold rounded-full px-2.5 py-1 border-0 ring-1 ring-inset cursor-pointer focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+                                            class="text-xs font-semibold rounded-full px-2.5 py-1 border-0 ring-1 ring-inset cursor-pointer focus:ring-2 focus:ring-sky-600 focus:outline-none"
                                             :class="statusSelectClass(cmd.statut)">
                                             <option value="en_attente">En attente</option>
                                             <option value="en_cours">En cours</option>
@@ -522,10 +522,10 @@
 
                 <!-- Zone de détails de la commande sélectionnée -->
                 <div v-if="selectedCommande"
-                    class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-900/5 transition-all duration-300">
+                    class="rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10 transition-all duration-300">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h2 class="text-xl font-bold text-gray-800">
+                            <h2 class="text-xl font-bold text-slate-800">
                                 <template v-if="selectedCommande.reference">
                                     Commande {{ selectedCommande.reference }}
                                 </template>
@@ -557,7 +557,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <button @click="openEditModal(selectedCommande)"
-                                class="text-gray-400 hover:text-indigo-600 p-2 rounded-xl hover:bg-indigo-50 transition-colors"
+                                class="text-gray-400 hover:text-sky-600 p-2 rounded-xl hover:bg-sky-50 transition-colors"
                                 title="Modifier">
                                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -584,7 +584,7 @@
 
                     <div v-if="selectedCommande.file_path" class="mb-5">
                         <a :href="selectedCommande.file_path" target="_blank"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors font-medium text-sm border border-indigo-100 shadow-sm">
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-sky-50 text-sky-800 rounded-lg hover:bg-sky-100 transition-colors font-medium text-sm border border-sky-200 shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -606,7 +606,7 @@
                             <p class="text-sm text-gray-800">
                                 <span class="font-medium text-gray-600">Suivi Colis :</span>
                                 <a v-if="selectedCommande.url_suivi_colis" :href="selectedCommande.url_suivi_colis"
-                                    target="_blank" class="text-indigo-600 hover:text-indigo-800 underline">
+                                    target="_blank" class="text-sky-600 hover:text-sky-900 underline">
                                     Lien de suivi
                                 </a>
                                 <span v-else>Aucun lien</span>
@@ -629,23 +629,23 @@
 
                 <!-- Bloc Total Non Terminées -->
                 <div
-                    class="bg-indigo-600 p-6 rounded-2xl shadow-xl shadow-indigo-200 text-white relative overflow-hidden">
+                    class="bg-slate-800 p-6 rounded-lg border border-slate-600 shadow-xl shadow-slate-950/50 text-white relative overflow-hidden">
                     <div class="relative z-10">
-                        <h3 class="text-indigo-100 font-medium text-sm mb-1 uppercase tracking-wider">
+                        <h3 class="text-slate-300 font-medium text-sm mb-1 uppercase tracking-wider">
                             Total non terminées
                         </h3>
                         <div class="text-5xl font-bold tracking-tight">
                             {{ stats.total_non_terminees }}
                         </div>
                     </div>
-                    <svg class="absolute -bottom-6 -right-6 w-36 h-36 text-indigo-500 opacity-40 transform -rotate-12"
+                    <svg class="absolute -bottom-6 -right-6 w-36 h-36 text-sky-500 opacity-40 transform -rotate-12"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                 </div>
 
-                <div class="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <div class="flex flex-col gap-4 rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
                     <h3 class="text-gray-800 font-bold mb-1">Commandes par statut</h3>
 
                     <div
@@ -676,7 +676,7 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                <div class="flex flex-col gap-4 rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
                     <h3 class="text-gray-800 font-bold mb-1">Commandes par priorité</h3>
 
                     <div

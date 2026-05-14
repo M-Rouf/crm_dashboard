@@ -1,9 +1,22 @@
-/* /css/style.css */
+/* /css/style.css — thème type tableau de bord industriel / automation */
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+html {
+  background-color: #cbd5e1;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
 
 body {
-  font-family: "Inter", sans-serif;
+  font-family: "IBM Plex Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono-tech {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 [v-cloak] {
@@ -29,12 +42,10 @@ body {
 }
 
 .stylised-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  /* Tailwind slate-300 */
-  border-radius: 10px;
+  background: #64748b;
+  border-radius: 6px;
 }
 
 .stylised-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-  /* Tailwind slate-400 */
+  background: #475569;
 }

@@ -29,13 +29,13 @@
   </head>
 
   <body
-    class="bg-gray-50 text-gray-900 antialiased leading-normal tracking-normal min-h-screen"
+    class="min-h-screen text-slate-900 antialiased leading-normal tracking-normal"
   >
     {% raw %}
     <div id="app" v-cloak class="min-h-screen flex flex-col">
       <!-- En-tête Global -->
       <header
-        class="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-sm"
+        class="sticky top-0 z-50 border-b border-slate-700 bg-slate-900/95 shadow-lg shadow-slate-950/40 backdrop-blur-md"
       >
         <div
           class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between"
@@ -49,7 +49,7 @@
                 class="h-8 w-auto"
               />
               <span
-                class="font-bold text-gray-800 text-lg hidden sm:block tracking-tight"
+                class="font-semibold text-slate-100 text-lg hidden sm:block tracking-tight"
                 >Dashboard</span
               >
             </a>
@@ -57,41 +57,41 @@
             <!-- Navigation -->
             <nav class="hidden md:flex items-center gap-1">
                 <a href="/"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
+                    class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Requêtes</a>
                 <a href="/contacts"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
+                    class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Contacts</a>
                 <a href="/actions" aria-current="page"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Actions</a>
+                    class="px-4 py-2 rounded-md text-sm font-medium border border-sky-500/40 bg-slate-800 text-sky-400 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">Actions</a>
                 <a href="/devis"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Devis</a>
+                    class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Devis</a>
                 <a href="/commandes"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Commandes</a>
+                    class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Commandes</a>
                 <a href="/factures"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Factures</a>
+                    class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Factures</a>
             </nav>
             <details class="relative md:hidden group">
                 <summary
-                    class="mobile-nav-summary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900">
+                    class="mobile-nav-summary flex cursor-pointer items-center gap-2 rounded-md border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800 hover:text-white">
                     <span>Menu</span>
                     <svg class="h-4 w-4 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </summary>
                 <div
-                    class="absolute left-0 top-full z-50 mt-2 flex w-56 flex-col gap-1 rounded-xl border border-gray-100 bg-white p-2 shadow-xl">
-                    <a href="/" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
-                    <a href="/contacts" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
-                    <a href="/actions" aria-current="page" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Actions</a>
-                    <a href="/devis" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Devis</a>
-                    <a href="/commandes" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Commandes</a>
-                    <a href="/factures" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Factures</a>
+                    class="absolute left-0 top-full z-50 mt-2 flex w-56 flex-col gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/20">
+                    <a href="/" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Requêtes</a>
+                    <a href="/contacts" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Contacts</a>
+                    <a href="/actions" aria-current="page" class="block rounded-md px-4 py-2 text-sm font-medium border-l-2 border-sky-500 bg-slate-100 text-slate-900">Actions</a>
+                    <a href="/devis" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Devis</a>
+                    <a href="/commandes" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Commandes</a>
+                    <a href="/factures" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Factures</a>
                 </div>
             </details>
           </div>
 
           <div class="flex items-center">
             <div
-              class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shadow-sm border border-indigo-200"
+              class="h-8 w-8 rounded-md bg-slate-800 flex items-center justify-center text-sky-400 font-bold text-xs font-mono tracking-widest shadow-inner border border-slate-600"
             >
               MR
             </div>
@@ -106,9 +106,9 @@
         <main class="order-2 flex w-full flex-col gap-8 lg:order-1 lg:w-3/4 lg:min-w-0">
           <!-- Header / Filtres -->
           <div
-            class="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-gray-900/5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+            class="flex flex-col gap-4 rounded-lg border border-slate-300/80 bg-white p-5 shadow-sm ring-1 ring-slate-900/10 sm:flex-row sm:items-center sm:justify-between sm:p-6"
           >
-            <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -119,7 +119,7 @@
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                class="text-indigo-600"
+                class="text-sky-600"
               >
                 <polyline points="9 11 12 14 22 4"></polyline>
                 <path
@@ -132,7 +132,7 @@
             <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button
                 @click="showAddModal = true"
-                class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center justify-center gap-2"
+                class="px-4 py-2 bg-slate-800 text-white font-medium rounded-lg shadow-sm hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors flex items-center justify-center gap-2"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -170,13 +170,13 @@
                   v-model="searchQuery"
                   type="text"
                   placeholder="Chercher par nom, client..."
-                  class="w-full sm:w-56 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
+                  class="w-full sm:w-56 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-colors"
                 />
               </div>
 
               <button
                 @click="showExecuted = !showExecuted"
-                :class="showExecuted ? 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                :class="showExecuted ? 'bg-sky-700 text-white border-sky-600 hover:bg-sky-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
                 class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <svg
@@ -225,7 +225,7 @@
 
           <!-- Tableau élégant avec scroll -->
           <div
-            class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-gray-900/5"
+            class="overflow-hidden rounded-lg border border-slate-300/80 bg-white shadow-sm ring-1 ring-slate-900/10"
           >
             <div
               class="relative max-h-[min(36rem,72vh)] overflow-x-auto overflow-y-auto stylised-scrollbar lg:max-h-[65vh]"
@@ -254,7 +254,7 @@
                     class="hover:bg-gray-50/50 transition-colors group cursor-pointer"
                     :class="{
                                     'opacity-50 grayscale hover:grayscale-0': act.statut === 'traite',
-                                    'bg-indigo-50/50 border-l-4 border-indigo-500': selectedAction && selectedAction.id === act.id,
+                                    'bg-sky-50/90 border-l-4 border-sky-600': selectedAction && selectedAction.id === act.id,
                                     'border-l-4 border-transparent': !(selectedAction && selectedAction.id === act.id)
                                 }"
                   >
@@ -355,11 +355,11 @@
           <!-- Zone de détails de l'action sélectionnée -->
           <div
             v-if="selectedAction"
-            class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-900/5 transition-all duration-300"
+            class="rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10 transition-all duration-300"
           >
             <div class="flex justify-between items-start mb-4">
               <div>
-                <h2 class="text-xl font-bold text-gray-800">
+                <h2 class="text-xl font-bold text-slate-800">
                   {{ selectedAction.nom }}
                 </h2>
                 <div
@@ -439,11 +439,11 @@
         <!-- Sidebar (25% sur Desktop) -->
         <aside class="order-1 flex w-full flex-col gap-8 lg:order-2 lg:w-1/4 lg:min-w-0">
           <div
-            class="bg-indigo-600 p-6 rounded-2xl shadow-xl shadow-indigo-200 text-white relative overflow-hidden"
+            class="bg-slate-800 p-6 rounded-lg border border-slate-600 shadow-xl shadow-slate-950/50 text-white relative overflow-hidden"
           >
             <div class="relative z-10">
               <h3
-                class="text-indigo-100 font-medium text-sm mb-1 uppercase tracking-wider"
+                class="text-slate-300 font-medium text-sm mb-1 uppercase tracking-wider"
               >
                 Total à exécuter
               </h3>
@@ -452,7 +452,7 @@
               </div>
             </div>
             <svg
-              class="absolute -bottom-6 -right-6 w-36 h-36 text-indigo-500 opacity-40 transform -rotate-12"
+              class="absolute -bottom-6 -right-6 w-36 h-36 text-sky-500 opacity-40 transform -rotate-12"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="none"
@@ -471,7 +471,7 @@
           </div>
 
           <div
-            class="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-900/5"
+            class="flex flex-col gap-4 rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10"
           >
             <h3 class="text-gray-800 font-bold mb-1">Actions par priorité</h3>
 
@@ -594,7 +594,7 @@
                     rows="4"
                     required
                     placeholder="Saisir la description de l'action à envoyer à n8n..."
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm resize-none"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-600 text-sm resize-none"
                   ></textarea>
                 </div>
                 <div
@@ -610,7 +610,7 @@
                   <button
                     type="submit"
                     :disabled="isSubmitting || !newActionText"
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                    class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-950 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
                   >
                     <svg
                       v-if="isSubmitting"

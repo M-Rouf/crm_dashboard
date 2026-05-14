@@ -26,57 +26,57 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 
-<body class="bg-gray-50 text-gray-900 antialiased leading-normal tracking-normal min-h-screen">
+<body class="min-h-screen text-slate-900 antialiased leading-normal tracking-normal">
     {% raw %}
     <div id="app" v-cloak class="min-h-screen flex flex-col">
         <!-- En-tête Global -->
-        <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-sm">
+        <header class="sticky top-0 z-50 border-b border-slate-700 bg-slate-900/95 shadow-lg shadow-slate-950/40 backdrop-blur-md">
             <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
                 <div class="flex items-center gap-6">
                     <!-- Logo -->
                     <a href="/" class="flex items-center gap-2">
                         <img src="/img/logo_mrliw.png" alt="MRLIW Logo" class="h-8 w-auto" />
-                        <span class="font-bold text-gray-800 text-lg hidden sm:block tracking-tight">Dashboard</span>
+                        <span class="font-semibold text-slate-100 text-lg hidden sm:block tracking-tight">Dashboard</span>
                     </a>
 
                     <!-- Navigation -->
                     <nav class="hidden md:flex items-center gap-1">
                         <a href="/"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Requêtes</a>
                         <a href="/contacts"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Contacts</a>
                         <a href="/actions"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Actions</a>
                         <a href="/devis" aria-current="page"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Devis</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium border border-sky-500/40 bg-slate-800 text-sky-400 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">Devis</a>
                         <a href="/commandes"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Commandes</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Commandes</a>
                         <a href="/factures"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Factures</a>
+                            class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Factures</a>
                     </nav>
                     <details class="relative md:hidden group">
                         <summary
-                            class="mobile-nav-summary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900">
+                            class="mobile-nav-summary flex cursor-pointer items-center gap-2 rounded-md border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800 hover:text-white">
                             <span>Menu</span>
                             <svg class="h-4 w-4 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </summary>
                         <div
-                            class="absolute left-0 top-full z-50 mt-2 flex w-56 flex-col gap-1 rounded-xl border border-gray-100 bg-white p-2 shadow-xl">
-                            <a href="/" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Requêtes</a>
-                            <a href="/contacts" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Contacts</a>
-                            <a href="/actions" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Actions</a>
-                            <a href="/devis" aria-current="page" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-indigo-50 text-indigo-700">Devis</a>
-                            <a href="/commandes" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Commandes</a>
-                            <a href="/factures" class="block rounded-lg px-4 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">Factures</a>
+                            class="absolute left-0 top-full z-50 mt-2 flex w-56 flex-col gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/20">
+                            <a href="/" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Requêtes</a>
+                            <a href="/contacts" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Contacts</a>
+                            <a href="/actions" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Actions</a>
+                            <a href="/devis" aria-current="page" class="block rounded-md px-4 py-2 text-sm font-medium border-l-2 border-sky-500 bg-slate-100 text-slate-900">Devis</a>
+                            <a href="/commandes" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Commandes</a>
+                            <a href="/factures" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Factures</a>
                         </div>
                     </details>
                 </div>
 
                 <div class="flex items-center">
                     <div
-                        class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shadow-sm border border-indigo-200">
+                        class="h-8 w-8 rounded-md bg-slate-800 flex items-center justify-center text-sky-400 font-bold text-xs font-mono tracking-widest shadow-inner border border-slate-600">
                         MR
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                 <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="lucide lucide-file-text text-indigo-600">
+                        class="lucide lucide-file-text text-sky-600">
                         <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
                         <path d="M14 2v4a2 2 0 0 0 2 2h4" />
                         <path d="M10 9H8" />
@@ -111,7 +111,7 @@
                         Ajout Manuel
                     </button>
                     <button @click="showAddModal = true"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                        class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-950 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -128,11 +128,11 @@
                             </svg>
                         </span>
                         <input v-model="searchQuery" type="text" placeholder="Chercher un nom ou client..."
-                            class="w-full sm:w-64 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" />
+                            class="w-full sm:w-64 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-colors" />
                     </div>
 
                     <button @click="showSigned = !showSigned"
-                        :class="showSigned ? 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                        :class="showSigned ? 'bg-sky-700 text-white border-sky-600 hover:bg-sky-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
                         class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
                         <svg v-if="!showSigned" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -158,7 +158,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <!-- Total -->
                 <div
-                    class="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                    class="flex items-center justify-between rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
                     <div>
                         <p class="text-sm font-medium text-gray-500 mb-1">
                             Total des devis
@@ -180,7 +180,7 @@
 
                 <!-- En attente -->
                 <div
-                    class="bg-orange-50 p-6 rounded-2xl shadow-sm border border-orange-100 flex items-center justify-between group hover:shadow-md transition-shadow">
+                    class="bg-orange-50 p-6 rounded-lg shadow-sm border border-orange-100 flex items-center justify-between group hover:shadow-md transition-shadow">
                     <div>
                         <p class="text-sm font-medium text-orange-600 mb-1">En attente</p>
                         <p class="text-3xl font-bold text-orange-900">
@@ -199,7 +199,7 @@
 
                 <!-- Signés -->
                 <div
-                    class="bg-green-50 p-6 rounded-2xl shadow-sm border border-green-100 flex items-center justify-between group hover:shadow-md transition-shadow">
+                    class="bg-green-50 p-6 rounded-lg shadow-sm border border-green-100 flex items-center justify-between group hover:shadow-md transition-shadow">
                     <div>
                         <p class="text-sm font-medium text-green-600 mb-1">Signés</p>
                         <p class="text-3xl font-bold text-green-900">
@@ -218,7 +218,7 @@
 
                 <!-- Abandonnés -->
                 <div
-                    class="bg-red-50 p-6 rounded-2xl shadow-sm border border-red-100 flex items-center justify-between group hover:shadow-md transition-shadow">
+                    class="bg-red-50 p-6 rounded-lg shadow-sm border border-red-100 flex items-center justify-between group hover:shadow-md transition-shadow">
                     <div>
                         <p class="text-sm font-medium text-red-600 mb-1">Abandonnés</p>
                         <p class="text-3xl font-bold text-red-900">
@@ -238,7 +238,7 @@
             </div>
 
             <!-- Tableau -->
-            <div class="relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-gray-900/5">
+            <div class="relative overflow-hidden rounded-lg border border-slate-300/80 bg-white shadow-sm ring-1 ring-slate-900/10">
                 <div class="relative max-h-[min(36rem,72vh)] overflow-x-auto overflow-y-auto stylised-scrollbar lg:max-h-[65vh]">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-gray-50">
@@ -276,7 +276,7 @@
                         <tbody class="text-sm divide-y divide-gray-100">
                             <tr v-for="dev in filteredDevis" :key="dev.id" @click="selectedDevis = dev"
                                 class="hover:bg-gray-50/50 transition-colors group cursor-pointer" :class="{
-                                'bg-indigo-50/50 border-l-4 border-indigo-500': selectedDevis && selectedDevis.id === dev.id,
+                                'bg-sky-50/90 border-l-4 border-sky-600': selectedDevis && selectedDevis.id === dev.id,
                                 'border-l-4 border-transparent': !(selectedDevis && selectedDevis.id === dev.id)
                             }">
                                 <td class="px-6 py-4">
@@ -296,7 +296,7 @@
                                     <span v-if="dev.montant_ht">{{ formatCurrency(dev.montant_ht) }}</span>
                                     <span v-else class="text-gray-400 font-normal">-</span>
                                 </td>
-                                <td class="px-6 py-4 text-center font-bold text-indigo-700 whitespace-nowrap">
+                                <td class="px-6 py-4 text-center font-bold text-sky-800 whitespace-nowrap">
                                     <span v-if="dev.montant_ttc">{{ formatCurrency(dev.montant_ttc) }}</span>
                                     <span v-else class="text-gray-400 font-normal">-</span>
                                 </td>
@@ -350,7 +350,7 @@
                         </h2>
                         <div class="text-sm text-gray-500 mt-2 flex flex-wrap gap-x-5 gap-y-2">
                             <span class="flex items-center gap-1.5 font-medium text-gray-700">
-                                <svg class="w-4 h-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                <svg class="w-4 h-4 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -374,7 +374,7 @@
                             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">TVA : {{
                                 formatCurrency(selectedDevis.montant_tva) }}</span>
                             <span
-                                class="text-lg font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100 mt-1 shadow-sm">
+                                class="text-lg font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-lg border border-sky-200 mt-1 shadow-sm">
                                 TTC : {{ formatCurrency(selectedDevis.montant_ttc) }}
                             </span>
                         </div>
@@ -404,7 +404,7 @@
                             Remettre en attente
                         </button>
                         <button v-if="selectedDevis.statut !== 'Signé'" @click="showUpdateModal = true"
-                            class="text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5"
+                            class="text-white bg-sky-700 hover:bg-sky-800 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5"
                             title="Modifier">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -459,12 +459,12 @@
                                 Document
                             </h3>
                             <div v-if="selectedDevis.file_path"
-                                class="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-lg p-3">
-                                <span class="text-sm font-medium text-indigo-700 truncate max-w-[150px]"
+                                class="flex items-center justify-between bg-sky-50 border border-sky-200 rounded-lg p-3">
+                                <span class="text-sm font-medium text-sky-800 truncate max-w-[150px]"
                                     :title="selectedDevis.file_path">{{ selectedDevis.file_path.split('/').pop()
                                     }}</span>
                                 <a :href="selectedDevis.file_path + '?v=' + Date.now()" target="_blank"
-                                    class="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5">
+                                    class="text-white bg-slate-800 hover:bg-slate-950 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                         stroke-linejoin="round">
@@ -523,7 +523,7 @@
                                     Fournisseur)
                                     *</label>
                                 <select v-model="manualAddForm.client" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 bg-white text-gray-900">
                                     <option value="" disabled>Sélectionner un contact...</option>
                                     <option v-for="c in contacts" :key="c.id" :value="c.id">
                                         {{ clientName(c) }}
@@ -536,12 +536,12 @@
                                         *</label>
                                     <input v-model="manualAddForm.nom" placeholder="Ex: mrliw_dXXXXXX" type="text"
                                         required
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
                                     <select v-model="manualAddForm.type" required
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 bg-white text-gray-900">
                                         <option value="émis">Devis émis</option>
                                         <option value="reçu">Devis reçu</option>
                                     </select>
@@ -558,7 +558,7 @@
                                         </div>
                                         <input v-model.number="manualAddForm.montant_ht" type="number" step="0.01"
                                             min="0" required
-                                            class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                            class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                     </div>
                                 </div>
                                 <div>
@@ -571,7 +571,7 @@
                                         </div>
                                         <input v-model.number="manualAddForm.montant_tva" type="number" step="0.01"
                                             min="0"
-                                            class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                            class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                     </div>
                                 </div>
                             </div>
@@ -587,17 +587,17 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Description
                                     (Optionnel)</label>
                                 <textarea v-model="manualAddForm.description" rows="3"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Fichier PDF *</label>
                                 <input type="file" ref="manualFileInput" @change="onManualFileChange"
                                     accept="application/pdf" required
-                                    class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                                    class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-900 hover:file:bg-sky-100" />
                             </div>
                             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
                                 <button type="button" @click="closeManualModal" :disabled="isManualSubmitting"
-                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors disabled:opacity-50">
                                     Annuler
                                 </button>
                                 <button type="submit" :disabled="isManualSubmitting"
@@ -643,11 +643,11 @@
                                     scanné et signé par le client
                                     :</label>
                                 <input type="file" ref="fileInput" accept="application/pdf" required
-                                    class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                                    class="block w-full text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-900 hover:file:bg-sky-100" />
                             </div>
                             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
                                 <button type="button" @click="closeUploadModal" :disabled="isUploading"
-                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors disabled:opacity-50">
                                     Annuler
                                 </button>
                                 <button type="submit" :disabled="isUploading"
@@ -698,15 +698,15 @@
                                     n8n</label>
                                 <textarea v-model="updateDevisText" rows="4" required
                                     placeholder="Ex: Ajouter une remise de 10% sur le montant HT..."
-                                    class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                                    class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
                             </div>
                             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
                                 <button type="button" @click="closeUpdateModal" :disabled="isUpdating"
-                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors disabled:opacity-50">
                                     Annuler
                                 </button>
                                 <button type="submit" :disabled="isUpdating || !updateDevisText"
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                    class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors flex items-center gap-2 disabled:opacity-50">
                                     <span v-if="isUpdating">Envoi en cours...</span>
                                     <span v-else>Envoyer</span>
                                 </button>
@@ -729,7 +729,7 @@
                             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2" id="modal-title">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="text-indigo-600">
+                                    stroke-linejoin="round" class="text-sky-600">
                                     <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                                     <polyline points="14 2 14 8 20 8" />
                                 </svg>
@@ -758,15 +758,15 @@
                                     <span class="text-red-500">*</span></label>
                                 <textarea id="devisText" v-model="newDevisRequestText" rows="5" required
                                     placeholder="Détaillez les informations nécessaires à la création du devis..."
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm resize-none"></textarea>
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-600 text-sm resize-none"></textarea>
                             </div>
                             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
                                 <button type="button" @click="closeAddModal" :disabled="isSubmitting"
-                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors disabled:opacity-50">
                                     Annuler
                                 </button>
                                 <button type="submit" :disabled="isSubmitting"
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                    class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors flex items-center gap-2 disabled:opacity-50">
                                     <svg v-if="isSubmitting" class="animate-spin h-4 w-4 text-white"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
@@ -795,38 +795,38 @@
                                         devis</label>
                                     <input type="text" v-model="parsedDevisData.designation"
                                         placeholder="Ex: Prestation de services tech..."
-                                        class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-blue-300 bg-blue-50/50 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
                                     <input type="text" v-model="parsedDevisData.prenom"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
                                     <input type="text" v-model="parsedDevisData.nom"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div class="col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
                                     <input type="text" v-model="parsedDevisData.entreprise"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div class="col-span-2 sm:col-span-1">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">SIRET</label>
                                     <input type="text" v-model="parsedDevisData.siret" maxlength="14"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div class="col-span-2 sm:col-span-1">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">TVA
                                         Intracommunautaire</label>
                                     <input type="text" v-model="parsedDevisData.tva_intra"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div class="col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Type d'entité</label>
                                     <select v-model="parsedDevisData.type_entite"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900">
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 bg-white text-gray-900">
                                         <option value="B2B">B2B (Professionnel)</option>
                                         <option value="B2C">B2C (Particulier)</option>
                                     </select>
@@ -835,32 +835,32 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Email <span
                                             class="text-red-500">*</span></label>
                                     <input type="email" v-model="parsedDevisData.email" required
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div class="col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Adresse
                                         Facturation</label>
                                     <input type="text" v-model="parsedDevisData.adresse_facturation"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div class="col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Adresse
                                         Livraison</label>
                                     <input type="text" v-model="parsedDevisData.adresse_livraison"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                 </div>
                                 <div class="col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Note
                                         additionnelle</label>
                                     <textarea v-model="parsedDevisData.note" rows="3"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
                                 </div>
                                 <div class="col-span-2 border-t border-gray-100 pt-4 mt-2">
                                     <div class="flex justify-between items-center mb-3">
                                         <h4 class="font-bold text-gray-800 text-sm">Articles</h4>
                                         <button type="button"
                                             @click="parsedDevisData.articles.push({designation: '', quantite: 1, prix_unitaire: 0})"
-                                            class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 font-semibold transition-colors">
+                                            class="text-xs bg-sky-50 text-sky-800 px-2 py-1 rounded hover:bg-sky-100 font-semibold transition-colors">
                                             + Ajouter un article
                                         </button>
                                     </div>
@@ -870,26 +870,26 @@
                                             <div class="flex-grow">
                                                 <input type="text" v-model="a.designation"
                                                     placeholder="Désignation de l'article"
-                                                    class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2 focus:ring-1 focus:ring-indigo-500 bg-white" />
+                                                    class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2 focus:ring-1 focus:ring-sky-500 bg-white" />
                                                 <div class="flex gap-3">
                                                     <div class="flex items-center gap-2 w-1/4">
                                                         <span class="text-xs font-medium text-gray-500">Qté:</span>
                                                         <input type="number" v-model.number="a.quantite" min="1"
-                                                            class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white" />
+                                                            class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-sky-500 bg-white" />
                                                     </div>
                                                     <div class="flex items-center gap-2 w-2/4">
                                                         <span class="text-xs font-medium text-gray-500">Prix U. HT
                                                             (€):</span>
                                                         <input type="number" v-model.number="a.prix_unitaire"
                                                             step="0.01"
-                                                            class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white" />
+                                                            class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-sky-500 bg-white" />
                                                     </div>
                                                     <div class="flex items-center gap-2 w-1/4">
                                                         <span class="text-xs font-medium text-gray-500">Remise
                                                             (%):</span>
                                                         <input type="number" v-model.number="a.remise" min="0" max="100"
                                                             step="0.1"
-                                                            class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 bg-white" />
+                                                            class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-sky-500 bg-white" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -910,9 +910,9 @@
                                         </div>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                                        <div class="flex flex-col bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                                            <span class="font-bold text-indigo-900 text-sm mb-1">Total HT (€)</span>
-                                            <div class="text-sm font-bold text-indigo-700">
+                                        <div class="flex flex-col bg-sky-50 p-3 rounded-lg border border-sky-200">
+                                            <span class="font-bold text-slate-900 text-sm mb-1">Total HT (€)</span>
+                                            <div class="text-sm font-bold text-sky-800">
                                                 {{ computedTotalEstime.toFixed(2) }}
                                             </div>
                                         </div>
@@ -940,7 +940,7 @@
                                                 estimé</label>
                                             <input type="text" v-model="parsedDevisData.delai"
                                                 placeholder="Ex: 4 semaines"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500" />
                                         </div>
                                         <div class="flex flex-col justify-center">
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Envoi du devis
@@ -951,10 +951,10 @@
                                                     @change="parsedDevisData.envoi = $event.target.checked ? 1 : 0"
                                                     class="sr-only peer" />
                                                 <div
-                                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
+                                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-400 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-800">
                                                 </div>
                                                 <span class="ml-3 text-sm font-medium"
-                                                    :class="parsedDevisData.envoi === 1 ? 'text-indigo-600' : 'text-gray-400'">{{
+                                                    :class="parsedDevisData.envoi === 1 ? 'text-sky-600' : 'text-gray-400'">{{
                                                     parsedDevisData.envoi === 1 ? 'Oui' : 'Non'
                                                     }}</span>
                                             </label>
@@ -964,7 +964,7 @@
                             </div>
                             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
                                 <button type="button" @click="closeAddModal" :disabled="isSubmitting"
-                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors disabled:opacity-50">
                                     Annuler
                                 </button>
                                 <button type="submit" :disabled="isSubmitting"
