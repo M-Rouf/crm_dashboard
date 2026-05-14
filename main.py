@@ -221,9 +221,45 @@ def _statut_paiement_from_montants(montant_paye: Decimal, montant_ttc: Decimal) 
     return "partiel"
 
 
-def _facture_non_soldee_sql():
-    """Facture non marquée « payée » (NULL et « partiel » inclus). SQL robuste NULL."""
-    return Facture.statut_paiement.is_distinct_from("paye")
+def _facture_reste_montant_clause():
+    """
+    Reste à couvrir au sens montants (montant_paye < TTC si TTC > 0).
+    Inclut les lignes historiques « paye » avec montant_paye < TTC (incohérence avant versements).
+    """
+    ttc = func.coalesce(Facture.montant_ttc, 0)
+    pay = func.coalesce(Facture.montant_paye, 0)
+    return or_(ttc <= 0, pay < ttc)
+
+
+def _sync_facture_paiement_from_montants(facture: Facture, db: Session) -> None:
+    """Aligne statut_paiement et date_paiement sur les montants si la ligne est incohérente."""
+    _reconcile_paiement_rows([facture], db)
+
+
+def _reconcile_paiement_rows(rows: List[Facture], db: Session) -> None:
+    """Met à jour en base les statuts incohérents (ex. paye avec montant_paye < TTC)."""
+    if not rows:
+        return
+    now = datetime.datetime.now(datetime.timezone.utc)
+    changed = False
+    for facture in rows:
+        ttc = _money_dec(facture.montant_ttc)
+        pay = _money_dec(facture.montant_paye)
+        expected = _statut_paiement_from_montants(pay, ttc)
+        if (facture.statut_paiement or "") == expected:
+            continue
+        facture.statut_paiement = expected
+        if expected == "paye" and ttc > 0:
+            if not facture.date_paiement:
+                facture.date_paiement = now
+        else:
+            facture.date_paiement = None
+        changed = True
+    if not changed:
+        return
+    db.commit()
+    for facture in rows:
+        db.refresh(facture)
 
 
 # --- Schémas Pydantic ---
@@ -672,7 +708,7 @@ def factures_unpaid_stats(db: Session = Depends(get_db)):
         db.query(Facture)
         .filter(
             and_(
-                _facture_non_soldee_sql(),
+                _facture_reste_montant_clause(),
                 func.lower(func.trim(func.coalesce(Facture.statut_plateforme, "")))
                 != "rejected",
             )
@@ -723,7 +759,7 @@ def list_factures(
     if not include_paid:
         q = q.filter(
             and_(
-                _facture_non_soldee_sql(),
+                _facture_reste_montant_clause(),
                 func.lower(func.trim(func.coalesce(Facture.statut_plateforme, "")))
                 != "rejected",
             )
@@ -755,7 +791,9 @@ def list_factures(
         if not contact_ids:
             return []
         q = q.filter(Facture.contact_id.in_(contact_ids))
-    return q.order_by(Facture.date_emission.desc()).all()
+    rows = q.order_by(Facture.date_emission.desc()).all()
+    _reconcile_paiement_rows(rows, db)
+    return rows
 
 
 @app.get("/api/factures/{facture_id}", response_model=FactureSchema)
@@ -773,6 +811,7 @@ def get_facture(facture_id: int, db: Session = Depends(get_db)):
     )
     if not facture:
         raise HTTPException(status_code=404, detail="Facture non trouvée")
+    _sync_facture_paiement_from_montants(facture, db)
     return facture
 
 
