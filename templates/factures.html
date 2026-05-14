@@ -118,26 +118,16 @@
                             <input v-model="manualAddForm.external_id" type="text"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Statut plateforme</label>
-                                <select v-model="manualAddForm.statut_plateforme"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-                                    <option value="draft">draft</option>
-                                    <option value="pending">pending</option>
-                                    <option value="sent">sent</option>
-                                    <option value="validated">validated</option>
-                                    <option value="rejected">rejected</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Statut paiement</label>
-                                <select v-model="manualAddForm.statut_paiement"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-                                    <option value="non_paye">Non payé</option>
-                                    <option value="paye">Payé</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Statut plateforme</label>
+                            <select v-model="manualAddForm.statut_plateforme"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white max-w-md">
+                                <option value="draft">draft</option>
+                                <option value="pending">pending</option>
+                                <option value="sent">sent</option>
+                                <option value="validated">validated</option>
+                                <option value="rejected">rejected</option>
+                            </select>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
@@ -313,10 +303,14 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5">
                 <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
                     <div class="text-xs font-semibold uppercase text-gray-500">Non payées (total)</div>
                     <div class="text-2xl font-bold text-gray-900 mt-1">{{ unpaidStats.total }}</div>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-xl border border-orange-100">
+                    <div class="text-xs font-semibold uppercase text-orange-900">Partiellement payées</div>
+                    <div class="text-2xl font-bold text-orange-950 mt-1">{{ unpaidStats.partiel ?? 0 }}</div>
                 </div>
                 <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
                     <div class="text-xs font-semibold uppercase text-amber-800">Brouillon</div>
@@ -326,7 +320,7 @@
                     <div class="text-xs font-semibold uppercase text-blue-800">En attente / envoyée</div>
                     <div class="text-2xl font-bold text-blue-900 mt-1">{{ unpaidStats.pending }}</div>
                 </div>
-                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 col-span-2 sm:col-span-1">
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 col-span-2 sm:col-span-2 lg:col-span-1">
                     <div class="text-xs font-semibold uppercase text-emerald-800">Validée</div>
                     <div class="text-2xl font-bold text-emerald-900 mt-1">{{ unpaidStats.validated }}</div>
                 </div>
@@ -375,12 +369,9 @@
                                         platformLabel(f.statut_plateforme) }}</span>
                                 </td>
                                 <td class="px-4 py-3 text-center" @click.stop>
-                                    <select v-model="f.statut_paiement" @change="updatePaiement(f)"
-                                        class="text-xs font-semibold rounded-full px-2 py-1 border-0 ring-1 ring-inset cursor-pointer"
-                                        :class="paiementSelectClass(f.statut_paiement)">
-                                        <option value="non_paye">Non payé</option>
-                                        <option value="paye">Payé</option>
-                                    </select>
+                                    <span :class="paiementBadgeClass(f.statut_paiement)"
+                                        class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset">{{
+                                        paiementLabel(f.statut_paiement) }}</span>
                                 </td>
                             </tr>
                             <tr v-if="!factures.length">
@@ -414,9 +405,29 @@
                                 typeFactureLabel(detail.type_facture) }}</span>
                         </dd>
                     </div>
-                    <div>
+                    <div class="sm:col-span-2">
                         <dt class="text-gray-500 font-medium">Montant payé</dt>
-                        <dd class="mt-0.5 font-semibold tabular-nums">{{ formatMoney(detail.montant_paye) }}</dd>
+                        <dd class="mt-0.5 font-semibold tabular-nums">
+                            {{ formatMoney(detail.montant_paye) }} <span class="text-gray-400 font-normal">sur</span> {{
+                            formatMoney(detail.montant_ttc) }}
+                        </dd>
+                        <div v-if="detailCanAddVersement(detail)" class="mt-3 flex flex-col sm:flex-row sm:items-end gap-2">
+                            <div class="flex-1 min-w-0">
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Ajouter un versement
+                                    (€)</label>
+                                <input v-model.number="versementMontant" type="number" step="0.01" min="0.01"
+                                    :max="montantRestantVersement(detail)"
+                                    class="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 tabular-nums"
+                                    placeholder="0,00" />
+                                <p v-if="versementError" class="text-red-600 text-xs mt-1">{{ versementError }}</p>
+                            </div>
+                            <button type="button" @click="submitVersement" :disabled="versementSubmitting"
+                                class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-950 disabled:opacity-50 shrink-0">
+                                {{ versementSubmitting ? 'Enregistrement…' : 'Enregistrer le versement' }}
+                            </button>
+                        </div>
+                        <p v-else-if="isFullyPaid(detail)" class="mt-2 text-sm text-gray-500">Facture soldée : le montant
+                            payé ne peut plus être modifié.</p>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-gray-500 font-medium">Facture associée</dt>
@@ -461,7 +472,7 @@
                     </div>
                     <div>
                         <dt class="text-gray-500 font-medium">Statut paiement</dt>
-                        <dd class="mt-0.5">{{ detail.statut_paiement === 'paye' ? 'Payé' : 'Non payé' }}</dd>
+                        <dd class="mt-0.5">{{ paiementLabel(detail.statut_paiement) }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 font-medium">ID externe</dt>
@@ -506,7 +517,7 @@
         createApp({
             setup() {
                 const factures = ref([]);
-                const unpaidStats = ref({ total: 0, draft: 0, pending: 0, validated: 0 });
+                const unpaidStats = ref({ total: 0, draft: 0, pending: 0, validated: 0, partiel: 0 });
                 const filterRef = ref("");
                 const filterClient = ref("");
                 const includePaid = ref(true);
@@ -528,7 +539,6 @@
                     devise: "EUR",
                     external_id: "",
                     statut_plateforme: "draft",
-                    statut_paiement: "non_paye",
                     devis_id: "",
                     commande_id: "",
                     date_emission: "",
@@ -613,7 +623,6 @@
                         devise: "EUR",
                         external_id: "",
                         statut_plateforme: "draft",
-                        statut_paiement: "non_paye",
                         devis_id: "",
                         commande_id: "",
                         date_emission: "",
@@ -647,6 +656,73 @@
                     if (!Number.isFinite(n)) return 0;
                     return Math.round((n + Number.EPSILON) * 100) / 100;
                 };
+
+                const versementMontant = ref(null);
+                const versementError = ref("");
+                const versementSubmitting = ref(false);
+
+                const isFullyPaid = (d) => {
+                    if (!d) return false;
+                    const ttc = roundMoney(d.montant_ttc);
+                    const pay = roundMoney(d.montant_paye ?? 0);
+                    return ttc > 0 && pay >= ttc;
+                };
+
+                const detailCanAddVersement = (d) => {
+                    if (!d) return false;
+                    const ttc = Number(d.montant_ttc);
+                    if (!Number.isFinite(ttc) || ttc <= 0) return false;
+                    return !isFullyPaid(d);
+                };
+
+                const montantRestantVersement = (d) => {
+                    if (!d) return 0;
+                    return Math.max(0, roundMoney(d.montant_ttc) - roundMoney(d.montant_paye ?? 0));
+                };
+
+                const submitVersement = async () => {
+                    if (!detail.value) return;
+                    versementError.value = "";
+                    const add = Number(versementMontant.value);
+                    if (!Number.isFinite(add) || add <= 0) {
+                        versementError.value = "Indiquez un montant strictement positif.";
+                        return;
+                    }
+                    const ttc = roundMoney(detail.value.montant_ttc);
+                    const pay = roundMoney(detail.value.montant_paye ?? 0);
+                    const maxAdd = roundMoney(ttc - pay);
+                    if (add > maxAdd + 1e-9) {
+                        versementError.value = "Le montant dépasse le solde restant (" + formatMoney(maxAdd) + ").";
+                        return;
+                    }
+                    versementSubmitting.value = true;
+                    try {
+                        const res = await fetch("/api/factures/" + detail.value.id + "/versement", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ montant: add }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            const msg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+                            throw new Error(msg || "Erreur");
+                        }
+                        detail.value = data;
+                        versementMontant.value = null;
+                        const i = factures.value.findIndex((x) => x.id === data.id);
+                        if (i >= 0) factures.value[i] = data;
+                        await fetchStats();
+                    } catch (e) {
+                        versementError.value = e.message || "Erreur";
+                    } finally {
+                        versementSubmitting.value = false;
+                    }
+                };
+
+                watch(detail, () => {
+                    versementMontant.value = null;
+                    versementError.value = "";
+                });
 
                 const onMontantHtInput = () => {
                     const f = manualAddForm.value;
@@ -695,7 +771,6 @@
                     fd.append("devise", (manualAddForm.value.devise || "EUR").toUpperCase().slice(0, 3));
                     fd.append("external_id", manualAddForm.value.external_id || "");
                     fd.append("statut_plateforme", manualAddForm.value.statut_plateforme || "draft");
-                    fd.append("statut_paiement", manualAddForm.value.statut_paiement || "non_paye");
                     if (manualAddForm.value.devis_id) fd.append("devis_id", String(manualAddForm.value.devis_id));
                     if (manualAddForm.value.commande_id) fd.append("commande_id", String(manualAddForm.value.commande_id));
                     if (manualAddForm.value.date_emission) fd.append("date_emission", manualAddForm.value.date_emission);
@@ -755,25 +830,6 @@
                         if (res.ok) detail.value = await res.json();
                         else detail.value = null;
                     } catch (e) { detail.value = null; }
-                };
-
-                const updatePaiement = async (f) => {
-                    try {
-                        const res = await fetch("/api/factures/" + f.id + "/statut-paiement", {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ statut_paiement: f.statut_paiement }),
-                        });
-                        if (!res.ok) {
-                            await refreshAll();
-                            return;
-                        }
-                        const updated = await res.json();
-                        const i = factures.value.findIndex((x) => x.id === f.id);
-                        if (i >= 0) factures.value[i] = updated;
-                        if (selectedId.value === f.id) detail.value = updated;
-                        fetchStats();
-                    } catch (e) { await refreshAll(); }
                 };
 
                 const clientName = (c) => {
@@ -846,8 +902,15 @@
                     return "bg-gray-100 text-gray-800";
                 };
 
-                const paiementSelectClass = (p) => {
+                const paiementLabel = (p) => {
+                    if (p === "paye") return "Payé";
+                    if (p === "partiel") return "Partiel";
+                    return "Non payé";
+                };
+
+                const paiementBadgeClass = (p) => {
                     if (p === "paye") return "bg-emerald-50 text-emerald-800 ring-emerald-200";
+                    if (p === "partiel") return "bg-amber-50 text-amber-900 ring-amber-200";
                     return "bg-orange-50 text-orange-800 ring-orange-200";
                 };
 
@@ -866,10 +929,12 @@
 
                 return {
                     factures, unpaidStats, filterRef, filterClient, includePaid,
-                    selectedId, detail, openDetail, updatePaiement,
+                    selectedId, detail, openDetail,
+                    versementMontant, versementError, versementSubmitting, submitVersement,
+                    isFullyPaid, detailCanAddVersement, montantRestantVersement,
                     clientName, formatMoney, formatDate, fluxLabel, fluxClass,
                     typeFactureLabel, typeFactureClass, docTypeTitle,
-                    platformLabel, platformBadgeClass, paiementSelectClass, fileHref,
+                    platformLabel, platformBadgeClass, paiementLabel, paiementBadgeClass, fileHref,
                     contacts, devisList, commandesList,
                     showManualModal, manualAddForm, manualFileInput, manualError, isManualSubmitting,
                     openManualModal, closeManualModal, onManualFileChange, submitManualAdd,

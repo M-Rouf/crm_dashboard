@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import urllib.request
+from decimal import ROUND_HALF_UP, Decimal
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -204,6 +205,22 @@ def _facture_platform_bucket(statut_plateforme: Optional[str]) -> str:
     return "pending"
 
 
+def _money_dec(value) -> Decimal:
+    if value is None:
+        return Decimal("0")
+    return Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def _statut_paiement_from_montants(montant_paye: Decimal, montant_ttc: Decimal) -> str:
+    if montant_ttc <= 0:
+        return "non_paye"
+    if montant_paye <= 0:
+        return "non_paye"
+    if montant_paye >= montant_ttc:
+        return "paye"
+    return "partiel"
+
+
 # --- Schémas Pydantic ---
 class ContactSchema(BaseModel):
     id: int
@@ -393,8 +410,8 @@ class FactureSchema(BaseModel):
         from_attributes = True
 
 
-class FacturePaiementUpdate(BaseModel):
-    statut_paiement: str
+class FactureVersementBody(BaseModel):
+    montant: float
 
 
 # --- Initialisation FastAPI ---
@@ -670,6 +687,21 @@ def factures_unpaid_stats(db: Session = Depends(get_db)):
         b = _facture_platform_bucket(f.statut_plateforme)
         if b in out:
             out[b] += 1
+
+    pay_expr = func.coalesce(Facture.montant_paye, 0)
+    ttc_expr = func.coalesce(Facture.montant_ttc, 0)
+    rejected_expr = func.lower(func.trim(func.coalesce(Facture.statut_plateforme, "")))
+    out["partiel"] = (
+        db.query(Facture)
+        .filter(
+            and_(
+                pay_expr > 0,
+                pay_expr < ttc_expr,
+                rejected_expr != "rejected",
+            )
+        )
+        .count()
+    )
     return out
 
 
@@ -745,16 +777,17 @@ def get_facture(facture_id: int, db: Session = Depends(get_db)):
     return facture
 
 
-@app.patch("/api/factures/{facture_id}/statut-paiement", response_model=FactureSchema)
-def update_facture_statut_paiement(
+@app.patch("/api/factures/{facture_id}/versement", response_model=FactureSchema)
+def add_facture_versement(
     facture_id: int,
-    body: FacturePaiementUpdate,
+    body: FactureVersementBody,
     db: Session = Depends(get_db),
 ):
-    if body.statut_paiement not in ("paye", "non_paye"):
+    ajout = _money_dec(body.montant)
+    if ajout <= 0:
         raise HTTPException(
             status_code=400,
-            detail="statut_paiement doit être 'paye' ou 'non_paye'.",
+            detail="Le montant du versement doit être strictement positif.",
         )
     facture = (
         db.query(Facture)
@@ -769,13 +802,38 @@ def update_facture_statut_paiement(
     )
     if not facture:
         raise HTTPException(status_code=404, detail="Facture non trouvée")
-    facture.statut_paiement = body.statut_paiement
+
+    ttc = _money_dec(facture.montant_ttc)
+    pay = _money_dec(facture.montant_paye)
+    if ttc <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Versement impossible : montant TTC nul ou absent.",
+        )
+    if pay >= ttc:
+        raise HTTPException(
+            status_code=400,
+            detail="La facture est déjà entièrement payée.",
+        )
+    new_pay = (pay + ajout).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if new_pay > ttc:
+        new_pay = ttc
+    if new_pay <= pay:
+        raise HTTPException(
+            status_code=400,
+            detail="Le versement n'augmente pas le montant payé (plafond TTC atteint).",
+        )
+
+    facture.montant_paye = new_pay
+    st = _statut_paiement_from_montants(new_pay, ttc)
+    facture.statut_paiement = st
     now = datetime.datetime.now(datetime.timezone.utc)
-    if body.statut_paiement == "paye":
+    if st == "paye":
         if not facture.date_paiement:
             facture.date_paiement = now
     else:
         facture.date_paiement = None
+
     db.commit()
     db.refresh(facture)
     return facture
@@ -792,7 +850,6 @@ def create_manual_facture(
     devise: str = Form("EUR"),
     external_id: str = Form(""),
     statut_plateforme: str = Form("draft"),
-    statut_paiement: str = Form("non_paye"),
     devis_id: str = Form(""),
     commande_id: str = Form(""),
     date_emission: str = Form(""),
@@ -813,12 +870,6 @@ def create_manual_facture(
         raise HTTPException(
             status_code=400,
             detail="flux doit être « envoyée » ou « réceptionnée ».",
-        )
-
-    if statut_paiement not in ("paye", "non_paye"):
-        raise HTTPException(
-            status_code=400,
-            detail="statut_paiement doit être 'paye' ou 'non_paye'.",
         )
 
     d_id: Optional[int] = None
@@ -898,9 +949,6 @@ def create_manual_facture(
             else base_num + suf
         )
 
-    now = datetime.datetime.now(datetime.timezone.utc)
-    pay_dt = now if statut_paiement == "paye" else None
-
     facture = Facture(
         numero_facture=num,
         contact_id=contact_id,
@@ -914,10 +962,10 @@ def create_manual_facture(
         file_path=web_path,
         external_id=(external_id or None) or None,
         statut_plateforme=(statut_plateforme or "draft")[:100],
-        statut_paiement=statut_paiement,
+        statut_paiement="non_paye",
         date_emission=emission,
         date_echeance=echeance,
-        date_paiement=pay_dt,
+        date_paiement=None,
         type_facture="Facture",
         montant_paye=0,
         id_facture_associee=None,
