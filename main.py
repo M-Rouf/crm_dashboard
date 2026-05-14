@@ -19,7 +19,9 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    and_,
     create_engine,
+    func,
     or_,
 )
 from sqlalchemy.orm import (
@@ -624,9 +626,13 @@ def factures_unpaid_stats(db: Session = Depends(get_db)):
     unpaid = (
         db.query(Facture)
         .filter(
-            or_(
-                Facture.statut_paiement != "paye",
-                Facture.statut_paiement.is_(None),
+            and_(
+                or_(
+                    Facture.statut_paiement != "paye",
+                    Facture.statut_paiement.is_(None),
+                ),
+                func.lower(func.trim(func.coalesce(Facture.statut_plateforme, "")))
+                != "rejected",
             )
         )
         .all()
@@ -636,7 +642,6 @@ def factures_unpaid_stats(db: Session = Depends(get_db)):
         "draft": 0,
         "pending": 0,
         "validated": 0,
-        "rejected": 0,
     }
     for f in unpaid:
         b = _facture_platform_bucket(f.statut_plateforme)
@@ -659,9 +664,13 @@ def list_factures(
     )
     if not include_paid:
         q = q.filter(
-            or_(
-                Facture.statut_paiement != "paye",
-                Facture.statut_paiement.is_(None),
+            and_(
+                or_(
+                    Facture.statut_paiement != "paye",
+                    Facture.statut_paiement.is_(None),
+                ),
+                func.lower(func.trim(func.coalesce(Facture.statut_plateforme, "")))
+                != "rejected",
             )
         )
     if ref and ref.strip():

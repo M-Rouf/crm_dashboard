@@ -290,7 +290,7 @@
                     <label
                         class="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm cursor-pointer bg-white">
                         <input type="checkbox" v-model="includePaid" class="rounded border-gray-300 text-sky-600" />
-                        Afficher les factures payées
+                        Afficher les factures payées et rejetées
                     </label>
                     <button type="button" @click="openManualModal"
                         class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
@@ -313,7 +313,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-5">
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
                 <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
                     <div class="text-xs font-semibold uppercase text-gray-500">Non payées (total)</div>
                     <div class="text-2xl font-bold text-gray-900 mt-1">{{ unpaidStats.total }}</div>
@@ -326,13 +326,9 @@
                     <div class="text-xs font-semibold uppercase text-blue-800">En attente / envoyée</div>
                     <div class="text-2xl font-bold text-blue-900 mt-1">{{ unpaidStats.pending }}</div>
                 </div>
-                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 col-span-2 sm:col-span-1">
                     <div class="text-xs font-semibold uppercase text-emerald-800">Validée</div>
                     <div class="text-2xl font-bold text-emerald-900 mt-1">{{ unpaidStats.validated }}</div>
-                </div>
-                <div class="bg-red-50 p-4 rounded-xl border border-red-100 col-span-2 sm:col-span-1">
-                    <div class="text-xs font-semibold uppercase text-red-800">Rejetée</div>
-                    <div class="text-2xl font-bold text-red-900 mt-1">{{ unpaidStats.rejected }}</div>
                 </div>
             </div>
 
@@ -356,7 +352,7 @@
                         <tbody class="text-sm divide-y divide-gray-100">
                             <tr v-for="f in factures" :key="f.id" @click="openDetail(f.id)"
                                 class="hover:bg-gray-50/80 cursor-pointer transition-colors"
-                                :class="{ 'bg-sky-50/80 border-l-4 border-sky-600': selectedId === f.id, 'border-l-4 border-transparent': selectedId !== f.id, 'opacity-60': f.statut_paiement === 'paye' }">
+                                :class="{ 'bg-sky-50/80 border-l-4 border-sky-600': selectedId === f.id, 'border-l-4 border-transparent': selectedId !== f.id, 'opacity-60': f.statut_paiement === 'paye' || platformKey(f.statut_plateforme) === 'rejected' }">
                                 <td class="px-4 py-3 font-semibold text-gray-900">{{ f.numero_facture }}</td>
                                 <td class="px-4 py-3 text-gray-700">{{ clientName(f.contact) }}</td>
                                 <td class="px-4 py-3 text-center">
@@ -478,7 +474,7 @@
         createApp({
             setup() {
                 const factures = ref([]);
-                const unpaidStats = ref({ total: 0, draft: 0, pending: 0, validated: 0, rejected: 0 });
+                const unpaidStats = ref({ total: 0, draft: 0, pending: 0, validated: 0 });
                 const filterRef = ref("");
                 const filterClient = ref("");
                 const includePaid = ref(true);
