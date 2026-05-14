@@ -315,7 +315,7 @@
                 </div>
                 <div class="bg-orange-50 p-4 rounded-xl border border-orange-100">
                     <div class="text-xs font-semibold uppercase text-orange-900">Partiellement payées</div>
-                    <div class="text-2xl font-bold text-orange-950 mt-1">{{ unpaidStats.partiel ?? 0 }}</div>
+                    <div class="text-2xl font-bold text-orange-950 mt-1">{{ unpaidStats.partiel != null ? unpaidStats.partiel : 0 }}</div>
                 </div>
                 <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
                     <div class="text-xs font-semibold uppercase text-amber-800">Brouillon</div>
@@ -809,21 +809,32 @@
                     }
                 };
 
+                let listFetchGeneration = 0;
+
                 const defaultUnpaidStats = () => ({
                     total: 0, draft: 0, pending: 0, validated: 0, partiel: 0,
                 });
 
+                const fetchWithTimeout = (url, ms = 20000) => {
+                    const ctrl = new AbortController();
+                    const t = setTimeout(() => ctrl.abort(), ms);
+                    return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+                };
+
                 const fetchStats = async () => {
                     try {
-                        const res = await fetch("/api/factures/stats-unpaid");
+                        const res = await fetchWithTimeout("/api/factures/stats-unpaid");
                         if (res.ok) {
                             const j = await res.json();
                             unpaidStats.value = { ...defaultUnpaidStats(), ...j };
                         }
-                    } catch (e) { console.error(e); }
+                    } catch (e) {
+                        console.error("stats-unpaid", e);
+                    }
                 };
 
                 const fetchList = async () => {
+                    const gen = ++listFetchGeneration;
                     listLoading.value = true;
                     listError.value = "";
                     try {
@@ -831,23 +842,25 @@
                         if (filterRef.value.trim()) q.set("ref", filterRef.value.trim());
                         if (filterClient.value.trim()) q.set("client", filterClient.value.trim());
                         q.set("include_paid", includePaid.value === true ? "true" : "false");
-                        const res = await fetch("/api/factures?" + q.toString());
+                        const res = await fetchWithTimeout("/api/factures?" + q.toString());
+                        if (gen !== listFetchGeneration) return;
                         if (!res.ok) {
-                            const t = await res.text().catch(() => "");
-                            console.error("GET /api/factures", res.status, t);
-                            throw new Error(t || "API");
+                            const text = await res.text().catch(() => "");
+                            console.error("GET /api/factures", res.status, text);
+                            throw new Error(text || "API");
                         }
                         factures.value = await res.json();
                     } catch (e) {
+                        if (gen !== listFetchGeneration) return;
                         console.error(e);
-                        listError.value = "Impossible de charger la liste des factures. Ouvre la console (F12) pour le détail, ou clique sur Réessayer.";
+                        listError.value = "Impossible de charger la liste (timeout ou erreur réseau). Réessaie ou ouvre la console (F12).";
                     } finally {
-                        listLoading.value = false;
+                        if (gen === listFetchGeneration) listLoading.value = false;
                     }
                 };
 
                 const refreshAll = async () => {
-                    await Promise.all([fetchStats(), fetchList()]);
+                    await Promise.allSettled([fetchList(), fetchStats()]);
                 };
 
                 watch([filterRef, filterClient], () => {
