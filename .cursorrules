@@ -36,5 +36,5 @@ Dès que je valide une modif ou que je dis "déploie", enchaîne :
 
 ## 5. Coding Style
 
-- **Stack**: React/Next.js, Tailwind CSS.
+- **Stack**: Python 3.11, **FastAPI** servi par **Uvicorn**, **Jinja2** (`templates/`), fichiers statiques (`static/`), **SQLAlchemy 2** + PostgreSQL en prod (`DATABASE_URL` sur le VPS). PDF : **pdfkit** + **wkhtmltopdf** (image Docker). UI : **Tailwind CSS** via CDN dans les templates HTML (pas de React/Next.js).
 - **Output**: Donne le code directement, sois concis.
