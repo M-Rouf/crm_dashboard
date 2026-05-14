@@ -20,7 +20,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 
-<body class="bg-gray-50 text-gray-900 leading-normal tracking-normal min-h-screen">
+<body class="bg-gray-50 text-gray-900 antialiased leading-normal tracking-normal min-h-screen">
     {% raw %}
     <div id="app" v-cloak class="min-h-screen flex flex-col">
         <div v-if="showManualModal" class="fixed inset-0 z-[100] overflow-y-auto" role="dialog" aria-modal="true">
@@ -225,7 +225,7 @@
             </div>
         </div>
 
-        <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+        <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-sm">
             <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
                 <div class="flex items-center gap-6">
                     <a href="/" class="flex items-center gap-2">
@@ -271,9 +271,9 @@
             </div>
         </header>
 
-        <div class="container mx-auto p-4 md:p-8 max-w-7xl flex flex-col gap-6 flex-grow">
+        <div class="container mx-auto flex flex-grow flex-col gap-8 px-4 py-6 md:px-8 md:py-10 max-w-7xl">
             <div
-                class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                class="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-gray-900/5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" class="text-indigo-600">
@@ -284,9 +284,9 @@
                 </h1>
                 <div class="flex flex-col sm:flex-row flex-wrap gap-3 w-full lg:w-auto">
                     <input v-model="filterRef" type="text" placeholder="Réf. facture ou ID externe…"
-                        class="w-full sm:w-48 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        class="w-full sm:w-48 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" />
                     <input v-model="filterClient" type="text" placeholder="Client / fournisseur…"
-                        class="w-full sm:w-48 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+                        class="w-full sm:w-48 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" />
                     <label
                         class="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm cursor-pointer bg-white">
                         <input type="checkbox" v-model="includePaid" class="rounded border-gray-300 text-indigo-600" />
@@ -313,8 +313,8 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-5">
+                <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
                     <div class="text-xs font-semibold uppercase text-gray-500">Non payées (total)</div>
                     <div class="text-2xl font-bold text-gray-900 mt-1">{{ unpaidStats.total }}</div>
                 </div>
@@ -336,9 +336,9 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ring-1 ring-gray-900/5">
                 <div
-                    class="overflow-x-auto overflow-y-auto max-h-[560px] lg:max-h-[60vh] stylised-scrollbar relative">
+                    class="relative max-h-[min(36rem,72vh)] overflow-x-auto overflow-y-auto stylised-scrollbar lg:max-h-[65vh]">
                     <table class="w-full text-left border-collapse">
                         <thead
                             class="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
@@ -392,7 +392,7 @@
                 </div>
             </div>
 
-            <div v-if="detail" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div v-if="detail" class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
                 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                     <div>
                         <h2 class="text-xl font-bold text-gray-900">Facture {{ detail.numero_facture }}</h2>
