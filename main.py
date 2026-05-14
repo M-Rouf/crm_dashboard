@@ -22,7 +22,13 @@ from sqlalchemy import (
     create_engine,
     or_,
 )
-from sqlalchemy.orm import Session, declarative_base, joinedload, relationship, sessionmaker
+from sqlalchemy.orm import (
+    Session,
+    declarative_base,
+    joinedload,
+    relationship,
+    sessionmaker,
+)
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from scripts.generate_devis import generate_devis_files
@@ -148,7 +154,9 @@ class Facture(Base):
     contact_id = Column(
         Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
     )
-    devis_id = Column(Integer, ForeignKey("devis.id", ondelete="SET NULL"), nullable=True)
+    devis_id = Column(
+        Integer, ForeignKey("devis.id", ondelete="SET NULL"), nullable=True
+    )
     commande_id = Column(
         Integer, ForeignKey("commandes.id", ondelete="SET NULL"), nullable=True
     )
@@ -564,8 +572,13 @@ def create_manual_commande(
 
     os.makedirs("./files/commandes", exist_ok=True)
     filename = file.filename
-    safe_ref = "".join([c if c.isalnum() else "_" for c in reference]) if reference else "manuel"
+    safe_ref = (
+        "".join([c if c.isalnum() else "_" for c in reference])
+        if reference
+        else "manuel"
+    )
     import time
+
     unix_time = str(int(time.time()))
     safe_filename = f"{safe_ref}_{unix_time}_{filename}"
 
@@ -618,7 +631,13 @@ def factures_unpaid_stats(db: Session = Depends(get_db)):
         )
         .all()
     )
-    out = {"total": len(unpaid), "draft": 0, "pending": 0, "validated": 0, "rejected": 0}
+    out = {
+        "total": len(unpaid),
+        "draft": 0,
+        "pending": 0,
+        "validated": 0,
+        "rejected": 0,
+    }
     for f in unpaid:
         b = _facture_platform_bucket(f.statut_plateforme)
         if b in out:
@@ -796,18 +815,20 @@ def create_manual_facture(
         except ValueError:
             return None
 
-    emission = _parse_day(date_emission) or datetime.datetime.now(
-        datetime.timezone.utc
-    )
+    emission = _parse_day(date_emission) or datetime.datetime.now(datetime.timezone.utc)
     echeance = _parse_day(date_echeance)
 
     import time
 
     os.makedirs("./files/factures", exist_ok=True)
     filename = file.filename or "facture.pdf"
-    safe_stem = "".join(
-        c if c.isalnum() or c in ("-", "_", ".") else "_" for c in (numero_facture or "facture")
-    ).strip("_") or "facture"
+    safe_stem = (
+        "".join(
+            c if c.isalnum() or c in ("-", "_", ".") else "_"
+            for c in (numero_facture or "facture")
+        ).strip("_")
+        or "facture"
+    )
     if len(safe_stem) > 40:
         safe_stem = safe_stem[:40]
     unix_time = str(int(time.time()))
@@ -836,7 +857,11 @@ def create_manual_facture(
     while db.query(Facture).filter(Facture.numero_facture == num).first():
         n += 1
         suf = f"-{n}"
-        num = (base_num[: 50 - len(suf)] + suf) if len(base_num) + len(suf) > 50 else base_num + suf
+        num = (
+            (base_num[: 50 - len(suf)] + suf)
+            if len(base_num) + len(suf) > 50
+            else base_num + suf
+        )
 
     now = datetime.datetime.now(datetime.timezone.utc)
     pay_dt = now if statut_paiement == "paye" else None
@@ -871,7 +896,11 @@ def create_manual_facture(
             pass
         raise HTTPException(status_code=400, detail=str(e))
     db.refresh(facture)
-    return {"status": "success", "id": facture.id, "numero_facture": facture.numero_facture}
+    return {
+        "status": "success",
+        "id": facture.id,
+        "numero_facture": facture.numero_facture,
+    }
 
 
 class WebhookPayload(BaseModel):
@@ -954,6 +983,28 @@ def trigger_action_webhook(payload: WebhookPayload):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/factures/webhook")
+def trigger_factures_webhook(payload: WebhookPayload):
+    texte = (payload.texte or "").strip()
+    if not texte:
+        raise HTTPException(status_code=400, detail="Le texte ne peut pas être vide.")
+    try:
+        data = json.dumps({"texte": texte}).encode("utf-8")
+        req = urllib.request.Request(
+            "https://n8n.mrliw.fr/webhook-test/invoces_dashboard_request",
+            data=data,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=120) as response:
+            res_body = response.read().decode("utf-8")
+            try:
+                return json.loads(res_body)
+            except json.JSONDecodeError:
+                return {"status": "success", "raw": res_body}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # --- Frontend (Static files & Templates) ---
 app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/img", StaticFiles(directory="img"), name="img")
@@ -992,9 +1043,7 @@ def page_commandes(request: Request):
 
 @app.get("/factures", response_class=HTMLResponse)
 def page_factures(request: Request):
-    return templates.TemplateResponse(
-        request=request, name="factures.html", context={}
-    )
+    return templates.TemplateResponse(request=request, name="factures.html", context={})
 
 
 @app.get("/api/devis", response_model=List[DevisSchema])

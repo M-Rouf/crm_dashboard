@@ -169,6 +169,62 @@
             </div>
         </div>
 
+        <div v-if="showCreateModal" class="fixed inset-0 z-[100] overflow-y-auto" role="dialog" aria-modal="true"
+            aria-labelledby="modal-create-facture-title">
+            <div class="flex min-h-screen items-center justify-center p-4 sm:p-0">
+                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" @click="closeCreateModal" aria-hidden="true">
+                </div>
+                <div
+                    class="bg-white rounded-2xl shadow-xl max-w-lg w-full relative z-10 text-left my-8 max-h-[90vh] overflow-y-auto">
+                    <div
+                        class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl sticky top-0 z-10">
+                        <h3 id="modal-create-facture-title" class="text-lg font-bold text-gray-900">Créer une demande
+                            facture</h3>
+                        <button type="button" @click="closeCreateModal"
+                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="submitCreateWebhook" class="p-6 space-y-4">
+                        <div v-if="createError"
+                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">{{ createError }}
+                        </div>
+                        <div v-if="createSuccess"
+                            class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+                            Demande envoyée avec succès.
+                        </div>
+                        <div>
+                            <label for="createFactureText" class="block text-sm font-medium text-gray-700 mb-1">Texte
+                                de la demande</label>
+                            <textarea id="createFactureText" v-model="createRequestText" rows="5" required
+                                placeholder="Décrivez la demande à transmettre à n8n…"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 resize-y min-h-[120px]"></textarea>
+                        </div>
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <button type="button" @click="closeCreateModal" :disabled="isCreateSubmitting"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Annuler</button>
+                            <button type="submit"
+                                :disabled="isCreateSubmitting || !createRequestText || !createRequestText.trim()"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 inline-flex items-center gap-2">
+                                <svg v-if="isCreateSubmitting" class="animate-spin h-4 w-4 text-white"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                                {{ isCreateSubmitting ? 'Envoi…' : 'Envoyer' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
             <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
                 <div class="flex items-center gap-6">
@@ -236,6 +292,10 @@
                         <input type="checkbox" v-model="includePaid" class="rounded border-gray-300 text-indigo-600" />
                         Afficher les factures payées
                     </label>
+                    <button type="button" @click="openCreateModal"
+                        class="px-4 py-2 border border-indigo-600 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 whitespace-nowrap">
+                        Créer
+                    </button>
                     <button type="button" @click="openManualModal"
                         class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 whitespace-nowrap">
                         Ajout manuel
@@ -439,6 +499,55 @@
                 const manualFileInput = ref(null);
                 const manualError = ref("");
                 const isManualSubmitting = ref(false);
+
+                const showCreateModal = ref(false);
+                const createRequestText = ref("");
+                const createError = ref("");
+                const createSuccess = ref(false);
+                const isCreateSubmitting = ref(false);
+
+                const openCreateModal = () => {
+                    createRequestText.value = "";
+                    createError.value = "";
+                    createSuccess.value = false;
+                    showCreateModal.value = true;
+                };
+
+                const closeCreateModal = () => {
+                    showCreateModal.value = false;
+                };
+
+                const submitCreateWebhook = async () => {
+                    const t = (createRequestText.value || "").trim();
+                    if (!t) return;
+                    isCreateSubmitting.value = true;
+                    createError.value = "";
+                    createSuccess.value = false;
+                    try {
+                        const res = await fetch("/api/factures/webhook", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ texte: t }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            const msg = typeof data.detail === "string"
+                                ? data.detail
+                                : JSON.stringify(data.detail || data);
+                            throw new Error(msg || "Erreur d'envoi.");
+                        }
+                        createSuccess.value = true;
+                        createRequestText.value = "";
+                        setTimeout(() => {
+                            closeCreateModal();
+                            createSuccess.value = false;
+                        }, 1600);
+                    } catch (e) {
+                        createError.value = e.message || "Erreur";
+                    } finally {
+                        isCreateSubmitting.value = false;
+                    }
+                };
 
                 const fetchDropdownData = async () => {
                     try {
@@ -710,6 +819,8 @@
                     showManualModal, manualAddForm, manualFileInput, manualError, isManualSubmitting,
                     openManualModal, closeManualModal, onManualFileChange, submitManualAdd,
                     onMontantHtInput, onMontantTvaInput, onMontantTtcInput,
+                    showCreateModal, createRequestText, createError, createSuccess, isCreateSubmitting,
+                    openCreateModal, closeCreateModal, submitCreateWebhook,
                 };
             },
         }).mount("#app");
