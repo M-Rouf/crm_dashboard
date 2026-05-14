@@ -11,7 +11,12 @@
 - **Source of Truth**: Le fichier `.env` est EXCLUSIVEMENT sur le VPS dans `/root/crm-stack/dashboard/crm_dashboard/.env`.
 - **AI Policy**: Pour toute question sur les variables d'env, connecte-toi en SSH sur `mrliw.fr` pour lire le fichier distant. Ne crée jamais de `.env` localement.
 
-## 3. Deployment Protocol (Command: "déploie")
+## 3. Git après modifications (agent)
+
+- **Par défaut** : dès que tu as modifié ou créé des fichiers dans ce dépôt, termine la tâche par **`git add`** (uniquement les fichiers concernés ; pas d’ajout opportuniste de `.vscode/` ou autres hors périmètre), **`git commit`** avec un message technique clair, puis **`git push`**.
+- **Exception** : ne pas committer / pousser si l’utilisateur le demande explicitement.
+
+## 4. Deployment Protocol (Command: "déploie")
 
 Dès que je valide une modif ou que je dis "déploie", enchaîne **uniquement côté dépôt Git** (le déploiement sur le VPS est assuré par un **workflow n8n** déclenché au `git push`) :
 
@@ -22,12 +27,12 @@ Dès que je valide une modif ou que je dis "déploie", enchaîne **uniquement c�
 
 Ne pas exécuter de commandes SSH manuelles sur le VPS ni `docker compose` depuis l’agent pour ce flux : n8n s’en charge après le push.
 
-## 4. Debugging & Logs
+## 5. Debugging & Logs
 
 - **Référence d’exécution** : le projet tourne sur le VPS (Docker + PostgreSQL + `.env`) après déploiement automatique (n8n au push). Ne perds pas de temps à faire tourner ou réparer l’environnement local Fedora pour valider l’app : pousse le code (commit + push) et laisse n8n déployer ; vérifier sur le serveur si besoin.
 - **Logs** : `ssh root@mrliw.fr "cd /root/crm-stack/dashboard/crm_dashboard && docker compose logs -f --tail=50"`
 
-## 5. Coding Style
+## 6. Coding Style
 
 - **Stack** : **FastAPI** + **Uvicorn**, **Jinja2** (`templates/`), fichiers statiques (`static/`), **SQLAlchemy 2** + PostgreSQL sur le VPS. PDF : **pdfkit** + **wkhtmltopdf** (image Docker). UI : **Tailwind CSS** via CDN dans les templates HTML.
 - **Output**: Donne le code directement, sois concis.
