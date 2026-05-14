@@ -257,9 +257,12 @@ def _reconcile_paiement_rows(rows: List[Facture], db: Session) -> None:
         changed = True
     if not changed:
         return
-    db.commit()
-    for facture in rows:
-        db.refresh(facture)
+    try:
+        db.commit()
+        for facture in rows:
+            db.refresh(facture)
+    except Exception:
+        db.rollback()
 
 
 # --- Schémas Pydantic ---
@@ -791,9 +794,7 @@ def list_factures(
         if not contact_ids:
             return []
         q = q.filter(Facture.contact_id.in_(contact_ids))
-    rows = q.order_by(Facture.date_emission.desc()).all()
-    _reconcile_paiement_rows(rows, db)
-    return rows
+    return q.order_by(Facture.date_emission.desc()).all()
 
 
 @app.get("/api/factures/{facture_id}", response_model=FactureSchema)

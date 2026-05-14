@@ -303,6 +303,11 @@
                 </div>
             </div>
 
+            <div v-if="listError"
+                class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-sm">
+                {{ listError }} <button type="button" class="ml-2 underline font-medium" @click="refreshAll">Réessayer</button>
+            </div>
+
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5">
                 <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
                     <div class="text-xs font-semibold uppercase text-gray-500">Non payées (total)</div>
@@ -325,6 +330,9 @@
                     <div class="text-2xl font-bold text-emerald-900 mt-1">{{ unpaidStats.validated }}</div>
                 </div>
             </div>
+            <p class="text-xs text-gray-500 -mt-4 max-w-4xl">
+                Le total « non payées » compte les factures avec un reste au TTC (hors rejetées), y compris une ligne marquée « payé » si le montant payé est encore inférieur au TTC (données à corriger à l’ouverture du détail).
+            </p>
 
             <div class="overflow-hidden rounded-lg border border-slate-300/80 bg-white shadow-sm ring-1 ring-slate-900/10">
                 <div
@@ -344,6 +352,10 @@
                             </tr>
                         </thead>
                         <tbody class="text-sm divide-y divide-gray-100">
+                            <tr v-if="listLoading">
+                                <td colspan="8" class="py-12 text-center text-gray-500">Chargement des factures…</td>
+                            </tr>
+                            <template v-else-if="factures.length">
                             <tr v-for="f in factures" :key="f.id" @click="openDetail(f.id)"
                                 class="hover:bg-gray-50/80 cursor-pointer transition-colors"
                                 :class="{ 'bg-sky-50/80 border-l-4 border-sky-600': selectedId === f.id, 'border-l-4 border-transparent': selectedId !== f.id, 'opacity-60': f.statut_paiement === 'paye' || platformKey(f.statut_plateforme) === 'rejected' }">
@@ -374,7 +386,8 @@
                                         paiementLabel(f.statut_paiement) }}</span>
                                 </td>
                             </tr>
-                            <tr v-if="!factures.length">
+                            </template>
+                            <tr v-else-if="!listLoading && !listError">
                                 <td colspan="8" class="py-12 text-center text-gray-400">Aucune facture ne correspond aux
                                     filtres.</td>
                             </tr>
@@ -518,6 +531,8 @@
             setup() {
                 const factures = ref([]);
                 const unpaidStats = ref({ total: 0, draft: 0, pending: 0, validated: 0, partiel: 0 });
+                const listLoading = ref(true);
+                const listError = ref("");
                 const filterRef = ref("");
                 const filterClient = ref("");
                 const includePaid = ref(true);
@@ -794,14 +809,23 @@
                     }
                 };
 
+                const defaultUnpaidStats = () => ({
+                    total: 0, draft: 0, pending: 0, validated: 0, partiel: 0,
+                });
+
                 const fetchStats = async () => {
                     try {
                         const res = await fetch("/api/factures/stats-unpaid");
-                        if (res.ok) unpaidStats.value = await res.json();
+                        if (res.ok) {
+                            const j = await res.json();
+                            unpaidStats.value = { ...defaultUnpaidStats(), ...j };
+                        }
                     } catch (e) { console.error(e); }
                 };
 
                 const fetchList = async () => {
+                    listLoading.value = true;
+                    listError.value = "";
                     try {
                         const q = new URLSearchParams();
                         if (filterRef.value.trim()) q.set("ref", filterRef.value.trim());
@@ -811,10 +835,15 @@
                         if (!res.ok) {
                             const t = await res.text().catch(() => "");
                             console.error("GET /api/factures", res.status, t);
-                            throw new Error("API");
+                            throw new Error(t || "API");
                         }
                         factures.value = await res.json();
-                    } catch (e) { console.error(e); }
+                    } catch (e) {
+                        console.error(e);
+                        listError.value = "Impossible de charger la liste des factures. Ouvre la console (F12) pour le détail, ou clique sur Réessayer.";
+                    } finally {
+                        listLoading.value = false;
+                    }
                 };
 
                 const refreshAll = async () => {
@@ -934,6 +963,7 @@
 
                 return {
                     factures, unpaidStats, filterRef, filterClient, includePaid,
+                    listLoading, listError, refreshAll,
                     selectedId, detail, openDetail,
                     versementMontant, versementError, versementSubmitting, submitVersement,
                     isFullyPaid, detailCanAddVersement, montantRestantVersement,
