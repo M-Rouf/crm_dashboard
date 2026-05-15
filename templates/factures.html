@@ -343,7 +343,7 @@
                                 <th class="px-4 py-3 font-semibold">Client / fournisseur</th>
                                 <th class="px-4 py-3 font-semibold text-center">Flux</th>
                                 <th class="px-4 py-3 font-semibold text-right">TTC</th>
-                                <th class="px-4 py-3 font-semibold text-center">Émission</th>
+                                <th class="px-4 py-3 font-semibold text-center">Échéance</th>
                                 <th class="px-4 py-3 font-semibold text-center">Plateforme</th>
                                 <th class="px-4 py-3 font-semibold text-center">Paiement</th>
                             </tr>
@@ -371,7 +371,7 @@
                                 <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ formatMoney(f.montant_ttc)
                                     }}</td>
                                 <td class="px-4 py-3 text-center text-gray-500 whitespace-nowrap">{{
-                                    formatDate(f.date_emission) }}</td>
+                                    formatDate(f.date_echeance) }}</td>
                                 <td class="px-4 py-3 text-center">
                                     <span :class="platformBadgeClass(f.statut_plateforme)"
                                         class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
