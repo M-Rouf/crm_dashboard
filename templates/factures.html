@@ -306,9 +306,17 @@
                         <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
                             <button type="button" @click="createStep = 1"
                                 class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Retour</button>
-                            <button type="submit"
-                                class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">
-                                Valider la facture
+                            <button type="submit" :disabled="isConfirmSubmitting"
+                                class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 inline-flex items-center gap-2">
+                                <svg v-if="isConfirmSubmitting" class="animate-spin h-4 w-4 text-white"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                                {{ isConfirmSubmitting ? 'Création…' : 'Valider la facture' }}
                             </button>
                         </div>
                     </form>
@@ -687,6 +695,7 @@
                 const createRequestText = ref("");
                 const createError = ref("");
                 const isCreateSubmitting = ref(false);
+                const isConfirmSubmitting = ref(false);
                 const parsedFactureData = ref(null);
 
                 const mapFactureDraftFromWebhook = (data) => {
@@ -771,8 +780,50 @@
                     }
                 };
 
-                const confirmFactureDraft = () => {
-                    closeCreateModal();
+                const confirmFactureDraft = async () => {
+                    if (!parsedFactureData.value) return;
+                    const d = parsedFactureData.value;
+                    const email = (d.email || "").trim();
+                    if (!email) {
+                        createError.value = "L'email du client est requis.";
+                        return;
+                    }
+                    if (!d.articles || !d.articles.length) {
+                        createError.value = "Ajoutez au moins un article.";
+                        return;
+                    }
+                    isConfirmSubmitting.value = true;
+                    createError.value = "";
+                    try {
+                        const res = await fetch("/api/factures/confirm", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                prenom: d.prenom,
+                                nom: d.nom,
+                                entreprise: d.entreprise,
+                                email,
+                                adresse_facturation: d.adresse_facturation,
+                                description: d.description,
+                                devis_associe: d.devis_associe,
+                                articles: d.articles,
+                            }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            const msg = typeof data.detail === "string"
+                                ? data.detail
+                                : JSON.stringify(data.detail || data);
+                            throw new Error(msg || "Erreur lors de la création.");
+                        }
+                        closeCreateModal();
+                        await refreshAll();
+                        if (data.id) openDetail(data.id);
+                    } catch (e) {
+                        createError.value = e.message || "Erreur";
+                    } finally {
+                        isConfirmSubmitting.value = false;
+                    }
                 };
 
                 const fetchDropdownData = async () => {
@@ -1209,7 +1260,7 @@
                     showManualModal, manualAddForm, manualFileInput, manualError, isManualSubmitting,
                     openManualModal, closeManualModal, onManualFileChange, submitManualAdd,
                     onMontantHtInput, onMontantTvaInput, onMontantTtcInput,
-                    showCreateModal, createStep, createRequestText, createError, isCreateSubmitting,
+                    showCreateModal, createStep, createRequestText, createError, isCreateSubmitting, isConfirmSubmitting,
                     parsedFactureData, computedFactureTotalHt, articleLineTotal,
                     openCreateModal, closeCreateModal, submitCreateWebhook, confirmFactureDraft, openFactureValidation,
                 };

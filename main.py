@@ -35,6 +35,7 @@ from sqlalchemy.orm import (
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from scripts.generate_devis import generate_devis_files
+from scripts.generate_facture import generate_facture_files
 
 # --- Configurations de la Base de Données ---
 # Par défaut, utilise SQLite en local pour faciliter les tests avec Pixi
@@ -1217,6 +1218,135 @@ def trigger_factures_webhook(payload: WebhookPayload, db: Session = Depends(get_
         return _enrich_facture_webhook_response(result, db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class ConfirmFacturePayload(BaseModel):
+    prenom: Optional[str] = ""
+    nom: Optional[str] = ""
+    entreprise: Optional[str] = ""
+    email: str
+    adresse_facturation: Optional[str] = ""
+    description: Optional[str] = ""
+    devis_associe: Optional[str] = ""
+    articles: List[ArticlePayload] = []
+
+
+def _next_facture_reference(db: Session) -> str:
+    now = datetime.datetime.now()
+    yy = now.strftime("%y")
+    mm = now.strftime("%m")
+    prefix = f"mrliw_f{yy}{mm}"
+    rows = (
+        db.query(Facture.numero_facture)
+        .filter(Facture.numero_facture.like(f"{prefix}%"))
+        .all()
+    )
+    max_xx = -1
+    for (num,) in rows:
+        if num and num.startswith(prefix) and len(num) >= len(prefix) + 2:
+            try:
+                max_xx = max(max_xx, int(num[-2:]))
+            except ValueError:
+                pass
+    return f"{prefix}{max_xx + 1:02d}"
+
+
+@app.post("/api/factures/confirm")
+def confirm_facture_creation(
+    payload: ConfirmFacturePayload, db: Session = Depends(get_db)
+):
+    email = (payload.email or "").strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email client requis.")
+    if not payload.articles:
+        raise HTTPException(status_code=400, detail="Au moins un article est requis.")
+
+    total_ht = Decimal("0")
+    for a in payload.articles:
+        pu = Decimal(str(a.prix_unitaire))
+        q = Decimal(str(a.quantite))
+        r = Decimal(str(a.remise or 0))
+        total_ht += pu * q * (Decimal("1") - r / Decimal("100"))
+    total_ht = total_ht.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    montant_tva = Decimal("0")
+    montant_ttc = total_ht
+
+    contact = db.query(Contact).filter(Contact.email == email).first()
+    if not contact:
+        contact = Contact(email=email)
+        db.add(contact)
+    contact.prenom = payload.prenom or ""
+    contact.nom = payload.nom or ""
+    contact.entreprise = payload.entreprise or ""
+    if payload.adresse_facturation:
+        contact.adresse_facturation = payload.adresse_facturation
+    db.commit()
+    db.refresh(contact)
+
+    ref_facture = _next_facture_reference(db)
+    entreprise = (payload.entreprise or "").strip()
+    prenom_nom = f"{payload.prenom or ''} {payload.nom or ''}".strip()
+    nom_client = (
+        f"{prenom_nom} ({entreprise})" if entreprise else prenom_nom
+    )
+
+    ref_devis = (payload.devis_associe or "").strip()
+    devis_id = None
+    if ref_devis:
+        devis = db.query(Devis).filter(Devis.nom == ref_devis).first()
+        if devis:
+            devis_id = devis.id
+
+    generations = generate_facture_files(
+        ref_facture=ref_facture,
+        nom_client=nom_client,
+        adresse_client=payload.adresse_facturation or "",
+        contact_client=email,
+        articles=payload.articles,
+        total_ht=float(total_ht),
+        ref_devis=ref_devis,
+        description=payload.description or "",
+    )
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    echeance = now + datetime.timedelta(days=30)
+    file_path = generations.get("url_path") or f"/files/factures/{ref_facture}.pdf"
+
+    facture = Facture(
+        numero_facture=ref_facture,
+        contact_id=contact.id,
+        devis_id=devis_id,
+        commande_id=None,
+        flux="envoyée",
+        montant_ht=total_ht,
+        montant_tva=montant_tva,
+        montant_ttc=montant_ttc,
+        devise="EUR",
+        file_path=file_path,
+        external_id=None,
+        statut_plateforme="draft",
+        statut_paiement="non_paye",
+        date_emission=now,
+        date_echeance=echeance,
+        date_paiement=None,
+        type_facture="Facture",
+        montant_paye=0,
+        id_facture_associee=None,
+    )
+    db.add(facture)
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    db.refresh(facture)
+
+    return {
+        "status": "success",
+        "id": facture.id,
+        "numero_facture": facture.numero_facture,
+        "file_path": facture.file_path,
+    }
 
 
 @app.post("/api/devis/{devis_id}/facture_webhook")
