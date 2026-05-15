@@ -800,7 +800,11 @@ def list_factures(
         if not contact_ids:
             return []
         q = q.filter(Facture.contact_id.in_(contact_ids))
-    return q.order_by(Facture.date_emission.desc()).all()
+    return q.order_by(
+        Facture.date_echeance.is_(None),
+        Facture.date_echeance.asc(),
+        Facture.id.asc(),
+    ).all()
 
 
 @app.patch(
@@ -900,6 +904,13 @@ def add_facture_versement(
     )
     if not facture:
         raise HTTPException(status_code=404, detail="Facture non trouvée")
+
+    plat = (facture.statut_plateforme or "").strip().lower()
+    if plat != "sent":
+        raise HTTPException(
+            status_code=400,
+            detail="Les versements ne sont possibles qu'une fois la facture envoyée sur la plateforme (statut « sent »).",
+        )
 
     ttc = _money_dec(facture.montant_ttc)
     pay = _money_dec(facture.montant_paye)

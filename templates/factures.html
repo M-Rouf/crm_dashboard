@@ -548,6 +548,10 @@
                         </div>
                         <p v-else-if="isFullyPaid(detail)" class="mt-2 text-sm text-gray-500">Facture soldée : le montant
                             payé ne peut plus être modifié.</p>
+                        <p v-else-if="detail && platformKey(detail.statut_plateforme) !== 'sent'"
+                            class="mt-2 text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                            Les versements sont disponibles une fois la facture marquée comme envoyée sur la plateforme.
+                        </p>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-gray-500 font-medium">Facture associée</dt>
@@ -899,6 +903,7 @@
 
                 const detailCanAddVersement = (d) => {
                     if (!d) return false;
+                    if (platformKey(d.statut_plateforme) !== "sent") return false;
                     const ttc = Number(d.montant_ttc);
                     if (!Number.isFinite(ttc) || ttc <= 0) return false;
                     return !isFullyPaid(d);
