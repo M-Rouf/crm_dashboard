@@ -1166,10 +1166,36 @@ def trigger_action_webhook(payload: WebhookPayload):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _resolve_devis_associe_label(value: str, db: Session) -> str:
+    value = (value or "").strip()
+    if not value:
+        return ""
+    if value.isdigit():
+        devis = db.query(Devis).filter(Devis.id == int(value)).first()
+        return devis.nom if devis else value
+    devis = db.query(Devis).filter(Devis.nom == value).first()
+    return devis.nom if devis else value
+
+
+def _enrich_facture_webhook_response(
+    data, db: Session, fallback_devis_id: Optional[int] = None
+):
+    if not isinstance(data, dict):
+        return data
+    assoc = (data.get("devis_associe") or "").strip()
+    if assoc:
+        data["devis_associe"] = _resolve_devis_associe_label(assoc, db)
+    elif fallback_devis_id:
+        devis = db.query(Devis).filter(Devis.id == fallback_devis_id).first()
+        if devis:
+            data["devis_associe"] = devis.nom
+    return data
+
+
 def _post_invoices_dashboard_webhook(payload: dict):
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
-        "https://n8n.mrliw.fr/webhook-test/invoces_dashboard_request",
+        "https://n8n.mrliw.fr/webhook/invoces_dashboard_request",
         data=data,
         headers={"Content-Type": "application/json"},
     )
@@ -1182,12 +1208,13 @@ def _post_invoices_dashboard_webhook(payload: dict):
 
 
 @app.post("/api/factures/webhook")
-def trigger_factures_webhook(payload: WebhookPayload):
+def trigger_factures_webhook(payload: WebhookPayload, db: Session = Depends(get_db)):
     texte = (payload.texte or "").strip()
     if not texte:
         raise HTTPException(status_code=400, detail="Le texte ne peut pas être vide.")
     try:
-        return _post_invoices_dashboard_webhook({"texte": texte})
+        result = _post_invoices_dashboard_webhook({"texte": texte})
+        return _enrich_facture_webhook_response(result, db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1208,7 +1235,8 @@ def trigger_devis_facture_webhook(
     if not texte:
         raise HTTPException(status_code=400, detail="Le texte ne peut pas être vide.")
     try:
-        return _post_invoices_dashboard_webhook({"texte": texte, "devis_id": devis_id})
+        result = _post_invoices_dashboard_webhook({"texte": texte, "devis_id": devis_id})
+        return _enrich_facture_webhook_response(result, db, fallback_devis_id=devis_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

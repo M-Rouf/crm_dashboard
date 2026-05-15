@@ -1172,12 +1172,12 @@
                                     : JSON.stringify(data.detail || data);
                             throw new Error(msg || "Erreur d'envoi.");
                         }
-                        factureSuccess.value = true;
-                        factureRequestText.value = "";
-                        setTimeout(() => {
-                            closeFactureModal();
-                            factureSuccess.value = false;
-                        }, 1600);
+                        sessionStorage.setItem(
+                            "facture_draft_validate",
+                            JSON.stringify(data),
+                        );
+                        closeFactureModal();
+                        window.location.href = "/factures?validate=1";
                     } catch (e) {
                         factureError.value = e.message || "Erreur";
                     } finally {
