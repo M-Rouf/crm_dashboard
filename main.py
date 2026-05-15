@@ -1166,24 +1166,49 @@ def trigger_action_webhook(payload: WebhookPayload):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _post_invoices_dashboard_webhook(payload: dict):
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        "https://n8n.mrliw.fr/webhook-test/invoces_dashboard_request",
+        data=data,
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=120) as response:
+        res_body = response.read().decode("utf-8")
+        try:
+            return json.loads(res_body)
+        except json.JSONDecodeError:
+            return {"status": "success", "raw": res_body}
+
+
 @app.post("/api/factures/webhook")
 def trigger_factures_webhook(payload: WebhookPayload):
     texte = (payload.texte or "").strip()
     if not texte:
         raise HTTPException(status_code=400, detail="Le texte ne peut pas être vide.")
     try:
-        data = json.dumps({"texte": texte}).encode("utf-8")
-        req = urllib.request.Request(
-            "https://n8n.mrliw.fr/webhook-test/invoces_dashboard_request",
-            data=data,
-            headers={"Content-Type": "application/json"},
+        return _post_invoices_dashboard_webhook({"texte": texte})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/devis/{devis_id}/facture_webhook")
+def trigger_devis_facture_webhook(
+    devis_id: int, payload: WebhookPayload, db: Session = Depends(get_db)
+):
+    devis = db.query(Devis).filter(Devis.id == devis_id).first()
+    if not devis:
+        raise HTTPException(status_code=404, detail="Devis non trouvé")
+    if devis.statut != "Signé":
+        raise HTTPException(
+            status_code=400,
+            detail="Seul un devis signé peut générer une facture.",
         )
-        with urllib.request.urlopen(req, timeout=120) as response:
-            res_body = response.read().decode("utf-8")
-            try:
-                return json.loads(res_body)
-            except json.JSONDecodeError:
-                return {"status": "success", "raw": res_body}
+    texte = (payload.texte or "").strip()
+    if not texte:
+        raise HTTPException(status_code=400, detail="Le texte ne peut pas être vide.")
+    try:
+        return _post_invoices_dashboard_webhook({"texte": texte, "devis_id": devis_id})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

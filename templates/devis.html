@@ -414,6 +414,19 @@
                             </svg>
                             Modifier
                         </button>
+                        <button v-if="selectedDevis.statut === 'Signé'" @click="openFactureModal"
+                            class="text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5"
+                            title="Générer la facture">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="12" x2="12" y1="18" y2="12" />
+                                <line x1="9" x2="15" y1="15" y2="15" />
+                            </svg>
+                            Générer la facture
+                        </button>
                         <button @click="selectedDevis = null"
                             class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100 transition-colors"
                             title="Fermer">
@@ -661,6 +674,61 @@
                 </div>
             </div>
 
+            <!-- Modal Générer facture (devis signé) -->
+            <div v-if="showFactureModal" class="fixed inset-0 z-[100] overflow-y-auto" role="dialog"
+                aria-modal="true" aria-labelledby="modal-facture-devis-title">
+                <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                    <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+                        @click="closeFactureModal" aria-hidden="true">
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-xl sm:max-w-lg w-full relative z-10 text-left my-8">
+                        <div
+                            class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
+                            <h3 id="modal-facture-devis-title"
+                                class="text-lg leading-6 font-bold text-gray-900 flex items-center gap-2">
+                                Générer la facture
+                            </h3>
+                            <button type="button" @click="closeFactureModal"
+                                class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <form @submit.prevent="submitFactureWebhook" class="p-6 space-y-4">
+                            <div v-if="factureError"
+                                class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                                {{ factureError }}
+                            </div>
+                            <div v-if="factureSuccess"
+                                class="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+                                Demande de facture envoyée avec succès.
+                            </div>
+                            <div>
+                                <label for="factureDevisText" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Instructions pour la facture</label>
+                                <textarea id="factureDevisText" v-model="factureRequestText" rows="5" required
+                                    placeholder="Décrivez les éléments à facturer, acomptes, échéances..."
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 resize-none"></textarea>
+                            </div>
+                            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+                                <button type="button" @click="closeFactureModal" :disabled="isFactureSubmitting"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors disabled:opacity-50">
+                                    Annuler
+                                </button>
+                                <button type="submit" :disabled="isFactureSubmitting || !factureRequestText.trim()"
+                                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                    <span v-if="isFactureSubmitting">Envoi en cours...</span>
+                                    <span v-else>Valider</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Modal Modification Devis -->
             <div v-if="showUpdateModal" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title"
                 role="dialog" aria-modal="true">
@@ -715,7 +783,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Modal Demande Création Devis -->
             <div v-if="showAddModal" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title"
                 role="dialog" aria-modal="true">
@@ -1062,6 +1129,59 @@
                         addError.value = e.message;
                     } finally {
                         isSubmitting.value = false;
+                    }
+                };
+
+                const showFactureModal = ref(false);
+                const factureRequestText = ref("");
+                const isFactureSubmitting = ref(false);
+                const factureError = ref("");
+                const factureSuccess = ref(false);
+
+                const openFactureModal = () => {
+                    factureRequestText.value = "";
+                    factureError.value = "";
+                    factureSuccess.value = false;
+                    showFactureModal.value = true;
+                };
+
+                const closeFactureModal = () => {
+                    showFactureModal.value = false;
+                };
+
+                const submitFactureWebhook = async () => {
+                    const t = (factureRequestText.value || "").trim();
+                    if (!t || !selectedDevis.value) return;
+                    isFactureSubmitting.value = true;
+                    factureError.value = "";
+                    factureSuccess.value = false;
+                    try {
+                        const res = await fetch(
+                            `/api/devis/${selectedDevis.value.id}/facture_webhook`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ texte: t }),
+                            },
+                        );
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            const msg =
+                                typeof data.detail === "string"
+                                    ? data.detail
+                                    : JSON.stringify(data.detail || data);
+                            throw new Error(msg || "Erreur d'envoi.");
+                        }
+                        factureSuccess.value = true;
+                        factureRequestText.value = "";
+                        setTimeout(() => {
+                            closeFactureModal();
+                            factureSuccess.value = false;
+                        }, 1600);
+                    } catch (e) {
+                        factureError.value = e.message || "Erreur";
+                    } finally {
+                        isFactureSubmitting.value = false;
                     }
                 };
 
@@ -1465,6 +1585,14 @@
                     computedTotalEstime,
                     computedTva,
                     computedTtc,
+                    showFactureModal,
+                    factureRequestText,
+                    isFactureSubmitting,
+                    factureError,
+                    factureSuccess,
+                    openFactureModal,
+                    closeFactureModal,
+                    submitFactureWebhook,
                     showUpdateModal,
                     updateDevisText,
                     isUpdating,
