@@ -325,6 +325,58 @@
         </div>
 
 
+        <div v-if="showAvoirModal" class="fixed inset-0 z-[100] overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="flex min-h-screen items-center justify-center p-4 sm:p-0">
+                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" @click="closeAvoirModal" aria-hidden="true">
+                </div>
+                <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full relative z-10 text-left my-8">
+                    <div
+                        class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
+                        <h3 class="text-lg font-bold text-gray-900">Générer un avoir</h3>
+                        <button type="button" @click="closeAvoirModal"
+                            class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="submitAvoir" class="p-6 space-y-4">
+                        <div v-if="avoirError"
+                            class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">{{ avoirError }}
+                        </div>
+                        <div v-if="detail" class="text-sm text-gray-600">
+                            Facture concernée : <span class="font-semibold text-gray-900">{{ detail.numero_facture }}</span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Raison de l'avoir *</label>
+                            <textarea v-model="avoirForm.raison" rows="4" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 resize-none"
+                                placeholder="Ex : geste commercial, annulation partielle..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Montant de l'avoir (€) *</label>
+                            <input v-model.number="avoirForm.montant" type="number" step="0.01" min="0"
+                                :max="detail ? roundMoney(detail.montant_ttc) : 0" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 tabular-nums" />
+                            <p v-if="detail" class="text-xs text-gray-500 mt-1">
+                                Montant maximum : {{ formatMoney(detail.montant_ttc) }}
+                            </p>
+                        </div>
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <button type="button" @click="closeAvoirModal" :disabled="avoirSubmitting"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Annuler</button>
+                            <button type="submit" :disabled="avoirSubmitting"
+                                class="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50">
+                                {{ avoirSubmitting ? 'Création…' : 'Générer l’avoir' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
         <header class="sticky top-0 z-50 border-b border-slate-700 bg-slate-900/95 shadow-lg shadow-slate-950/40 backdrop-blur-md">
             <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
                 <div class="flex items-center gap-6">
@@ -613,6 +665,14 @@
                                 class="px-4 py-2 bg-sky-600 text-white rounded-lg text-sm font-medium hover:bg-sky-700 disabled:opacity-50 shadow-sm">Envoyer</button>
                         </dd>
                     </div>
+                    <div v-if="canGenerateAvoir(detail)" class="sm:col-span-2">
+                        <dt class="text-gray-500 font-medium">Avoir</dt>
+                        <dd class="mt-0.5 flex flex-wrap items-center gap-2">
+                            <button type="button" @click="openAvoirModal"
+                                class="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 shadow-sm">Générer
+                                un avoir</button>
+                        </dd>
+                    </div>
                     <div>
                         <dt class="text-gray-500 font-medium">Statut paiement</dt>
                         <dd class="mt-0.5">{{ paiementLabel(detail.statut_paiement) }}</dd>
@@ -893,6 +953,10 @@
                 const versementMontant = ref(null);
                 const versementError = ref("");
                 const versementSubmitting = ref(false);
+                const showAvoirModal = ref(false);
+                const avoirForm = ref({ raison: "", montant: 0 });
+                const avoirError = ref("");
+                const avoirSubmitting = ref(false);
 
                 const isFullyPaid = (d) => {
                     if (!d) return false;
@@ -907,6 +971,18 @@
                     const ttc = Number(d.montant_ttc);
                     if (!Number.isFinite(ttc) || ttc <= 0) return false;
                     return !isFullyPaid(d);
+                };
+
+                const canGenerateAvoir = (d) => {
+                    if (!d) return false;
+                    const type = (d.type_facture || "Facture").toString().trim().toLowerCase();
+                    if (type !== "facture") return false;
+                    const flux = (d.flux || "").toString().trim().toLowerCase();
+                    if (flux !== "envoyée" && flux !== "envoyee") return false;
+                    const platform = platformKey(d.statut_plateforme);
+                    if (platform !== "validated" && platform !== "sent") return false;
+                    const ttc = Number(d.montant_ttc);
+                    return Number.isFinite(ttc) && ttc >= 0;
                 };
 
                 const montantRestantVersement = (d) => {
@@ -954,9 +1030,64 @@
                     }
                 };
 
+                const openAvoirModal = () => {
+                    if (!detail.value) return;
+                    avoirForm.value = {
+                        raison: "",
+                        montant: roundMoney(detail.value.montant_ttc),
+                    };
+                    avoirError.value = "";
+                    showAvoirModal.value = true;
+                };
+
+                const closeAvoirModal = () => {
+                    showAvoirModal.value = false;
+                };
+
+                const submitAvoir = async () => {
+                    if (!detail.value) return;
+                    avoirError.value = "";
+                    const raison = (avoirForm.value.raison || "").trim();
+                    const montant = Number(avoirForm.value.montant);
+                    const max = roundMoney(detail.value.montant_ttc);
+                    if (!raison) {
+                        avoirError.value = "Indiquez la raison de l'avoir.";
+                        return;
+                    }
+                    if (!Number.isFinite(montant) || montant < 0) {
+                        avoirError.value = "Le montant ne peut pas être négatif.";
+                        return;
+                    }
+                    if (montant > max + 1e-9) {
+                        avoirError.value = "Le montant dépasse le TTC de la facture (" + formatMoney(max) + ").";
+                        return;
+                    }
+                    avoirSubmitting.value = true;
+                    try {
+                        const res = await fetch("/api/factures/" + detail.value.id + "/avoir", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ raison, montant }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            const msg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+                            throw new Error(msg || "Erreur lors de la création de l'avoir.");
+                        }
+                        closeAvoirModal();
+                        await refreshAll();
+                        if (data.id) await openDetail(data.id);
+                    } catch (e) {
+                        avoirError.value = e.message || "Erreur";
+                    } finally {
+                        avoirSubmitting.value = false;
+                    }
+                };
+
                 watch(detail, () => {
                     versementMontant.value = null;
                     versementError.value = "";
+                    avoirError.value = "";
                 });
 
                 const onMontantHtInput = () => {
@@ -1129,13 +1260,13 @@
                 };
 
                 const typeFactureLabel = (t) => {
-                    const x = (t || "Facture").toString().trim();
-                    return x === "Avoir" ? "Avoir" : "Facture";
+                    const x = (t || "Facture").toString().trim().toLowerCase();
+                    return x === "avoir" ? "Avoir" : "Facture";
                 };
 
                 const typeFactureClass = (t) => {
-                    const x = (t || "Facture").toString().trim();
-                    if (x === "Avoir") return "bg-violet-100 text-violet-900";
+                    const x = (t || "Facture").toString().trim().toLowerCase();
+                    if (x === "avoir") return "bg-violet-100 text-violet-900";
                     return "bg-slate-200 text-slate-800";
                 };
 
@@ -1261,6 +1392,8 @@
                     detailPlateformeBrouillon, facturePlateformeValideePourEnvoi, setFacturePlateforme,
                     versementMontant, versementError, versementSubmitting, submitVersement,
                     isFullyPaid, detailCanAddVersement, montantRestantVersement,
+                    canGenerateAvoir, showAvoirModal, avoirForm, avoirError, avoirSubmitting,
+                    openAvoirModal, closeAvoirModal, submitAvoir,
                     clientName, formatMoney, formatDate, fluxLabel, fluxClass,
                     typeFactureLabel, typeFactureClass, docTypeTitle,
                     platformLabel, platformBadgeClass, platformKey, paiementLabel, paiementBadgeClass, fileHref,

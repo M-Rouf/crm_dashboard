@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Avoir - MRLIW</title>
+    <style>
+      :root {
+        --primary-color: #0076b3;
+        --text-dark: #333;
+        --text-light: #666;
+        --border-color: #ccc;
+        --bg-gray: #f2f2f2;
+        --accent-credit: #d32f2f; /* Rouge pour distinguer l'avoir de la facture */
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: var(--text-dark);
+        background-color: #e0e0e0;
+      }
+
+      .page {
+        max-width: 210mm;
+        min-height: 297mm;
+        padding: 5mm 15mm;
+        margin: 0 auto;
+        background: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        box-sizing: border-box;
+        position: relative;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 40px;
+      }
+
+      .logo-container img {
+        max-width: 200px;
+        height: auto;
+      }
+
+      .company-info {
+        font-size: 11pt;
+        line-height: 1.4;
+        text-align: left;
+        flex-grow: 1;
+        margin-left: 40px;
+      }
+
+      .company-name {
+        font-weight: bold;
+        font-size: 14pt;
+      }
+
+      .reference-block {
+        text-align: right;
+      }
+
+      .ref-label {
+        color: var(--text-light);
+        font-size: 11pt;
+        text-transform: uppercase;
+      }
+
+      .ref-value {
+        font-weight: bold;
+        font-size: 16pt;
+        color: var(--accent-credit);
+      }
+
+      .summary-header {
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        padding: 15px 0;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        background-color: #fffafa; /* Teinte très légère rosée */
+      }
+
+      .title-invoice {
+        font-size: 32pt;
+        font-weight: bold;
+        margin: 0;
+        color: var(--accent-credit);
+      }
+
+      .client-info-box {
+        font-size: 10pt;
+      }
+
+      .label-small {
+        color: var(--text-light);
+        font-size: 9pt;
+        margin-bottom: 4px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+
+      thead th {
+        background-color: var(--bg-gray);
+        color: var(--text-light);
+        font-size: 9pt;
+        font-weight: normal;
+        padding: 8px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+      }
+
+      tbody td {
+        padding: 15px 8px;
+        border-bottom: 1px solid #eee;
+        font-size: 10pt;
+        vertical-align: top;
+      }
+
+      .totals-section {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 10px;
+      }
+
+      .totals-table {
+        width: 300px;
+        border: none;
+      }
+
+      .totals-table td {
+        border: none;
+        padding: 4px 8px;
+      }
+
+      .totals-table .label {
+        color: var(--text-light);
+        text-align: left;
+      }
+
+      .totals-table .value {
+        text-align: right;
+        font-weight: bold;
+      }
+
+      .notice-box {
+        margin-top: 40px;
+        padding: 15px;
+        border: 1px solid #ffcdd2;
+        background-color: #ffebee;
+        font-size: 10pt;
+        border-radius: 4px;
+      }
+
+      @media print {
+        body {
+          background: none;
+        }
+        .page {
+          box-shadow: none;
+          width: 100%;
+          padding: 10mm 15mm;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <header>
+        <div class="logo-container">
+          <img src="logo_devis.png" alt="Logo MRLIW" width="80" height="80" />
+        </div>
+        <div class="company-info">
+          <div class="company-name">MRLIW - Matthieu ROUFFY EI</div>
+          46 Mas de Bessac, 46320 Brengues<br />
+          06 34 38 74 27 |
+          <span style="color: var(--primary-color)">contact@mrliw.fr</span
+          ><br />
+          SIRET : 900 577 933 000 22
+        </div>
+        <div class="reference-block">
+          <div class="ref-label">Avoir N°</div>
+          <div class="ref-value">#ref_avoir</div>
+          <div
+            style="font-size: 9pt; color: var(--text-light); margin-top: 5px"
+          >
+            En référence à la facture : <strong>#ref_facture</strong>
+          </div>
+        </div>
+      </header>
+
+      <div class="summary-header">
+        <div>
+          <h1 class="title-invoice">Avoir</h1>
+        </div>
+        <div class="client-info-box">
+          <div class="label-small">Adressé à :</div>
+          <strong>#nom_client</strong><br />
+          #adresse_client<br />
+          #contact_client
+        </div>
+        <div style="text-align: right">
+          <div class="label-small">Date d'émission :</div>
+          <strong>#date_avoir</strong>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 70%">Description du motif de l'avoir</th>
+            <th style="width: 30%; text-align: right">Montant Crédité HT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div style="font-weight: bold">#description_avoir</div>
+              <div
+                style="
+                  font-size: 9pt;
+                  color: var(--text-light);
+                  margin-top: 4px;
+                  white-space: pre-line;
+                "
+              >
+                Annulation ou correction de la facture #ref_facture du
+                #date_facture.
+              </div>
+            </td>
+            <td style="text-align: right; font-weight: bold">#Tot_HT €</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="totals-section">
+        <table class="totals-table">
+          <tr>
+            <td class="label">Total HT</td>
+            <td class="value">#Tot_HT €</td>
+          </tr>
+          <tr>
+            <td class="label">TVA (0%)</td>
+            <td class="value">0,00 €</td>
+          </tr>
+          <tr style="border-top: 2px solid var(--accent-credit)">
+            <td class="label" style="font-size: 12pt">
+              <strong>NET CRÉDITÉ</strong>
+            </td>
+            <td
+              class="value"
+              style="font-size: 14pt; color: var(--accent-credit)"
+            >
+              <strong>#Tot_TTC €</strong>
+            </td>
+          </tr>
+          <tr>
+            <td
+              colspan="2"
+              style="
+                font-size: 8pt;
+                color: var(--text-light);
+                padding-top: 10px;
+              "
+            >
+              TVA non applicable, art 293B du CGI
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="notice-box">
+        <strong>Note d'information :</strong><br />
+        Cet avoir vient en déduction de votre facture
+        <strong>#ref_facture</strong>. Si cette facture a déjà été réglée, ce
+        montant sera déduit de votre prochain achat ou pourra faire l'objet d'un
+        remboursement sur demande.
+      </div>
+
+      <footer
+        style="
+          margin-top: 40px;
+          font-size: 8pt;
+          color: var(--text-light);
+          text-align: center;
+          border-top: 1px solid #eee;
+          padding-top: 10px;
+        "
+      >
+        MRLIW - Matthieu ROUFFY EI - SIRET : 900 577 933 000 22
+      </footer>
+    </div>
+  </body>
+</html>

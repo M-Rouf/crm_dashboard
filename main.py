@@ -35,6 +35,7 @@ from sqlalchemy.orm import (
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from scripts.generate_devis import generate_devis_files
+from scripts.generate_avoir import generate_avoir_files
 from scripts.generate_facture import generate_facture_files
 
 # --- Configurations de la Base de Données ---
@@ -475,6 +476,11 @@ class FactureSchema(BaseModel):
 
 
 class FactureVersementBody(BaseModel):
+    montant: float
+
+
+class FactureAvoirBody(BaseModel):
+    raison: str
     montant: float
 
 
@@ -985,6 +991,143 @@ def add_facture_versement(
     return facture
 
 
+@app.post("/api/factures/{facture_id}/avoir", response_model=FactureSchema)
+def generate_facture_avoir(
+    facture_id: int,
+    body: FactureAvoirBody,
+    db: Session = Depends(get_db),
+):
+    raison = (body.raison or "").strip()
+    if not raison:
+        raise HTTPException(status_code=400, detail="La raison de l'avoir est requise.")
+
+    montant_avoir = _money_dec(body.montant)
+    if montant_avoir < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Le montant de l'avoir ne peut pas être négatif.",
+        )
+
+    facture = (
+        db.query(Facture)
+        .options(joinedload(Facture.contact))
+        .filter(Facture.id == facture_id)
+        .first()
+    )
+    if not facture:
+        raise HTTPException(status_code=404, detail="Facture non trouvée")
+
+    if (facture.type_facture or "Facture").strip().lower() != "facture":
+        raise HTTPException(
+            status_code=400,
+            detail="Un avoir ne peut être généré que depuis une facture.",
+        )
+
+    flux = (facture.flux or "").strip().lower()
+    if flux not in ("envoyée", "envoyee"):
+        raise HTTPException(
+            status_code=400,
+            detail="Un avoir ne peut être généré que pour une facture en flux envoyée.",
+        )
+
+    statut_plateforme = (facture.statut_plateforme or "").strip().lower()
+    if statut_plateforme not in ("validated", "sent"):
+        raise HTTPException(
+            status_code=400,
+            detail="Un avoir ne peut être généré que pour une facture plateforme validée ou envoyée.",
+        )
+
+    montant_ttc = _money_dec(facture.montant_ttc)
+    if montant_avoir > montant_ttc:
+        raise HTTPException(
+            status_code=400,
+            detail="Le montant de l'avoir ne peut pas dépasser le montant TTC de la facture.",
+        )
+
+    contact = facture.contact
+    if not contact:
+        raise HTTPException(status_code=400, detail="Contact client introuvable.")
+
+    ref_avoir = _next_avoir_reference(db)
+    entreprise = (contact.entreprise or "").strip()
+    prenom_nom = f"{contact.prenom or ''} {contact.nom or ''}".strip()
+    nom_client = f"{prenom_nom} ({entreprise})" if entreprise else prenom_nom
+    adresse_client = contact.adresse_facturation or contact.adresse_livraison or ""
+    generations = generate_avoir_files(
+        ref_avoir=ref_avoir,
+        ref_facture=facture.numero_facture,
+        nom_client=nom_client,
+        adresse_client=adresse_client,
+        contact_client=contact.email or "",
+        description_avoir=raison,
+        montant=float(montant_avoir),
+        date_facture=facture.date_emission,
+    )
+
+    montant_paye_initial = _money_dec(facture.montant_paye)
+    montant_paye_avec_avoir = (montant_paye_initial + montant_avoir).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    ecart_montant = Decimal("0.00")
+    if montant_paye_avec_avoir > montant_ttc:
+        ecart_montant = (montant_paye_avec_avoir - montant_ttc).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        montant_paye_avec_avoir = montant_ttc
+
+    montant_paye_avoir = (montant_avoir - ecart_montant).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    if montant_paye_avoir < 0:
+        montant_paye_avoir = Decimal("0.00")
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    facture.montant_paye = montant_paye_avec_avoir
+    facture.statut_paiement = _statut_paiement_from_montants(
+        montant_paye_avec_avoir, montant_ttc
+    )
+    facture.date_paiement = now if facture.statut_paiement == "paye" else None
+
+    avoir = Facture(
+        numero_facture=ref_avoir,
+        contact_id=contact.id,
+        devis_id=facture.devis_id,
+        commande_id=facture.commande_id,
+        flux="envoyée",
+        montant_ht=montant_avoir,
+        montant_tva=Decimal("0.00"),
+        montant_ttc=montant_avoir,
+        devise=facture.devise or "EUR",
+        file_path=generations.get("url_path") or f"/files/avoirs/{ref_avoir}.pdf",
+        external_id=None,
+        statut_plateforme="draft",
+        statut_paiement=_statut_paiement_from_montants(
+            montant_paye_avoir, montant_avoir
+        ),
+        date_emission=now,
+        date_echeance=None,
+        date_paiement=now if montant_paye_avoir >= montant_avoir and montant_avoir > 0 else None,
+        type_facture="avoir",
+        montant_paye=montant_paye_avoir,
+        id_facture_associee=facture.id,
+    )
+    db.add(avoir)
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        for key in ("html_path", "pdf_path"):
+            path = generations.get(key)
+            try:
+                if path and os.path.isfile(path):
+                    os.remove(path)
+            except OSError:
+                pass
+        raise HTTPException(status_code=400, detail=str(e))
+    db.refresh(avoir)
+    return avoir
+
+
 @app.post("/api/factures/manuel")
 def create_manual_facture(
     contact_id: int = Form(...),
@@ -1294,6 +1437,27 @@ def _next_facture_reference(db: Session) -> str:
         if num and num.startswith(prefix) and len(num) >= len(prefix) + 2:
             try:
                 max_xx = max(max_xx, int(num[-2:]))
+            except ValueError:
+                pass
+    return f"{prefix}{max_xx + 1:02d}"
+
+
+def _next_avoir_reference(db: Session) -> str:
+    now = datetime.datetime.now()
+    yy = now.strftime("%y")
+    mm = now.strftime("%m")
+    prefix = f"mrliw_a{yy}{mm}"
+    rows = (
+        db.query(Facture.numero_facture)
+        .filter(Facture.numero_facture.like(f"{prefix}%"))
+        .all()
+    )
+    max_xx = -1
+    for (num,) in rows:
+        suffix = (num or "")[len(prefix) :]
+        if num and num.startswith(prefix) and len(suffix) == 2:
+            try:
+                max_xx = max(max_xx, int(suffix))
             except ValueError:
                 pass
     return f"{prefix}{max_xx + 1:02d}"
