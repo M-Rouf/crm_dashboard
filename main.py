@@ -1492,6 +1492,7 @@ class ConfirmFacturePayload(BaseModel):
     email: str
     adresse_facturation: Optional[str] = ""
     description: Optional[str] = ""
+    categorie: Optional[str] = "AUTRE"
     devis_associe: Optional[str] = ""
     articles: List[ArticlePayload] = []
 
@@ -1546,6 +1547,21 @@ def confirm_facture_creation(
         raise HTTPException(status_code=400, detail="Email client requis.")
     if not payload.articles:
         raise HTTPException(status_code=400, detail="Au moins un article est requis.")
+
+    categories_valides = {
+        "PRESTATION",
+        "ABONNEMENT",
+        "MATERIEL",
+        "LOGICIEL",
+        "FRAIS_DEPLACEMENT",
+        "SOUS_TRAITANCE",
+        "ASSURANCE",
+        "IMPOTS_TAXES",
+        "AUTRE",
+    }
+    categorie = (payload.categorie or "AUTRE").strip().upper() or "AUTRE"
+    if categorie not in categories_valides:
+        raise HTTPException(status_code=400, detail="Catégorie de facture invalide.")
 
     total_ht = Decimal("0")
     for a in payload.articles:
@@ -1617,7 +1633,7 @@ def confirm_facture_creation(
         date_paiement=None,
         type_facture="Facture",
         montant_paye=0,
-        categorie="PRESTATION",
+        categorie=categorie,
         id_facture_associee=None,
     )
     db.add(facture)
