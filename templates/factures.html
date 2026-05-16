@@ -652,13 +652,19 @@
                     <div>
                         <dt class="text-gray-500 font-medium">Catégorie</dt>
                         <dd class="mt-0.5 flex flex-col gap-1">
-                            <select :value="detail.categorie || 'AUTRE'" @change="updateFactureCategorie($event.target.value)"
+                            <select v-if="canEditCategorie(detail)" :value="detail.categorie || 'AUTRE'" @change="updateFactureCategorie($event.target.value)"
                                 :disabled="categorieSaving"
                                 class="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-900 focus:ring-2 focus:ring-sky-500 disabled:opacity-60">
                                 <option v-for="cat in categorieOptions" :key="cat.value" :value="cat.value">
                                     {{ cat.label }}
                                 </option>
                             </select>
+                            <span v-else :class="categorieClass(detail.categorie)"
+                                class="inline-flex w-fit px-2 py-0.5 rounded-full text-xs font-semibold">{{
+                                categorieLabel(detail.categorie) }}</span>
+                            <span v-if="!canEditCategorie(detail) && detail.id_facture_associee" class="text-xs text-gray-500">
+                                La catégorie se modifie depuis la facture associée.
+                            </span>
                             <span v-if="categorieSaving" class="text-xs text-gray-500">Enregistrement…</span>
                             <span v-if="categorieError" class="text-xs text-red-600">{{ categorieError }}</span>
                         </dd>
@@ -1390,9 +1396,14 @@
                     return x === "validated";
                 };
 
+                const canEditCategorie = (d) => {
+                    if (!d) return false;
+                    return typeFactureLabel(d.type_facture) !== "Avoir";
+                };
+
                 const updateFactureCategorie = async (categorie) => {
                     const id = detail.value && detail.value.id;
-                    if (!id) return;
+                    if (!id || !canEditCategorie(detail.value)) return;
                     categorieSaving.value = true;
                     categorieError.value = "";
                     try {
@@ -1409,6 +1420,9 @@
                         detail.value = data;
                         const index = factures.value.findIndex((f) => f.id === data.id);
                         if (index >= 0) factures.value[index] = data;
+                        factures.value = factures.value.map((f) =>
+                            f.id_facture_associee === data.id ? { ...f, categorie: data.categorie } : f
+                        );
                     } catch (e) {
                         categorieError.value = e.message || "Erreur";
                     } finally {
@@ -1489,6 +1503,7 @@
                     selectedId, detail, openDetail,
                     plateformeActionsLoading,
                     categorieOptions, categorieSaving, categorieError, updateFactureCategorie,
+                    canEditCategorie,
                     detailPlateformeBrouillon, facturePlateformeValideePourEnvoi, setFacturePlateforme,
                     versementMontant, versementError, versementSubmitting, submitVersement,
                     isFullyPaid, detailCanAddVersement, montantRestantVersement,

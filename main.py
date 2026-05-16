@@ -937,8 +937,17 @@ def update_facture_categorie(
     )
     if not facture:
         raise HTTPException(status_code=404, detail="Facture non trouvée")
+    if (facture.type_facture or "Facture").strip().lower() == "avoir":
+        raise HTTPException(
+            status_code=400,
+            detail="La catégorie d'un avoir se modifie depuis sa facture associée.",
+        )
 
     facture.categorie = categorie
+    db.query(Facture).filter(
+        Facture.id_facture_associee == facture.id,
+        func.lower(func.trim(func.coalesce(Facture.type_facture, ""))) == "avoir",
+    ).update({Facture.categorie: categorie}, synchronize_session=False)
     db.commit()
     db.refresh(facture)
     return facture
