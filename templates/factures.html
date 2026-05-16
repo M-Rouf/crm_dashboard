@@ -59,13 +59,28 @@
                                 <option v-for="c in contacts" :key="c.id" :value="c.id">{{ clientName(c) }}</option>
                             </select>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Flux *</label>
                                 <select v-model="manualAddForm.flux" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-                                    <option value="envoyée">Envoyée</option>
-                                    <option value="réceptionnée">Réceptionnée</option>
+                                    <option value="vente">Vente</option>
+                                    <option value="achat">Achat</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+                                <select v-model="manualAddForm.categorie"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+                                    <option value="PRESTATION">Prestation</option>
+                                    <option value="ABONNEMENT">Abonnement</option>
+                                    <option value="MATERIEL">Matériel</option>
+                                    <option value="LOGICIEL">Logiciel</option>
+                                    <option value="FRAIS_DEPLACEMENT">Frais déplacement</option>
+                                    <option value="SOUS_TRAITANCE">Sous-traitance</option>
+                                    <option value="ASSURANCE">Assurance</option>
+                                    <option value="IMPOTS_TAXES">Impôts / taxes</option>
+                                    <option value="AUTRE">Autre</option>
                                 </select>
                             </div>
                             <div>
@@ -503,7 +518,7 @@
                                 <th class="px-4 py-3 font-semibold text-left">Type</th>
                                 <th class="px-4 py-3 font-semibold">N° facture</th>
                                 <th class="px-4 py-3 font-semibold">Client / fournisseur</th>
-                                <th class="px-4 py-3 font-semibold text-center">Flux</th>
+                                <th class="px-4 py-3 font-semibold text-center">Flux / catégorie</th>
                                 <th class="px-4 py-3 font-semibold text-right">TTC</th>
                                 <th class="px-4 py-3 font-semibold text-center">Échéance</th>
                                 <th class="px-4 py-3 font-semibold text-center">Plateforme</th>
@@ -526,9 +541,14 @@
                                 <td class="px-4 py-3 font-semibold text-gray-900">{{ f.numero_facture }}</td>
                                 <td class="px-4 py-3 text-gray-700">{{ clientName(f.contact) }}</td>
                                 <td class="px-4 py-3 text-center">
+                                    <div class="inline-flex flex-wrap justify-center gap-1.5">
                                     <span :class="fluxClass(f.flux)"
                                         class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
                                         fluxLabel(f.flux) }}</span>
+                                    <span :class="categorieClass(f.categorie)"
+                                        class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
+                                        categorieLabel(f.categorie) }}</span>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ formatMoney(f.montant_ttc)
                                     }}</td>
@@ -623,7 +643,19 @@
                     </div>
                     <div>
                         <dt class="text-gray-500 font-medium">Flux</dt>
-                        <dd class="mt-0.5">{{ fluxLabel(detail.flux) }}</dd>
+                        <dd class="mt-0.5">
+                            <span :class="fluxClass(detail.flux)"
+                                class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
+                                fluxLabel(detail.flux) }}</span>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 font-medium">Catégorie</dt>
+                        <dd class="mt-0.5">
+                            <span :class="categorieClass(detail.categorie)"
+                                class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
+                                categorieLabel(detail.categorie) }}</span>
+                        </dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 font-medium">Devise</dt>
@@ -738,7 +770,8 @@
                 const manualAddForm = ref({
                     numero_facture: "",
                     contact_id: "",
-                    flux: "envoyée",
+                    flux: "vente",
+                    categorie: "AUTRE",
                     montant_ht: 0,
                     montant_tva: 0,
                     montant_ttc: 0,
@@ -909,7 +942,8 @@
                     manualAddForm.value = {
                         numero_facture: "",
                         contact_id: "",
-                        flux: "envoyée",
+                        flux: "vente",
+                        categorie: "AUTRE",
                         montant_ht: 0,
                         montant_tva: 0,
                         montant_ttc: 0,
@@ -978,7 +1012,7 @@
                     const type = (d.type_facture || "Facture").toString().trim().toLowerCase();
                     if (type !== "facture") return false;
                     const flux = (d.flux || "").toString().trim().toLowerCase();
-                    if (flux !== "envoyée" && flux !== "envoyee") return false;
+                    if (flux !== "vente" && flux !== "envoyée" && flux !== "envoyee") return false;
                     const platform = platformKey(d.statut_plateforme);
                     if (platform !== "validated" && platform !== "sent") return false;
                     const ttc = Number(d.montant_ttc);
@@ -1130,6 +1164,7 @@
                     const fd = new FormData();
                     fd.append("contact_id", manualAddForm.value.contact_id);
                     fd.append("flux", manualAddForm.value.flux);
+                    fd.append("categorie", manualAddForm.value.categorie || "AUTRE");
                     fd.append("montant_ht", String(manualAddForm.value.montant_ht));
                     fd.append("montant_tva", String(manualAddForm.value.montant_tva ?? 0));
                     fd.append("montant_ttc", String(manualAddForm.value.montant_ttc));
@@ -1248,14 +1283,41 @@
                 };
 
                 const fluxLabel = (flux) => {
-                    if (flux === "réceptionnée" || flux === "receptionnee") return "Réceptionnée";
-                    if (flux === "envoyée" || flux === "envoyee") return "Envoyée";
+                    const x = (flux || "").toString().trim().toLowerCase();
+                    if (x === "achat" || x === "réceptionnée" || x === "receptionnee") return "Achat";
+                    if (x === "vente" || x === "envoyée" || x === "envoyee") return "Vente";
                     return flux || "—";
                 };
 
                 const fluxClass = (flux) => {
-                    if (flux === "envoyée" || flux === "envoyee") return "bg-sky-100 text-sky-800";
-                    if (flux === "réceptionnée" || flux === "receptionnee") return "bg-violet-100 text-violet-800";
+                    const x = (flux || "").toString().trim().toLowerCase();
+                    if (x === "vente" || x === "envoyée" || x === "envoyee") return "bg-emerald-100 text-emerald-800";
+                    if (x === "achat" || x === "réceptionnée" || x === "receptionnee") return "bg-purple-100 text-purple-800";
+                    return "bg-gray-100 text-gray-700";
+                };
+
+                const categorieLabel = (categorie) => {
+                    const map = {
+                        PRESTATION: "Prestation",
+                        ABONNEMENT: "Abonnement",
+                        MATERIEL: "Matériel",
+                        LOGICIEL: "Logiciel",
+                        FRAIS_DEPLACEMENT: "Frais déplacement",
+                        SOUS_TRAITANCE: "Sous-traitance",
+                        ASSURANCE: "Assurance",
+                        IMPOTS_TAXES: "Impôts / taxes",
+                        AUTRE: "Autre",
+                    };
+                    const key = (categorie || "AUTRE").toString().trim().toUpperCase();
+                    return map[key] || key || "Autre";
+                };
+
+                const categorieClass = (categorie) => {
+                    const key = (categorie || "AUTRE").toString().trim().toUpperCase();
+                    if (key === "PRESTATION" || key === "ABONNEMENT") return "bg-sky-100 text-sky-800";
+                    if (key === "MATERIEL" || key === "LOGICIEL") return "bg-indigo-100 text-indigo-800";
+                    if (key === "FRAIS_DEPLACEMENT" || key === "SOUS_TRAITANCE") return "bg-orange-100 text-orange-800";
+                    if (key === "ASSURANCE" || key === "IMPOTS_TAXES") return "bg-rose-100 text-rose-800";
                     return "bg-gray-100 text-gray-700";
                 };
 
@@ -1394,7 +1456,7 @@
                     isFullyPaid, detailCanAddVersement, montantRestantVersement,
                     canGenerateAvoir, showAvoirModal, avoirForm, avoirError, avoirSubmitting,
                     openAvoirModal, closeAvoirModal, submitAvoir,
-                    clientName, formatMoney, roundMoney, formatDate, fluxLabel, fluxClass,
+                    clientName, formatMoney, roundMoney, formatDate, fluxLabel, fluxClass, categorieLabel, categorieClass,
                     typeFactureLabel, typeFactureClass, docTypeTitle,
                     platformLabel, platformBadgeClass, platformKey, paiementLabel, paiementBadgeClass, fileHref,
                     contacts, devisList, commandesList,

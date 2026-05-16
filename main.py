@@ -182,6 +182,7 @@ class Facture(Base):
         Integer, ForeignKey("factures.id", ondelete="SET NULL"), nullable=True
     )
     montant_paye = Column(Numeric(12, 2), default=0)
+    categorie = Column(String(50), default="AUTRE")
 
     contact = relationship("Contact", back_populates="factures")
     devis = relationship("Devis", foreign_keys=[devis_id])
@@ -462,6 +463,7 @@ class FactureSchema(BaseModel):
     statut_paiement: Optional[str] = "non_paye"
     type_facture: Optional[str] = "Facture"
     montant_paye: Optional[float] = 0
+    categorie: Optional[str] = "AUTRE"
     id_facture_associee: Optional[int] = None
     date_emission: Optional[datetime.datetime] = None
     date_echeance: Optional[datetime.datetime] = None
@@ -1024,10 +1026,10 @@ def generate_facture_avoir(
         )
 
     flux = (facture.flux or "").strip().lower()
-    if flux not in ("envoyée", "envoyee"):
+    if flux not in ("vente", "envoyée", "envoyee"):
         raise HTTPException(
             status_code=400,
-            detail="Un avoir ne peut être généré que pour une facture en flux envoyée.",
+            detail="Un avoir ne peut être généré que pour une facture en flux vente.",
         )
 
     statut_plateforme = (facture.statut_plateforme or "").strip().lower()
@@ -1093,7 +1095,7 @@ def generate_facture_avoir(
         contact_id=contact.id,
         devis_id=facture.devis_id,
         commande_id=facture.commande_id,
-        flux="envoyée",
+        flux="vente",
         montant_ht=montant_avoir,
         montant_tva=Decimal("0.00"),
         montant_ttc=montant_avoir,
@@ -1109,6 +1111,7 @@ def generate_facture_avoir(
         date_paiement=now if montant_paye_avoir >= montant_avoir and montant_avoir > 0 else None,
         type_facture="Avoir",
         montant_paye=montant_paye_avoir,
+        categorie=facture.categorie or "AUTRE",
         id_facture_associee=facture.id,
     )
     db.add(avoir)
@@ -1131,7 +1134,8 @@ def generate_facture_avoir(
 @app.post("/api/factures/manuel")
 def create_manual_facture(
     contact_id: int = Form(...),
-    flux: str = Form("envoyée"),
+    flux: str = Form("vente"),
+    categorie: str = Form("AUTRE"),
     montant_ht: float = Form(...),
     montant_tva: float = Form(0.0),
     montant_ttc: float = Form(...),
@@ -1150,16 +1154,31 @@ def create_manual_facture(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact introuvable")
 
-    flux_clean = (flux or "").strip()
-    if flux_clean in ("envoyee", "envoyée"):
-        flux_db = "envoyée"
-    elif flux_clean in ("receptionnee", "réceptionnée"):
-        flux_db = "réceptionnée"
+    flux_clean = (flux or "").strip().lower()
+    if flux_clean in ("vente", "envoyee", "envoyée"):
+        flux_db = "vente"
+    elif flux_clean in ("achat", "receptionnee", "réceptionnée"):
+        flux_db = "achat"
     else:
         raise HTTPException(
             status_code=400,
-            detail="flux doit être « envoyée » ou « réceptionnée ».",
+            detail="flux doit être « vente » ou « achat ».",
         )
+
+    categories_valides = {
+        "PRESTATION",
+        "ABONNEMENT",
+        "MATERIEL",
+        "LOGICIEL",
+        "FRAIS_DEPLACEMENT",
+        "SOUS_TRAITANCE",
+        "ASSURANCE",
+        "IMPOTS_TAXES",
+        "AUTRE",
+    }
+    categorie_db = (categorie or "AUTRE").strip().upper() or "AUTRE"
+    if categorie_db not in categories_valides:
+        categorie_db = "AUTRE"
 
     d_id: Optional[int] = None
     if devis_id and str(devis_id).strip():
@@ -1257,6 +1276,7 @@ def create_manual_facture(
         date_paiement=None,
         type_facture="Facture",
         montant_paye=0,
+        categorie=categorie_db,
         id_facture_associee=None,
     )
     db.add(facture)
@@ -1529,7 +1549,7 @@ def confirm_facture_creation(
         contact_id=contact.id,
         devis_id=devis_id,
         commande_id=None,
-        flux="envoyée",
+        flux="vente",
         montant_ht=total_ht,
         montant_tva=montant_tva,
         montant_ttc=montant_ttc,
@@ -1543,6 +1563,7 @@ def confirm_facture_creation(
         date_paiement=None,
         type_facture="Facture",
         montant_paye=0,
+        categorie="PRESTATION",
         id_facture_associee=None,
     )
     db.add(facture)
