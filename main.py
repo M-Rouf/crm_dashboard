@@ -486,6 +486,10 @@ class FactureAvoirBody(BaseModel):
     montant: float
 
 
+class FactureCategorieUpdate(BaseModel):
+    categorie: str
+
+
 class FacturePlateformeUpdate(BaseModel):
     statut_plateforme: str
     envoyer_mail: bool = False
@@ -894,6 +898,47 @@ def update_facture_statut_plateforme(
                     detail=f"Erreur lors de l'envoi mail via n8n : {e}",
                 )
     facture.statut_plateforme = raw[:100]
+    db.commit()
+    db.refresh(facture)
+    return facture
+
+
+@app.patch("/api/factures/{facture_id}/categorie", response_model=FactureSchema)
+def update_facture_categorie(
+    facture_id: int,
+    body: FactureCategorieUpdate,
+    db: Session = Depends(get_db),
+):
+    categories_valides = {
+        "PRESTATION",
+        "ABONNEMENT",
+        "MATERIEL",
+        "LOGICIEL",
+        "FRAIS_DEPLACEMENT",
+        "SOUS_TRAITANCE",
+        "ASSURANCE",
+        "IMPOTS_TAXES",
+        "AUTRE",
+    }
+    categorie = (body.categorie or "AUTRE").strip().upper() or "AUTRE"
+    if categorie not in categories_valides:
+        raise HTTPException(status_code=400, detail="Catégorie de facture invalide.")
+
+    facture = (
+        db.query(Facture)
+        .options(
+            joinedload(Facture.contact),
+            joinedload(Facture.devis),
+            joinedload(Facture.commande),
+            joinedload(Facture.facture_associee),
+        )
+        .filter(Facture.id == facture_id)
+        .first()
+    )
+    if not facture:
+        raise HTTPException(status_code=404, detail="Facture non trouvée")
+
+    facture.categorie = categorie
     db.commit()
     db.refresh(facture)
     return facture

@@ -651,10 +651,16 @@
                     </div>
                     <div>
                         <dt class="text-gray-500 font-medium">Catégorie</dt>
-                        <dd class="mt-0.5">
-                            <span :class="categorieClass(detail.categorie)"
-                                class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold">{{
-                                categorieLabel(detail.categorie) }}</span>
+                        <dd class="mt-0.5 flex flex-col gap-1">
+                            <select :value="detail.categorie || 'AUTRE'" @change="updateFactureCategorie($event.target.value)"
+                                :disabled="categorieSaving"
+                                class="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-900 focus:ring-2 focus:ring-sky-500 disabled:opacity-60">
+                                <option v-for="cat in categorieOptions" :key="cat.value" :value="cat.value">
+                                    {{ cat.label }}
+                                </option>
+                            </select>
+                            <span v-if="categorieSaving" class="text-xs text-gray-500">Enregistrement…</span>
+                            <span v-if="categorieError" class="text-xs text-red-600">{{ categorieError }}</span>
                         </dd>
                     </div>
                     <div>
@@ -761,7 +767,21 @@
                 const selectedId = ref(null);
                 const detail = ref(null);
                 const plateformeActionsLoading = ref(false);
+                const categorieSaving = ref(false);
+                const categorieError = ref("");
                 let debounceTimer = null;
+
+                const categorieOptions = [
+                    { value: "PRESTATION", label: "Prestation" },
+                    { value: "ABONNEMENT", label: "Abonnement" },
+                    { value: "MATERIEL", label: "Matériel" },
+                    { value: "LOGICIEL", label: "Logiciel" },
+                    { value: "FRAIS_DEPLACEMENT", label: "Frais déplacement" },
+                    { value: "SOUS_TRAITANCE", label: "Sous-traitance" },
+                    { value: "ASSURANCE", label: "Assurance" },
+                    { value: "IMPOTS_TAXES", label: "Impôts / taxes" },
+                    { value: "AUTRE", label: "Autre" },
+                ];
 
                 const contacts = ref([]);
                 const devisList = ref([]);
@@ -1122,6 +1142,7 @@
                     versementMontant.value = null;
                     versementError.value = "";
                     avoirError.value = "";
+                    categorieError.value = "";
                 });
 
                 const onMontantHtInput = () => {
@@ -1297,19 +1318,9 @@
                 };
 
                 const categorieLabel = (categorie) => {
-                    const map = {
-                        PRESTATION: "Prestation",
-                        ABONNEMENT: "Abonnement",
-                        MATERIEL: "Matériel",
-                        LOGICIEL: "Logiciel",
-                        FRAIS_DEPLACEMENT: "Frais déplacement",
-                        SOUS_TRAITANCE: "Sous-traitance",
-                        ASSURANCE: "Assurance",
-                        IMPOTS_TAXES: "Impôts / taxes",
-                        AUTRE: "Autre",
-                    };
                     const key = (categorie || "AUTRE").toString().trim().toUpperCase();
-                    return map[key] || key || "Autre";
+                    const option = categorieOptions.find((cat) => cat.value === key);
+                    return option ? option.label : key || "Autre";
                 };
 
                 const categorieClass = (categorie) => {
@@ -1377,6 +1388,32 @@
                     if (!d) return false;
                     const x = (d.statut_plateforme || "").toString().trim().toLowerCase();
                     return x === "validated";
+                };
+
+                const updateFactureCategorie = async (categorie) => {
+                    const id = detail.value && detail.value.id;
+                    if (!id) return;
+                    categorieSaving.value = true;
+                    categorieError.value = "";
+                    try {
+                        const res = await fetch(`/api/factures/${id}/categorie`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ categorie }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            const msg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+                            throw new Error(msg || "Erreur de mise à jour.");
+                        }
+                        detail.value = data;
+                        const index = factures.value.findIndex((f) => f.id === data.id);
+                        if (index >= 0) factures.value[index] = data;
+                    } catch (e) {
+                        categorieError.value = e.message || "Erreur";
+                    } finally {
+                        categorieSaving.value = false;
+                    }
                 };
 
                 const setFacturePlateforme = async (statut_plateforme) => {
@@ -1451,6 +1488,7 @@
                     listLoading, listError, refreshAll,
                     selectedId, detail, openDetail,
                     plateformeActionsLoading,
+                    categorieOptions, categorieSaving, categorieError, updateFactureCategorie,
                     detailPlateformeBrouillon, facturePlateformeValideePourEnvoi, setFacturePlateforme,
                     versementMontant, versementError, versementSubmitting, submitVersement,
                     isFullyPaid, detailCanAddVersement, montantRestantVersement,
