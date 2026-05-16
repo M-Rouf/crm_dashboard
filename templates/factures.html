@@ -1189,12 +1189,15 @@
                 const setFacturePlateforme = async (statut_plateforme) => {
                     const id = detail.value && detail.value.id;
                     if (!id) return;
+                    const envoyer_mail = statut_plateforme === "sent"
+                        ? window.confirm("Envoyer cette facture par mail au client ?")
+                        : false;
                     plateformeActionsLoading.value = true;
                     try {
                         const res = await fetch(`/api/factures/${id}/statut-plateforme`, {
                             method: "PATCH",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ statut_plateforme }),
+                            body: JSON.stringify({ statut_plateforme, envoyer_mail }),
                         });
                         const data = await res.json().catch(() => ({}));
                         if (!res.ok) {

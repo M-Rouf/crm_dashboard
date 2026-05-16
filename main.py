@@ -206,6 +206,24 @@ def _facture_platform_bucket(statut_plateforme: Optional[str]) -> str:
     return "pending"
 
 
+def _post_facture_email_webhook(facture: Facture) -> None:
+    contact = facture.contact
+    payload = {
+        "prenom": (contact.prenom if contact else "") or "",
+        "email": (contact.email if contact else "") or "",
+        "nom_facture": facture.numero_facture,
+        "file_path": facture.file_path or "",
+    }
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        "https://n8n.mrliw.fr/webhook-test/envoi_factures",
+        data=data,
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=120) as response:
+        response.read()
+
+
 def _money_dec(value) -> Decimal:
     if value is None:
         return Decimal("0")
@@ -462,6 +480,7 @@ class FactureVersementBody(BaseModel):
 
 class FacturePlateformeUpdate(BaseModel):
     statut_plateforme: str
+    envoyer_mail: bool = False
 
 
 # --- Initialisation FastAPI ---
@@ -848,6 +867,24 @@ def update_facture_statut_plateforme(
                 status_code=400,
                 detail="Seules les factures validées sur la plateforme peuvent être marquées comme envoyées.",
             )
+        if body.envoyer_mail:
+            if not facture.contact or not (facture.contact.email or "").strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail="Impossible d'envoyer la facture par mail : email client manquant.",
+                )
+            if not (facture.file_path or "").strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail="Impossible d'envoyer la facture par mail : fichier facture manquant.",
+                )
+            try:
+                _post_facture_email_webhook(facture)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Erreur lors de l'envoi mail via n8n : {e}",
+                )
     facture.statut_plateforme = raw[:100]
     db.commit()
     db.refresh(facture)
