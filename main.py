@@ -1107,7 +1107,7 @@ def generate_facture_avoir(
         date_emission=now,
         date_echeance=None,
         date_paiement=now if montant_paye_avoir >= montant_avoir and montant_avoir > 0 else None,
-        type_facture="avoir",
+        type_facture="Avoir",
         montant_paye=montant_paye_avoir,
         id_facture_associee=facture.id,
     )
