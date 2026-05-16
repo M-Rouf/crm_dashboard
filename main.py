@@ -217,7 +217,7 @@ def _post_facture_email_webhook(facture: Facture) -> None:
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
-        "https://n8n.mrliw.fr/webhook-test/envoi_factures",
+        "https://n8n.mrliw.fr/webhook/envoi_factures",
         data=data,
         headers={"Content-Type": "application/json"},
     )
