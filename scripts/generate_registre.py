@@ -128,15 +128,16 @@ def generate_registre_files(
         "enable-local-file-access": None,
         "encoding": "UTF-8",
         "page-size": "A4",
+        "print-media-type": None,
+        "disable-smart-shrinking": None,
+        "viewport-size": "794x1123",
+        "zoom": "1.0",
         "margin-top": "0mm",
         "margin-right": "0mm",
         "margin-bottom": "0mm",
         "margin-left": "0mm",
     }
-    try:
-        pdfkit.from_file(html_output_path, pdf_output_path, options=options)
-    except Exception as e:
-        print(f"Erreur PDF generation registre: {e}")
+    pdfkit.from_file(html_output_path, pdf_output_path, options=options)
 
     return {
         "html_path": html_output_path,

@@ -21,6 +21,7 @@ from sqlalchemy import (
     String,
     Text,
     and_,
+    cast,
     create_engine,
     func,
     or_,
@@ -1759,7 +1760,7 @@ def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_d
     date_debut_dt = datetime.datetime.combine(payload.date_debut, datetime.time.min)
     date_fin_dt = datetime.datetime.combine(payload.date_fin, datetime.time.max)
     statut_expr = func.lower(func.trim(func.coalesce(Facture.statut_paiement, "")))
-    flux_expr = func.lower(func.trim(func.coalesce(Facture.flux, "")))
+    flux_expr = func.lower(func.trim(cast(Facture.flux, String)))
 
     query = (
         db.query(Facture)
