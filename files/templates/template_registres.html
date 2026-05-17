@@ -16,34 +16,21 @@
         --purchase-color: #d32f2f;
       }
 
-      @page {
-        size: A4;
-        margin: 0;
-      }
-
-      html {
-        width: 210mm;
-        min-height: 297mm;
-        margin: 0;
-        padding: 0;
-      }
-
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         padding: 0;
         color: var(--text-dark);
-        background-color: white;
-        width: 210mm;
-        min-height: 297mm;
+        background-color: #e0e0e0;
       }
 
       .page {
-        width: 210mm;
+        max-width: 210mm;
         min-height: 297mm;
-        padding: 10mm 12mm;
-        margin: 0;
+        padding: 5mm 15mm;
+        margin: 0 auto;
         background: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         box-sizing: border-box;
         position: relative;
         display: flex;
@@ -181,7 +168,7 @@
         .page {
           margin: 0;
           box-shadow: none;
-          width: 210mm;
+          width: 100%;
         }
         .stat-card {
           border: 1px solid #eee;
