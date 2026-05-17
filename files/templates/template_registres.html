@@ -27,7 +27,7 @@
       .page {
         max-width: 210mm;
         min-height: 297mm;
-        padding: 5mm 15mm;
+        padding: 5mm 15mm 28mm;
         margin: 0 auto;
         background: white;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -116,7 +116,7 @@
         width: 100%;
         border-collapse: collapse;
         font-size: 9pt;
-        margin-bottom: auto; /* Pousse le footer en bas */
+        margin-bottom: 20px;
       }
 
       thead th {
@@ -156,7 +156,10 @@
       }
 
       footer {
-        margin-top: 40px;
+        position: absolute;
+        left: 15mm;
+        right: 15mm;
+        bottom: 8mm;
         padding-top: 15px;
         border-top: 1px solid #eee;
         font-size: 8pt;
@@ -176,7 +179,7 @@
           max-width: none;
           margin: 0;
           box-shadow: none;
-          padding: 10mm 15mm;
+          padding: 10mm 15mm 28mm;
           box-sizing: border-box;
         }
 
