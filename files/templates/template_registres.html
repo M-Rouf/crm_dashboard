@@ -228,14 +228,31 @@
           <div class="stat-title">Total Achats (TTC)</div>
           <div class="stat-value val-purchase">#total_achat_ttc €</div>
           <div style="font-size: 7pt; color: #888">HT: #total_achat_ht €</div>
+          <div style="font-size: 7pt; color: #888">
+            Dont taxes et impôts: #total_impots €
+          </div>
         </div>
         <!-- stat-card-achats-end -->
+        <!-- stat-card-resultat-avant-impots-start -->
+        <div
+          class="stat-card"
+          style="background-color: #eef2ff; border-color: var(--accent-color)"
+        >
+          <div class="stat-title">Résultat Net (HT - Avant impôts)</div>
+          <div class="stat-value" style="color: var(--accent-color)">
+            #resultat_net_ht_avant_impots €
+          </div>
+          <div style="font-size: 7pt; color: #888">
+            Trésorerie TTC : #resultat_net_ttc_avant_impots €
+          </div>
+        </div>
+        <!-- stat-card-resultat-avant-impots-end -->
         <!-- stat-card-resultat-start -->
         <div
           class="stat-card"
           style="background-color: #eef2ff; border-color: var(--accent-color)"
         >
-          <div class="stat-title">Résultat Net (HT)</div>
+          <div class="stat-title">Résultat Net (HT - Après impôts)</div>
           <div class="stat-value" style="color: var(--accent-color)">
             #resultat_net_ht €
           </div>

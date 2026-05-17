@@ -1782,6 +1782,8 @@ def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_d
         "vente_ttc": Decimal("0.00"),
         "achat_ht": Decimal("0.00"),
         "achat_ttc": Decimal("0.00"),
+        "impots_ht": Decimal("0.00"),
+        "impots_ttc": Decimal("0.00"),
     }
     items = []
     for facture in factures:
@@ -1807,6 +1809,9 @@ def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_d
         else:
             totals["achat_ht"] += montant_ht
             totals["achat_ttc"] += montant_ttc
+            if (facture.categorie or "").strip().upper() == "IMPOTS_TAXES":
+                totals["impots_ht"] += montant_ht
+                totals["impots_ttc"] += montant_ttc
 
         contact = facture.contact
         prenom_nom = (
@@ -1835,6 +1840,10 @@ def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_d
 
     totals["resultat_ht"] = totals["vente_ht"] - totals["achat_ht"]
     totals["resultat_ttc"] = totals["vente_ttc"] - totals["achat_ttc"]
+    totals["resultat_avant_impots_ht"] = totals["resultat_ht"] + totals["impots_ht"]
+    totals["resultat_avant_impots_ttc"] = (
+        totals["resultat_ttc"] + totals["impots_ttc"]
+    )
 
     generations = generate_registre_files(
         document_type=type_document,

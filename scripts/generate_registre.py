@@ -82,9 +82,15 @@ def generate_registre_files(
 
     if document_type == "registre_achats":
         html_content = _remove_marked_block(html_content, "stat-card-ventes")
+        html_content = _remove_marked_block(
+            html_content, "stat-card-resultat-avant-impots"
+        )
         html_content = _remove_marked_block(html_content, "stat-card-resultat")
     elif document_type == "registre_ventes":
         html_content = _remove_marked_block(html_content, "stat-card-achats")
+        html_content = _remove_marked_block(
+            html_content, "stat-card-resultat-avant-impots"
+        )
         html_content = _remove_marked_block(html_content, "stat-card-resultat")
 
     generation_date = datetime.now().strftime("%d/%m/%Y")
@@ -102,6 +108,15 @@ def generate_registre_files(
         "#total_achat_ht": _format_money(totals.get("achat_ht")),
         "#total_achats_ttc": _format_money(totals.get("achat_ttc")),
         "#total_achats_ht": _format_money(totals.get("achat_ht")),
+        "#total_impots": _format_money(totals.get("impots_ttc")),
+        "#total_impots_ttc": _format_money(totals.get("impots_ttc")),
+        "#total_impots_ht": _format_money(totals.get("impots_ht")),
+        "#resultat_net_ht_avant_impots": _format_money(
+            totals.get("resultat_avant_impots_ht")
+        ),
+        "#resultat_net_ttc_avant_impots": _format_money(
+            totals.get("resultat_avant_impots_ttc")
+        ),
         "#resultat_net_ht": _format_money(totals.get("resultat_ht")),
         "#resultat_net_ttc": _format_money(totals.get("resultat_ttc")),
         "#resultat_ttc": _format_money(totals.get("resultat_ttc")),
