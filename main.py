@@ -37,6 +37,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from scripts.generate_devis import generate_devis_files
 from scripts.generate_avoir import generate_avoir_files
 from scripts.generate_facture import generate_facture_files
+from scripts.generate_registre import generate_registre_files
 
 # --- Configurations de la Base de Données ---
 # Par défaut, utilise SQLite en local pour faciliter les tests avec Pixi
@@ -493,6 +494,12 @@ class FactureCategorieUpdate(BaseModel):
 class FacturePlateformeUpdate(BaseModel):
     statut_plateforme: str
     envoyer_mail: bool = False
+
+
+class RegistreGenerateBody(BaseModel):
+    type_document: str
+    date_debut: datetime.date
+    date_fin: datetime.date
 
 
 # --- Initialisation FastAPI ---
@@ -1713,6 +1720,137 @@ def page_commandes(request: Request):
 @app.get("/factures", response_class=HTMLResponse)
 def page_factures(request: Request):
     return templates.TemplateResponse(request=request, name="factures.html", context={})
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def page_dashboard(request: Request):
+    return templates.TemplateResponse(request=request, name="dashboard.html", context={})
+
+
+@app.post("/api/registres")
+def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_db)):
+    document_configs = {
+        "registre_achats": {
+            "label": "Registre des achats",
+            "flux": "achat",
+            "file_prefix": "reg_achat",
+        },
+        "registre_ventes": {
+            "label": "Registre des ventes",
+            "flux": "vente",
+            "file_prefix": "reg_ventes",
+        },
+        "livre_comptes": {
+            "label": "Livre des comptes",
+            "flux": None,
+            "file_prefix": "liv_comptes",
+        },
+    }
+    type_document = (payload.type_document or "").strip().lower()
+    config = document_configs.get(type_document)
+    if not config:
+        raise HTTPException(status_code=400, detail="Type de document invalide.")
+    if payload.date_debut > payload.date_fin:
+        raise HTTPException(
+            status_code=400,
+            detail="La date de début doit être antérieure ou égale à la date de fin.",
+        )
+
+    date_debut_dt = datetime.datetime.combine(payload.date_debut, datetime.time.min)
+    date_fin_dt = datetime.datetime.combine(payload.date_fin, datetime.time.max)
+    statut_expr = func.lower(func.trim(func.coalesce(Facture.statut_paiement, "")))
+    flux_expr = func.lower(func.trim(func.coalesce(Facture.flux, "")))
+
+    query = (
+        db.query(Facture)
+        .options(joinedload(Facture.contact))
+        .filter(
+            statut_expr == "paye",
+            Facture.date_paiement.isnot(None),
+            Facture.date_paiement >= date_debut_dt,
+            Facture.date_paiement <= date_fin_dt,
+        )
+    )
+    if config["flux"]:
+        query = query.filter(flux_expr == config["flux"])
+
+    factures = query.order_by(Facture.date_paiement.asc(), Facture.id.asc()).all()
+
+    totals = {
+        "vente_ht": Decimal("0.00"),
+        "vente_ttc": Decimal("0.00"),
+        "achat_ht": Decimal("0.00"),
+        "achat_ttc": Decimal("0.00"),
+    }
+    items = []
+    for facture in factures:
+        flux = (facture.flux or "").strip().lower()
+        if flux not in ("vente", "achat"):
+            continue
+
+        is_avoir = (facture.type_facture or "").strip().lower() == "avoir"
+        sign = Decimal("-1.00") if is_avoir else Decimal("1.00")
+        montant_ht = (_money_dec(facture.montant_ht) * sign).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        montant_tva = (_money_dec(facture.montant_tva) * sign).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        montant_ttc = (_money_dec(facture.montant_ttc) * sign).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+        if flux == "vente":
+            totals["vente_ht"] += montant_ht
+            totals["vente_ttc"] += montant_ttc
+        else:
+            totals["achat_ht"] += montant_ht
+            totals["achat_ttc"] += montant_ttc
+
+        contact = facture.contact
+        prenom_nom = (
+            f"{(contact.prenom or '').strip()} {(contact.nom or '').strip()}".strip()
+            if contact
+            else ""
+        )
+        entreprise = (contact.entreprise or "").strip() if contact else ""
+        if entreprise and prenom_nom:
+            entite_nom = f"{prenom_nom} ({entreprise})"
+        else:
+            entite_nom = prenom_nom or entreprise or (contact.email if contact else "")
+
+        items.append(
+            {
+                "date_paiement": facture.date_paiement,
+                "flux": flux,
+                "reference": facture.numero_facture,
+                "entite_nom": entite_nom,
+                "categorie": facture.categorie or "AUTRE",
+                "montant_ht": montant_ht,
+                "montant_tva": montant_tva,
+                "montant_ttc": montant_ttc,
+            }
+        )
+
+    totals["resultat_ht"] = totals["vente_ht"] - totals["achat_ht"]
+    totals["resultat_ttc"] = totals["vente_ttc"] - totals["achat_ttc"]
+
+    generations = generate_registre_files(
+        document_type=type_document,
+        document_label=config["label"],
+        date_debut=payload.date_debut,
+        date_fin=payload.date_fin,
+        items=items,
+        totals=totals,
+        file_prefix=config["file_prefix"],
+    )
+    if not os.path.exists(generations["pdf_path"]):
+        raise HTTPException(
+            status_code=500,
+            detail="Le document HTML a été généré, mais la conversion PDF a échoué.",
+        )
+
+    return {"status": "success", "file_path": generations["url_path"]}
 
 
 @app.get("/api/devis", response_model=List[DevisSchema])

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registre Comptable - MRLIW</title>
+    <style>
+      :root {
+        --primary-color: #0076b3;
+        --text-dark: #333;
+        --text-light: #666;
+        --border-color: #eee;
+        --bg-gray: #f8f9fa;
+        --accent-color: #1e1b4b; /* Indigo pour le côté financier */
+        --sale-color: #1e8e3e;
+        --purchase-color: #d32f2f;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: var(--text-dark);
+        background-color: #e0e0e0;
+      }
+
+      .page {
+        max-width: 210mm;
+        min-height: 297mm;
+        padding: 10mm 15mm;
+        margin: 10px auto;
+        background: white;
+        box-sizing: border-box;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        border-bottom: 2px solid var(--accent-color);
+        padding-bottom: 15px;
+      }
+
+      .company-info {
+        font-size: 10pt;
+        line-height: 1.4;
+      }
+
+      .company-name {
+        font-weight: bold;
+        font-size: 12pt;
+        color: var(--accent-color);
+      }
+
+      .doc-type-block {
+        text-align: right;
+      }
+
+      .doc-label {
+        font-size: 18pt;
+        font-weight: bold;
+        color: var(--accent-color);
+        text-transform: uppercase;
+      }
+
+      .period-label {
+        font-size: 10pt;
+        color: var(--text-light);
+      }
+
+      /* Résumé des chiffres clés */
+      .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+
+      .stat-card {
+        padding: 15px;
+        background: var(--bg-gray);
+        border-radius: 4px;
+        text-align: center;
+        border: 1px solid #ddd;
+      }
+
+      .stat-title {
+        font-size: 8pt;
+        text-transform: uppercase;
+        color: var(--text-light);
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 13pt;
+        font-weight: bold;
+      }
+
+      .val-sale {
+        color: var(--sale-color);
+      }
+      .val-purchase {
+        color: var(--purchase-color);
+      }
+
+      /* Table comptable */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt;
+        margin-bottom: auto; /* Pousse le footer en bas */
+      }
+
+      thead th {
+        background-color: var(--accent-color);
+        color: white;
+        padding: 10px 5px;
+        text-align: left;
+        font-weight: 600;
+      }
+
+      tbody td {
+        padding: 8px 5px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .type-tag {
+        font-size: 7pt;
+        font-weight: bold;
+        padding: 2px 4px;
+        border-radius: 3px;
+        text-transform: uppercase;
+      }
+
+      .tag-vente {
+        background: #e6f4ea;
+        color: var(--sale-color);
+      }
+      .tag-achat {
+        background: #fce8e6;
+        color: var(--purchase-color);
+      }
+
+      .amount {
+        text-align: right;
+        font-family: monospace;
+        font-size: 9.5pt;
+      }
+
+      footer {
+        margin-top: 40px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+        font-size: 8pt;
+        color: var(--text-light);
+        text-align: center;
+      }
+
+      @media print {
+        body {
+          background: none;
+        }
+        .page {
+          margin: 0;
+          box-shadow: none;
+          width: 100%;
+        }
+        .stat-card {
+          border: 1px solid #eee;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <header>
+        <div class="company-info">
+          <div class="company-name">MRLIW - Matthieu ROUFFY EI</div>
+          46 Mas de Bessac, 46320 Brengues<br />
+          SIRET : 900 577 933 000 22 | contact@mrliw.fr
+        </div>
+        <div class="doc-type-block">
+          <div class="doc-label">#type_document</div>
+          <div class="period-label">
+            Période du <strong>#date_debut</strong> au
+            <strong>#date_fin</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="summary-stats">
+        <!-- stat-card-ventes-start -->
+        <div class="stat-card">
+          <div class="stat-title">Total Ventes (TTC)</div>
+          <div class="stat-value val-sale">#total_vente_ttc €</div>
+          <div style="font-size: 7pt; color: #888">HT: #total_vente_ht €</div>
+        </div>
+        <!-- stat-card-ventes-end -->
+        <!-- stat-card-achats-start -->
+        <div class="stat-card">
+          <div class="stat-title">Total Achats (TTC)</div>
+          <div class="stat-value val-purchase">#total_achat_ttc €</div>
+          <div style="font-size: 7pt; color: #888">HT: #total_achat_ht €</div>
+        </div>
+        <!-- stat-card-achats-end -->
+        <!-- stat-card-resultat-start -->
+        <div
+          class="stat-card"
+          style="background-color: #eef2ff; border-color: var(--accent-color)"
+        >
+          <div class="stat-title">Résultat Net (HT)</div>
+          <div class="stat-value" style="color: var(--accent-color)">
+            #resultat_net_ht €
+          </div>
+          <div style="font-size: 7pt; color: #888">
+            Trésorerie TTC : #resultat_net_ttc €
+          </div>
+        </div>
+        <!-- stat-card-resultat-end -->
+      </section>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 10%">Date</th>
+            <th style="width: 8%">Type</th>
+            <th style="width: 12%">Référence</th>
+            <th style="width: 20%">Client/Fournisseur</th>
+            <th style="width: 15%">Catégorie</th>
+            <th style="width: 11%" class="amount">Montant HT</th>
+            <th style="width: 11%" class="amount">TVA</th>
+            <th style="width: 13%" class="amount">Total TTC</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>#date_item</td>
+            <td><span class="type-tag tag-vente">Vente</span></td>
+            <td>#ref_item</td>
+            <td>#entite_nom</td>
+            <td>#categorie</td>
+            <td class="amount">#ht_item €</td>
+            <td class="amount">#tva_item €</td>
+            <td class="amount"><strong>#ttc_item €</strong></td>
+          </tr>
+          <tr>
+            <td>#date_item</td>
+            <td><span class="type-tag tag-achat">Achat</span></td>
+            <td>#ref_item</td>
+            <td>#entite_nom</td>
+            <td>#categorie</td>
+            <td class="amount">#ht_item €</td>
+            <td class="amount">#tva_item €</td>
+            <td class="amount"><strong>#ttc_item €</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <footer>
+        Document généré le #date_document - MRLIW Gestion Privée<br />
+        <em
+          >Note : Conformément à l'art 293B du CGI, la TVA est de 0% pour les
+          activités non assujetties.</em
+        >
+      </footer>
+    </div>
+  </body>
+</html>

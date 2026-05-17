@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard CRM | mrliw.fr</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Inter", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  </head>
+
+  <body class="min-h-screen text-slate-900 antialiased leading-normal tracking-normal">
+    {% raw %}
+    <div id="app" v-cloak class="min-h-screen flex flex-col">
+      <header class="sticky top-0 z-50 border-b border-slate-700 bg-slate-900/95 shadow-lg shadow-slate-950/40 backdrop-blur-md">
+        <div class="container mx-auto px-4 md:px-8 max-w-7xl h-16 flex items-center justify-between">
+          <div class="flex items-center gap-6">
+            <a href="/" class="flex items-center gap-2">
+              <img src="/img/logo_mrliw.png" alt="MRLIW Logo" class="h-8 w-auto" />
+              <span class="font-semibold text-slate-100 text-lg hidden sm:block tracking-tight">Dashboard</span>
+            </a>
+            <nav class="hidden md:flex items-center gap-1">
+              <a href="/dashboard" aria-current="page"
+                class="px-4 py-2 rounded-md text-sm font-medium border border-sky-500/40 bg-slate-800 text-sky-400 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">Dashboard</a>
+              <a href="/"
+                class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Requêtes</a>
+              <a href="/contacts"
+                class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Contacts</a>
+              <a href="/actions"
+                class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Actions</a>
+              <a href="/devis"
+                class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Devis</a>
+              <a href="/commandes"
+                class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Commandes</a>
+              <a href="/factures"
+                class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white">Factures (achats/ventes)</a>
+            </nav>
+            <details class="relative md:hidden group">
+              <summary class="mobile-nav-summary flex cursor-pointer items-center gap-2 rounded-md border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800 hover:text-white">
+                <span>Menu</span>
+                <svg class="h-4 w-4 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <div class="absolute left-0 top-full z-50 mt-2 flex w-64 flex-col gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/20">
+                <a href="/dashboard" aria-current="page" class="block rounded-md px-4 py-2 text-sm font-medium border-l-2 border-sky-500 bg-slate-100 text-slate-900">Dashboard</a>
+                <a href="/" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Requêtes</a>
+                <a href="/contacts" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Contacts</a>
+                <a href="/actions" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Actions</a>
+                <a href="/devis" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Devis</a>
+                <a href="/commandes" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Commandes</a>
+                <a href="/factures" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Factures (achats/ventes)</a>
+              </div>
+            </details>
+          </div>
+          <div class="h-8 w-8 rounded-md bg-slate-800 flex items-center justify-center text-sky-400 font-bold text-xs font-mono tracking-widest shadow-inner border border-slate-600">
+            MR
+          </div>
+        </div>
+      </header>
+
+      <main class="container mx-auto flex flex-grow flex-col gap-8 px-4 py-6 md:px-8 md:py-10 max-w-7xl">
+        <section class="rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
+          <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-wide text-sky-600">Comptabilité</p>
+              <h1 class="mt-1 text-2xl font-bold text-slate-900">Dashboard</h1>
+              <p class="mt-2 max-w-2xl text-sm text-slate-600">
+                Générez un registre comptable PDF à partir des factures payées sur une période donnée.
+              </p>
+            </div>
+            <button type="button" @click="showForm = !showForm"
+              class="inline-flex items-center justify-center rounded-lg bg-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2">
+              Générer un document comptable
+            </button>
+          </div>
+        </section>
+
+        <section v-if="showForm" class="rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
+          <form @submit.prevent="generateDocument" class="grid gap-5 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
+            <div>
+              <label for="type_document" class="block text-sm font-medium text-slate-700">Type de document</label>
+              <select id="type_document" v-model="form.type_document" required
+                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <option value="registre_achats">Registre des achats</option>
+                <option value="registre_ventes">Registre des ventes</option>
+                <option value="livre_comptes">Livre des comptes</option>
+              </select>
+            </div>
+            <div>
+              <label for="date_debut" class="block text-sm font-medium text-slate-700">Date de début</label>
+              <input id="date_debut" v-model="form.date_debut" type="date" required
+                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            </div>
+            <div>
+              <label for="date_fin" class="block text-sm font-medium text-slate-700">Date de fin</label>
+              <input id="date_fin" v-model="form.date_fin" type="date" required
+                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            </div>
+            <button type="submit" :disabled="loading"
+              class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
+              {{ loading ? "Génération…" : "Valider" }}
+            </button>
+          </form>
+          <p v-if="error" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</p>
+          <p v-if="success" class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Document généré. Si le nouvel onglet ne s'est pas ouvert, <a :href="success" target="_blank" rel="noopener" class="font-semibold underline">ouvrir le PDF</a>.
+          </p>
+        </section>
+      </main>
+      {% endraw %}
+      {% include "_app_footer.html" %}
+      {% raw %}
+    </div>
+
+    <script>
+      const { createApp, ref } = Vue;
+
+      createApp({
+        setup() {
+          const today = new Date().toISOString().slice(0, 10);
+          const showForm = ref(false);
+          const loading = ref(false);
+          const error = ref("");
+          const success = ref("");
+          const form = ref({
+            type_document: "registre_achats",
+            date_debut: today,
+            date_fin: today,
+          });
+
+          const generateDocument = async () => {
+            error.value = "";
+            success.value = "";
+            const pdfTab = window.open("about:blank", "_blank");
+            loading.value = true;
+            try {
+              const res = await fetch("/api/registres", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(form.value),
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) throw new Error(data.detail || "Erreur de génération du registre.");
+              success.value = data.file_path;
+              if (pdfTab) {
+                pdfTab.location.href = data.file_path;
+              } else {
+                window.open(data.file_path, "_blank");
+              }
+            } catch (e) {
+              if (pdfTab) pdfTab.close();
+              error.value = e.message || "Erreur de génération du registre.";
+            } finally {
+              loading.value = false;
+            }
+          };
+
+          return { showForm, loading, error, success, form, generateDocument };
+        },
+      }).mount("#app");
+    </script>
+    {% endraw %}
+  </body>
+</html>
