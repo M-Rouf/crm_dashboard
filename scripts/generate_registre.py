@@ -75,6 +75,8 @@ def generate_registre_files(
     end_slug = date_fin.strftime("%Y-%m-%d")
     output_name = f"{file_prefix}_{start_slug}_{end_slug}"
     html_output_path = os.path.join(output_dir, f"{output_name}.html")
+    pdf_html_output_path = os.path.join(output_dir, f"{output_name}_pdf.html")
+    footer_output_path = os.path.join(output_dir, f"{output_name}_footer.html")
     pdf_output_path = os.path.join(output_dir, f"{output_name}.pdf")
 
     with open(template_path, "r", encoding="utf-8") as f:
@@ -121,6 +123,46 @@ def generate_registre_files(
     with open(html_output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
 
+    pdf_html_content = re.sub(
+        r"\s*<footer>.*?</footer>",
+        "",
+        html_content,
+        count=1,
+        flags=re.DOTALL,
+    )
+    with open(pdf_html_output_path, "w", encoding="utf-8") as f:
+        f.write(pdf_html_content)
+
+    footer_content = f"""<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {{
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0 15mm;
+        color: #666;
+        font-size: 8pt;
+        text-align: center;
+      }}
+      .footer {{
+        border-top: 1px solid #eee;
+        padding-top: 8px;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class="footer">
+      Document généré le {generation_date} - MRLIW Gestion Privée<br />
+      <em>Note : Conformément à l'art 293B du CGI, la TVA est de 0% pour les activités non assujetties.</em>
+    </div>
+  </body>
+</html>
+"""
+    with open(footer_output_path, "w", encoding="utf-8") as f:
+        f.write(footer_content)
+
     if os.path.exists(pdf_output_path):
         os.remove(pdf_output_path)
 
@@ -130,10 +172,12 @@ def generate_registre_files(
         "page-size": "A4",
         "margin-top": "0mm",
         "margin-right": "0mm",
-        "margin-bottom": "0mm",
+        "margin-bottom": "18mm",
         "margin-left": "0mm",
+        "footer-html": footer_output_path,
+        "footer-spacing": "2",
     }
-    pdfkit.from_file(html_output_path, pdf_output_path, options=options)
+    pdfkit.from_file(pdf_html_output_path, pdf_output_path, options=options)
 
     return {
         "html_path": html_output_path,
