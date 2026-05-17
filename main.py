@@ -1810,8 +1810,9 @@ def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_d
             totals["achat_ht"] += montant_ht
             totals["achat_ttc"] += montant_ttc
             if (facture.categorie or "").strip().upper() == "IMPOTS_TAXES":
-                totals["impots_ht"] += montant_ht
-                totals["impots_ttc"] += montant_ttc
+                montant_impot = montant_ht
+                totals["impots_ht"] += montant_impot
+                totals["impots_ttc"] += montant_impot
 
         contact = facture.contact
         prenom_nom = (
