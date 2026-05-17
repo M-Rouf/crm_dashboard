@@ -128,8 +128,6 @@ def generate_registre_files(
         "enable-local-file-access": None,
         "encoding": "UTF-8",
         "page-size": "A4",
-        "print-media-type": None,
-        "disable-smart-shrinking": None,
         "margin-top": "0mm",
         "margin-right": "0mm",
         "margin-bottom": "0mm",
