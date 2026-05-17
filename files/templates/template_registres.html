@@ -164,12 +164,19 @@
       @media print {
         body {
           background: none;
+          margin: 0;
+          padding: 0;
         }
+
         .page {
+          width: 100%;
+          max-width: none;
           margin: 0;
           box-shadow: none;
-          width: 100%;
+          padding: 10mm 15mm;
+          box-sizing: border-box;
         }
+
         .stat-card {
           border: 1px solid #eee;
         }

@@ -138,5 +138,5 @@ def generate_registre_files(
     return {
         "html_path": html_output_path,
         "pdf_path": pdf_output_path,
-        "url_path": f"/files/registres/{output_name}.pdf",
+        "url_path": f"/files/registres/{output_name}.pdf?v={int(datetime.now().timestamp())}",
     }
