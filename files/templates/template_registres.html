@@ -33,6 +33,18 @@
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         box-sizing: border-box;
         position: relative;
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+      }
+
+      .page-main {
+        display: table-row;
+        height: 100%;
+      }
+
+      .page-main-inner {
+        display: table-cell;
       }
 
       header {
@@ -168,7 +180,12 @@
       }
 
       footer {
-        margin-top: 40px;
+        display: table-row;
+        height: 1px;
+      }
+
+      .footer-inner {
+        display: table-cell;
         padding-top: 15px;
         border-top: 1px solid #eee;
         font-size: 8pt;
@@ -200,95 +217,101 @@
 
   <body>
     <div class="page">
-      <header>
-        <div class="company-info">
-          <div class="company-name">MRLIW - Matthieu ROUFFY EI</div>
-          46 Mas de Bessac, 46320 Brengues<br />
-          SIRET : 900 577 933 000 22 | contact@mrliw.fr
-        </div>
-        <div class="doc-type-block">
-          <div class="doc-label">#type_document</div>
-          <div class="period-label">
-            Période du <strong>#date_debut</strong> au
-            <strong>#date_fin</strong>
-          </div>
-        </div>
-      </header>
+      <div class="page-main">
+        <div class="page-main-inner">
+          <header>
+            <div class="company-info">
+              <div class="company-name">MRLIW - Matthieu ROUFFY EI</div>
+              46 Mas de Bessac, 46320 Brengues<br />
+              SIRET : 900 577 933 000 22 | contact@mrliw.fr
+            </div>
+            <div class="doc-type-block">
+              <div class="doc-label">#type_document</div>
+              <div class="period-label">
+                Période du <strong>#date_debut</strong> au
+                <strong>#date_fin</strong>
+              </div>
+            </div>
+          </header>
 
-      <section class="summary-stats">
-        <!-- stat-card-ventes-start -->
-        <div class="stat-card">
-          <div class="stat-title">Total Ventes (TTC)</div>
-          <div class="stat-value val-sale">#total_vente_ttc €</div>
-          <div style="font-size: 7pt; color: #888">HT: #total_vente_ht €</div>
-        </div>
-        <!-- stat-card-ventes-end -->
-        <!-- stat-card-achats-start -->
-        <div class="stat-card">
-          <div class="stat-title">Total Achats (TTC)</div>
-          <div class="stat-value val-purchase">#total_achat_ttc €</div>
-          <div style="font-size: 7pt; color: #888">HT: #total_achat_ht €</div>
-        </div>
-        <!-- stat-card-achats-end -->
-        <!-- stat-card-resultat-start -->
-        <div
-          class="stat-card"
-          style="background-color: #eef2ff; border-color: var(--accent-color)"
-        >
-          <div class="stat-title">Résultat Net (HT)</div>
-          <div class="stat-value" style="color: var(--accent-color)">
-            #resultat_net_ht €
-          </div>
-          <div style="font-size: 7pt; color: #888">
-            Trésorerie TTC : #resultat_net_ttc €
-          </div>
-        </div>
-        <!-- stat-card-resultat-end -->
-      </section>
+          <section class="summary-stats">
+            <!-- stat-card-ventes-start -->
+            <div class="stat-card">
+              <div class="stat-title">Total Ventes (TTC)</div>
+              <div class="stat-value val-sale">#total_vente_ttc €</div>
+              <div style="font-size: 7pt; color: #888">HT: #total_vente_ht €</div>
+            </div>
+            <!-- stat-card-ventes-end -->
+            <!-- stat-card-achats-start -->
+            <div class="stat-card">
+              <div class="stat-title">Total Achats (TTC)</div>
+              <div class="stat-value val-purchase">#total_achat_ttc €</div>
+              <div style="font-size: 7pt; color: #888">HT: #total_achat_ht €</div>
+            </div>
+            <!-- stat-card-achats-end -->
+            <!-- stat-card-resultat-start -->
+            <div
+              class="stat-card"
+              style="background-color: #eef2ff; border-color: var(--accent-color)"
+            >
+              <div class="stat-title">Résultat Net (HT)</div>
+              <div class="stat-value" style="color: var(--accent-color)">
+                #resultat_net_ht €
+              </div>
+              <div style="font-size: 7pt; color: #888">
+                Trésorerie TTC : #resultat_net_ttc €
+              </div>
+            </div>
+            <!-- stat-card-resultat-end -->
+          </section>
 
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 10%">Date</th>
-            <th style="width: 8%">Type</th>
-            <th style="width: 12%">Référence</th>
-            <th style="width: 20%">Client/Fournisseur</th>
-            <th style="width: 15%">Catégorie</th>
-            <th style="width: 11%" class="amount">Montant HT</th>
-            <th style="width: 11%" class="amount">TVA</th>
-            <th style="width: 13%" class="amount">Total TTC</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>#date_item</td>
-            <td><span class="type-tag tag-vente">Vente</span></td>
-            <td>#ref_item</td>
-            <td>#entite_nom</td>
-            <td>#categorie</td>
-            <td class="amount">#ht_item €</td>
-            <td class="amount">#tva_item €</td>
-            <td class="amount"><strong>#ttc_item €</strong></td>
-          </tr>
-          <tr>
-            <td>#date_item</td>
-            <td><span class="type-tag tag-achat">Achat</span></td>
-            <td>#ref_item</td>
-            <td>#entite_nom</td>
-            <td>#categorie</td>
-            <td class="amount">#ht_item €</td>
-            <td class="amount">#tva_item €</td>
-            <td class="amount"><strong>#ttc_item €</strong></td>
-          </tr>
-        </tbody>
-      </table>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 10%">Date</th>
+                <th style="width: 8%">Type</th>
+                <th style="width: 12%">Référence</th>
+                <th style="width: 20%">Client/Fournisseur</th>
+                <th style="width: 15%">Catégorie</th>
+                <th style="width: 11%" class="amount">Montant HT</th>
+                <th style="width: 11%" class="amount">TVA</th>
+                <th style="width: 13%" class="amount">Total TTC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>#date_item</td>
+                <td><span class="type-tag tag-vente">Vente</span></td>
+                <td>#ref_item</td>
+                <td>#entite_nom</td>
+                <td>#categorie</td>
+                <td class="amount">#ht_item €</td>
+                <td class="amount">#tva_item €</td>
+                <td class="amount"><strong>#ttc_item €</strong></td>
+              </tr>
+              <tr>
+                <td>#date_item</td>
+                <td><span class="type-tag tag-achat">Achat</span></td>
+                <td>#ref_item</td>
+                <td>#entite_nom</td>
+                <td>#categorie</td>
+                <td class="amount">#ht_item €</td>
+                <td class="amount">#tva_item €</td>
+                <td class="amount"><strong>#ttc_item €</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <footer>
-        Document généré le #date_document - MRLIW Gestion Privée<br />
-        <em
-          >Note : Conformément à l'art 293B du CGI, la TVA est de 0% pour les
-          activités non assujetties.</em
-        >
+        <div class="footer-inner">
+          Document généré le #date_document - MRLIW Gestion Privée<br />
+          <em
+            >Note : Conformément à l'art 293B du CGI, la TVA est de 0% pour les
+            activités non assujetties.</em
+          >
+        </div>
       </footer>
     </div>
   </body>
