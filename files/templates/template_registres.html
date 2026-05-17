@@ -122,21 +122,30 @@
         table-layout: fixed;
         font-size: 9pt;
         margin-bottom: 20px;
+        overflow-wrap: anywhere;
       }
 
       thead th {
         background-color: var(--accent-color);
         color: white;
-        padding: 10px 5px;
+        padding: 8px 4px;
         text-align: left;
         font-weight: 600;
+        font-size: 8pt;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+        white-space: normal;
       }
 
       tbody td {
-        padding: 8px 5px;
+        padding: 7px 4px;
         border-bottom: 1px solid var(--border-color);
-        overflow-wrap: break-word;
-        word-break: normal;
+        font-size: 8.5pt;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        vertical-align: top;
+        white-space: normal;
       }
 
       .type-tag {
@@ -159,8 +168,8 @@
       .amount {
         text-align: right;
         font-family: monospace;
-        font-size: 8.5pt;
-        white-space: nowrap;
+        font-size: 8pt;
+        white-space: normal;
       }
 
       footer {

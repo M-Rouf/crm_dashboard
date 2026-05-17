@@ -129,6 +129,7 @@ def generate_registre_files(
         "encoding": "UTF-8",
         "page-size": "A4",
         "print-media-type": None,
+        "disable-smart-shrinking": None,
         "margin-top": "0mm",
         "margin-right": "0mm",
         "margin-bottom": "0mm",
