@@ -75,13 +75,16 @@
 
       /* Résumé des chiffres clés */
       .summary-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px;
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 15px 0;
         margin-bottom: 30px;
       }
 
       .stat-card {
+        display: table-cell;
         padding: 15px;
         background: var(--bg-gray);
         border-radius: 4px;
