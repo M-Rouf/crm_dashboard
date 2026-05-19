@@ -255,6 +255,52 @@ def _facture_reste_montant_clause():
     return or_(ttc <= 0, pay < ttc)
 
 
+def _facture_platform_validated_or_sent_clause():
+    plat = func.lower(func.trim(func.coalesce(Facture.statut_plateforme, "")))
+    return plat.in_(("validated", "sent"))
+
+
+def _facture_signed_ttc_reste(facture: Facture) -> tuple[Decimal, Decimal]:
+    is_avoir = (facture.type_facture or "").strip().lower() == "avoir"
+    sign = Decimal("-1.00") if is_avoir else Decimal("1.00")
+    montant_ttc = (_money_dec(facture.montant_ttc) * sign).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    montant_paye = (_money_dec(facture.montant_paye) * sign).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    if montant_ttc <= 0:
+        reste = Decimal("0.00")
+    else:
+        reste = (montant_ttc - montant_paye).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        if reste < 0:
+            reste = Decimal("0.00")
+    return montant_ttc, reste
+
+
+def _aggregate_pending_payments(factures: list, flux: str) -> DashboardPendingFluxSchema:
+    flux_key = flux.strip().lower()
+    total_ttc = Decimal("0.00")
+    total_reste = Decimal("0.00")
+    nb = 0
+    for facture in factures:
+        if (facture.flux or "").strip().lower() != flux_key:
+            continue
+        ttc, reste = _facture_signed_ttc_reste(facture)
+        nb += 1
+        total_ttc += ttc
+        total_reste += reste
+    return DashboardPendingFluxSchema(
+        nb_factures=nb,
+        total_ttc=float(total_ttc.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+        total_reste_ttc=float(
+            total_reste.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        ),
+    )
+
+
 def _sync_facture_paiement_from_montants(facture: Facture, db: Session) -> None:
     """Aligne statut_paiement et date_paiement sur les montants si la ligne est incohérente."""
     _reconcile_paiement_rows([facture], db)
@@ -572,6 +618,17 @@ class DashboardPieChartsSchema(BaseModel):
     ventes_par_categorie: Dict[str, float]
     achats_total: float
     ventes_total: float
+
+
+class DashboardPendingFluxSchema(BaseModel):
+    nb_factures: int
+    total_ttc: float
+    total_reste_ttc: float
+
+
+class DashboardPendingPaymentsSchema(BaseModel):
+    achats: DashboardPendingFluxSchema
+    ventes: DashboardPendingFluxSchema
 
 
 # --- Initialisation FastAPI ---
@@ -1797,6 +1854,22 @@ def page_factures(request: Request):
 @app.get("/dashboard", response_class=HTMLResponse)
 def page_dashboard(request: Request):
     return templates.TemplateResponse(request=request, name="dashboard.html", context={})
+
+
+@app.get("/api/dashboard/pending-payments", response_model=DashboardPendingPaymentsSchema)
+def dashboard_pending_payments(db: Session = Depends(get_db)):
+    factures = (
+        db.query(Facture)
+        .filter(
+            _facture_reste_montant_clause(),
+            _facture_platform_validated_or_sent_clause(),
+        )
+        .all()
+    )
+    return DashboardPendingPaymentsSchema(
+        achats=_aggregate_pending_payments(factures, "achat"),
+        ventes=_aggregate_pending_payments(factures, "vente"),
+    )
 
 
 def _month_period(year: int, month: int) -> tuple[datetime.date, datetime.date]:
