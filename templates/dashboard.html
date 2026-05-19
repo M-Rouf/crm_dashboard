@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="/css/style.css" />
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   </head>
 
   <body class="min-h-screen text-slate-900 antialiased leading-normal tracking-normal">
@@ -256,6 +257,48 @@
             </div>
           </div>
         </section>
+
+        <section class="rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-wide text-sky-600">Répartition</p>
+              <h2 class="mt-1 text-xl font-bold text-slate-900">Achats et ventes par catégorie</h2>
+              <p class="mt-1 text-sm text-slate-600">
+                Part de chaque catégorie sur la période (année en cours par défaut).
+              </p>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div class="sm:w-44">
+                <label for="pie_mois_debut" class="block text-sm font-medium text-slate-700">Mois de début</label>
+                <input id="pie_mois_debut" v-model="pieMoisDebut" type="month" @change="fetchPieCharts"
+                  class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              </div>
+              <div class="sm:w-44">
+                <label for="pie_mois_fin" class="block text-sm font-medium text-slate-700">Mois de fin</label>
+                <input id="pie_mois_fin" v-model="pieMoisFin" type="month" @change="fetchPieCharts"
+                  class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              </div>
+            </div>
+          </div>
+          <p v-if="pieChartsError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ pieChartsError }}</p>
+          <div v-if="pieChartsLoading" class="mt-6 text-center text-sm text-slate-500">Chargement des camemberts…</div>
+          <div v-else-if="pieChartsData" class="mt-6 grid grid-cols-1 gap-8 xl:grid-cols-2">
+            <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+              <h3 class="text-sm font-semibold text-slate-800">Répartition des achats (TTC)</h3>
+              <p v-if="!hasPieData(pieChartsData.achats_par_categorie)" class="mt-6 text-center text-sm text-slate-500">Aucun achat sur cette période.</p>
+              <div v-else class="mt-4 h-72 sm:h-80">
+                <canvas ref="achatPieCanvas"></canvas>
+              </div>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+              <h3 class="text-sm font-semibold text-slate-800">Répartition des ventes (TTC)</h3>
+              <p v-if="!hasPieData(pieChartsData.ventes_par_categorie)" class="mt-6 text-center text-sm text-slate-500">Aucune vente sur cette période.</p>
+              <div v-else class="mt-4 h-72 sm:h-80">
+                <canvas ref="ventePieCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
       {% endraw %}
       {% include "_app_footer.html" %}
@@ -264,6 +307,9 @@
 
     <script>
       const { createApp, ref, nextTick, onUnmounted } = Vue;
+      if (typeof Chart !== "undefined" && typeof ChartDataLabels !== "undefined") {
+        Chart.register(ChartDataLabels);
+      }
 
       createApp({
         setup() {
@@ -277,6 +323,8 @@
             defaultChartEnd.getMonth() - 11,
             1
           );
+          const defaultPieStart = new Date(now.getFullYear(), 0, 1);
+          const defaultPieEnd = new Date(now.getFullYear(), now.getMonth(), 1);
           const showForm = ref(false);
           const loading = ref(false);
           const error = ref("");
@@ -304,8 +352,17 @@
           const chartsError = ref("");
           const lineChartCanvas = ref(null);
           const barChartCanvas = ref(null);
+          const pieMoisDebut = ref(formatYearMonth(defaultPieStart));
+          const pieMoisFin = ref(formatYearMonth(defaultPieEnd));
+          const pieChartsData = ref(null);
+          const pieChartsLoading = ref(false);
+          const pieChartsError = ref("");
+          const achatPieCanvas = ref(null);
+          const ventePieCanvas = ref(null);
           let lineChartInstance = null;
           let barChartInstance = null;
+          let achatPieInstance = null;
+          let ventePieInstance = null;
 
           const CATEGORIE_OPTIONS = [
             { value: "PRESTATION", label: "Prestation", color: "#0ea5e9" },
@@ -335,6 +392,84 @@
             Number(value).toLocaleString("fr-FR", {
               maximumFractionDigits: 0,
             }) + " €";
+
+          const buildPieChartData = (parCategorie) => {
+            const labels = [];
+            const data = [];
+            const backgroundColor = [];
+            CATEGORIE_OPTIONS.forEach((cat) => {
+              const val = Number(parCategorie?.[cat.value] || 0);
+              if (val > 0.005) {
+                labels.push(categorieLabel(cat.value));
+                data.push(val);
+                backgroundColor.push(cat.color);
+              }
+            });
+            const total = data.reduce((sum, value) => sum + value, 0);
+            return { labels, data, backgroundColor, total };
+          };
+
+          const hasPieData = (parCategorie) =>
+            buildPieChartData(parCategorie || {}).total > 0;
+
+          const pieChartOptions = (total) => ({
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              datalabels: {
+                color: "#ffffff",
+                font: { weight: "600", size: 11 },
+                textAlign: "center",
+                formatter: (value, ctx) => {
+                  const chartTotal = ctx.chart._pieTotal || total;
+                  if (!chartTotal || value <= 0.005) return "";
+                  const pct = ((value / chartTotal) * 100).toFixed(1);
+                  const name = ctx.chart.data.labels[ctx.dataIndex];
+                  return `${name}\n${formatMoney(value)} (${pct}%)`;
+                },
+                display: (ctx) => {
+                  const chartTotal = ctx.chart._pieTotal || total;
+                  if (!chartTotal) return false;
+                  return (ctx.dataset.data[ctx.dataIndex] / chartTotal) * 100 >= 4;
+                },
+              },
+              legend: {
+                position: "bottom",
+                labels: {
+                  boxWidth: 12,
+                  font: { size: 11 },
+                  generateLabels(chart) {
+                    const dataset = chart.data.datasets[0];
+                    const chartTotal =
+                      chart._pieTotal || dataset.data.reduce((sum, value) => sum + value, 0);
+                    return chart.data.labels.map((label, index) => {
+                      const value = dataset.data[index];
+                      const pct =
+                        chartTotal > 0 ? ((value / chartTotal) * 100).toFixed(1) : "0.0";
+                      return {
+                        text: `${label} : ${formatMoney(value)} (${pct}%)`,
+                        fillStyle: dataset.backgroundColor[index],
+                        strokeStyle: dataset.backgroundColor[index],
+                        hidden: false,
+                        index,
+                      };
+                    });
+                  },
+                },
+              },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const chartTotal = ctx.chart._pieTotal || total;
+                    const value = ctx.parsed;
+                    const pct =
+                      chartTotal > 0 ? ((value / chartTotal) * 100).toFixed(1) : "0.0";
+                    return `${ctx.label} : ${formatMoney(value)} (${pct}%)`;
+                  },
+                },
+              },
+            },
+          });
 
           const formatMoney = (v) => {
             if (v == null || v === "") return "—";
@@ -433,6 +568,67 @@
               barChartInstance.destroy();
               barChartInstance = null;
             }
+            if (achatPieInstance) {
+              achatPieInstance.destroy();
+              achatPieInstance = null;
+            }
+            if (ventePieInstance) {
+              ventePieInstance.destroy();
+              ventePieInstance = null;
+            }
+          };
+
+          const createPieChart = (canvas, pieData, title) => {
+            if (!canvas || !pieData.total) return null;
+            const chart = new Chart(canvas, {
+              type: "pie",
+              data: {
+                labels: pieData.labels,
+                datasets: [
+                  {
+                    label: title,
+                    data: pieData.data,
+                    backgroundColor: pieData.backgroundColor,
+                    borderColor: "#ffffff",
+                    borderWidth: 2,
+                  },
+                ],
+              },
+              options: pieChartOptions(pieData.total),
+            });
+            chart._pieTotal = pieData.total;
+            return chart;
+          };
+
+          const renderPieCharts = async () => {
+            const data = pieChartsData.value;
+            if (!data || typeof Chart === "undefined") return;
+            await nextTick();
+            if (achatPieInstance) {
+              achatPieInstance.destroy();
+              achatPieInstance = null;
+            }
+            if (ventePieInstance) {
+              ventePieInstance.destroy();
+              ventePieInstance = null;
+            }
+
+            const achatPie = buildPieChartData(data.achats_par_categorie);
+            if (achatPie.total > 0 && achatPieCanvas.value) {
+              achatPieInstance = createPieChart(
+                achatPieCanvas.value,
+                achatPie,
+                "Achats"
+              );
+            }
+            const ventePie = buildPieChartData(data.ventes_par_categorie);
+            if (ventePie.total > 0 && ventePieCanvas.value) {
+              ventePieInstance = createPieChart(
+                ventePieCanvas.value,
+                ventePie,
+                "Ventes"
+              );
+            }
           };
 
           const renderCharts = async () => {
@@ -480,6 +676,7 @@
                   maintainAspectRatio: false,
                   interaction: { mode: "index", intersect: false },
                   plugins: {
+                    datalabels: { display: false },
                     legend: { position: "bottom" },
                     tooltip: {
                       callbacks: {
@@ -530,6 +727,7 @@
                   responsive: true,
                   maintainAspectRatio: false,
                   plugins: {
+                    datalabels: { display: false },
                     legend: {
                       position: "bottom",
                       labels: { boxWidth: 10, font: { size: 10 } },
@@ -550,6 +748,36 @@
                   },
                 },
               });
+            }
+          };
+
+          const fetchPieCharts = async () => {
+            pieChartsError.value = "";
+            if (!pieMoisDebut.value || !pieMoisFin.value) return;
+            pieChartsLoading.value = true;
+            if (achatPieInstance) {
+              achatPieInstance.destroy();
+              achatPieInstance = null;
+            }
+            if (ventePieInstance) {
+              ventePieInstance.destroy();
+              ventePieInstance = null;
+            }
+            try {
+              const params = new URLSearchParams({
+                mois_debut: pieMoisDebut.value,
+                mois_fin: pieMoisFin.value,
+              });
+              const res = await fetch(`/api/dashboard/pie-charts?${params}`);
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) throw new Error(data.detail || "Impossible de charger les camemberts.");
+              pieChartsData.value = data;
+              pieChartsLoading.value = false;
+              await renderPieCharts();
+            } catch (e) {
+              pieChartsData.value = null;
+              pieChartsError.value = e.message || "Impossible de charger les camemberts.";
+              pieChartsLoading.value = false;
             }
           };
 
@@ -581,6 +809,7 @@
           fetchKpi();
           fetchKpiYear();
           fetchCharts();
+          fetchPieCharts();
 
           return {
             showForm,
@@ -610,6 +839,15 @@
             fetchCharts,
             lineChartCanvas,
             barChartCanvas,
+            pieMoisDebut,
+            pieMoisFin,
+            pieChartsData,
+            pieChartsLoading,
+            pieChartsError,
+            fetchPieCharts,
+            achatPieCanvas,
+            ventePieCanvas,
+            hasPieData,
           };
         },
       }).mount("#app");

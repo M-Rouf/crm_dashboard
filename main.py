@@ -564,6 +564,16 @@ class DashboardChartsSchema(BaseModel):
     achats_par_categorie: Dict[str, List[float]]
 
 
+class DashboardPieChartsSchema(BaseModel):
+    mois_debut: str
+    mois_fin: str
+    categories: List[str]
+    achats_par_categorie: Dict[str, float]
+    ventes_par_categorie: Dict[str, float]
+    achats_total: float
+    ventes_total: float
+
+
 # --- Initialisation FastAPI ---
 app = FastAPI(
     title="Dashboard CRM personnel", description="API pour CRM dashboard.mrliw.fr"
@@ -2115,6 +2125,49 @@ def dashboard_charts(
     mois_debut = (mois_debut or default_debut).strip()
     mois_fin = (mois_fin or default_fin).strip()
     return _build_monthly_charts_data(db, mois_debut, mois_fin)
+
+
+def _default_pie_period() -> tuple[str, str]:
+    today = datetime.date.today()
+    return _format_year_month(today.year, 1), _format_year_month(
+        today.year, today.month
+    )
+
+
+def _build_pie_charts_data(
+    db: Session, mois_debut: str, mois_fin: str
+) -> DashboardPieChartsSchema:
+    monthly = _build_monthly_charts_data(db, mois_debut, mois_fin)
+    achats_par_categorie: dict[str, float] = {}
+    ventes_par_categorie: dict[str, float] = {}
+    for cat in FACTURE_CATEGORIES:
+        achats_par_categorie[cat] = round(
+            sum(monthly.achats_par_categorie.get(cat, [])), 2
+        )
+        ventes_par_categorie[cat] = round(
+            sum(monthly.ventes_par_categorie.get(cat, [])), 2
+        )
+    return DashboardPieChartsSchema(
+        mois_debut=mois_debut,
+        mois_fin=mois_fin,
+        categories=list(FACTURE_CATEGORIES),
+        achats_par_categorie=achats_par_categorie,
+        ventes_par_categorie=ventes_par_categorie,
+        achats_total=round(sum(achats_par_categorie.values()), 2),
+        ventes_total=round(sum(ventes_par_categorie.values()), 2),
+    )
+
+
+@app.get("/api/dashboard/pie-charts", response_model=DashboardPieChartsSchema)
+def dashboard_pie_charts(
+    mois_debut: Optional[str] = None,
+    mois_fin: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    default_debut, default_fin = _default_pie_period()
+    mois_debut = (mois_debut or default_debut).strip()
+    mois_fin = (mois_fin or default_fin).strip()
+    return _build_pie_charts_data(db, mois_debut, mois_fin)
 
 
 @app.post("/api/registres")
