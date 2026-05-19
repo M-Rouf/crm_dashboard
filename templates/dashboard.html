@@ -117,6 +117,104 @@
             Document généré. Si le nouvel onglet ne s'est pas ouvert, <a :href="success" target="_blank" rel="noopener" class="font-semibold underline">ouvrir le PDF</a>.
           </p>
         </section>
+
+        <section class="rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-wide text-sky-600">Indicateurs</p>
+              <h2 class="mt-1 text-xl font-bold text-slate-900">Synthèse mensuelle</h2>
+              <p class="mt-1 text-sm text-slate-600">
+                Factures payées sur le mois sélectionné (même base que les registres comptables).
+              </p>
+            </div>
+            <div class="sm:w-56">
+              <label for="kpi_month" class="block text-sm font-medium text-slate-700">Mois</label>
+              <input id="kpi_month" v-model="selectedMonth" type="month" @change="fetchKpi"
+                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            </div>
+          </div>
+          <p v-if="kpiError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ kpiError }}</p>
+          <div v-if="kpiLoading" class="mt-6 text-center text-sm text-slate-500">Chargement des indicateurs…</div>
+          <div v-else-if="kpi" class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-lg border border-rose-100 bg-rose-50/60 p-5">
+              <p class="text-sm font-medium text-rose-700">Total achats</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums text-rose-950">{{ formatMoney(kpi.achat_ttc) }}</p>
+              <p class="mt-2 text-xs text-rose-800/80">HT : {{ formatMoney(kpi.achat_ht) }}</p>
+              <p class="text-xs text-rose-800/80">Dont impôts et taxes : {{ formatMoney(kpi.impots_ht) }}</p>
+            </div>
+            <div class="rounded-lg border border-emerald-100 bg-emerald-50/60 p-5">
+              <p class="text-sm font-medium text-emerald-700">Total ventes</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums text-emerald-950">{{ formatMoney(kpi.vente_ttc) }}</p>
+              <p class="mt-2 text-xs text-emerald-800/80">HT : {{ formatMoney(kpi.vente_ht) }}</p>
+            </div>
+            <div class="rounded-lg border border-indigo-100 bg-indigo-50/60 p-5">
+              <p class="text-sm font-medium text-indigo-700">Résultat avant impôts</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums" :class="resultClass(kpi.resultat_avant_impots_ht)">
+                {{ formatMoney(kpi.resultat_avant_impots_ht) }}
+              </p>
+              <p class="mt-2 text-xs text-indigo-800/80">Trésorerie TTC : {{ formatMoney(kpi.resultat_avant_impots_ttc) }}</p>
+            </div>
+            <div class="rounded-lg border border-violet-100 bg-violet-50/60 p-5">
+              <p class="text-sm font-medium text-violet-700">Résultat après impôts</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums" :class="resultClass(kpi.resultat_apres_impots_ht)">
+                {{ formatMoney(kpi.resultat_apres_impots_ht) }}
+              </p>
+              <p class="mt-2 text-xs text-violet-800/80">Trésorerie TTC : {{ formatMoney(kpi.resultat_apres_impots_ttc) }}</p>
+            </div>
+          </div>
+          <p v-if="kpi && !kpiLoading" class="mt-4 text-xs text-slate-500">
+            Période du {{ formatPeriod(kpi.date_debut) }} au {{ formatPeriod(kpi.date_fin) }} — {{ kpi.nb_factures }} facture(s) payée(s).
+          </p>
+        </section>
+
+        <section class="rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-wide text-sky-600">Indicateurs</p>
+              <h2 class="mt-1 text-xl font-bold text-slate-900">Synthèse annuelle</h2>
+              <p class="mt-1 text-sm text-slate-600">
+                Factures payées sur l'année sélectionnée (même base que les registres comptables).
+              </p>
+            </div>
+            <div class="sm:w-40">
+              <label for="kpi_year" class="block text-sm font-medium text-slate-700">Année</label>
+              <input id="kpi_year" v-model.number="selectedYear" type="number" min="2000" max="2100" @change="fetchKpiYear"
+                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            </div>
+          </div>
+          <p v-if="kpiYearError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ kpiYearError }}</p>
+          <div v-if="kpiYearLoading" class="mt-6 text-center text-sm text-slate-500">Chargement des indicateurs…</div>
+          <div v-else-if="kpiYear" class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-lg border border-rose-100 bg-rose-50/60 p-5">
+              <p class="text-sm font-medium text-rose-700">Total achats</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums text-rose-950">{{ formatMoney(kpiYear.achat_ttc) }}</p>
+              <p class="mt-2 text-xs text-rose-800/80">HT : {{ formatMoney(kpiYear.achat_ht) }}</p>
+              <p class="text-xs text-rose-800/80">Dont impôts et taxes : {{ formatMoney(kpiYear.impots_ht) }}</p>
+            </div>
+            <div class="rounded-lg border border-emerald-100 bg-emerald-50/60 p-5">
+              <p class="text-sm font-medium text-emerald-700">Total ventes</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums text-emerald-950">{{ formatMoney(kpiYear.vente_ttc) }}</p>
+              <p class="mt-2 text-xs text-emerald-800/80">HT : {{ formatMoney(kpiYear.vente_ht) }}</p>
+            </div>
+            <div class="rounded-lg border border-indigo-100 bg-indigo-50/60 p-5">
+              <p class="text-sm font-medium text-indigo-700">Résultat avant impôts</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums" :class="resultClass(kpiYear.resultat_avant_impots_ht)">
+                {{ formatMoney(kpiYear.resultat_avant_impots_ht) }}
+              </p>
+              <p class="mt-2 text-xs text-indigo-800/80">Trésorerie TTC : {{ formatMoney(kpiYear.resultat_avant_impots_ttc) }}</p>
+            </div>
+            <div class="rounded-lg border border-violet-100 bg-violet-50/60 p-5">
+              <p class="text-sm font-medium text-violet-700">Résultat après impôts</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums" :class="resultClass(kpiYear.resultat_apres_impots_ht)">
+                {{ formatMoney(kpiYear.resultat_apres_impots_ht) }}
+              </p>
+              <p class="mt-2 text-xs text-violet-800/80">Trésorerie TTC : {{ formatMoney(kpiYear.resultat_apres_impots_ttc) }}</p>
+            </div>
+          </div>
+          <p v-if="kpiYear && !kpiYearLoading" class="mt-4 text-xs text-slate-500">
+            Période du {{ formatPeriod(kpiYear.date_debut) }} au {{ formatPeriod(kpiYear.date_fin) }} — {{ kpiYear.nb_factures }} facture(s) payée(s).
+          </p>
+        </section>
       </main>
       {% endraw %}
       {% include "_app_footer.html" %}
@@ -129,6 +227,7 @@
       createApp({
         setup() {
           const today = new Date().toISOString().slice(0, 10);
+          const now = new Date();
           const showForm = ref(false);
           const loading = ref(false);
           const error = ref("");
@@ -138,6 +237,60 @@
             date_debut: today,
             date_fin: today,
           });
+
+          const selectedMonth = ref(
+            `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+          );
+          const kpi = ref(null);
+          const kpiLoading = ref(false);
+          const kpiError = ref("");
+          const selectedYear = ref(now.getFullYear());
+          const kpiYear = ref(null);
+          const kpiYearLoading = ref(false);
+          const kpiYearError = ref("");
+
+          const formatMoney = (v) => {
+            if (v == null || v === "") return "—";
+            return (
+              Number(v).toLocaleString("fr-FR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }) + " €"
+            );
+          };
+
+          const formatPeriod = (isoDate) => {
+            if (!isoDate) return "—";
+            const d = new Date(isoDate + "T12:00:00");
+            return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+          };
+
+          const resultClass = (v) => {
+            const n = Number(v);
+            if (n > 0) return "text-emerald-950";
+            if (n < 0) return "text-red-950";
+            return "text-slate-900";
+          };
+
+          const fetchKpi = async () => {
+            kpiError.value = "";
+            const parts = (selectedMonth.value || "").split("-");
+            if (parts.length !== 2) return;
+            const year = parts[0];
+            const month = String(parseInt(parts[1], 10));
+            kpiLoading.value = true;
+            try {
+              const res = await fetch(`/api/dashboard/kpi?year=${year}&month=${month}`);
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) throw new Error(data.detail || "Impossible de charger les indicateurs.");
+              kpi.value = data;
+            } catch (e) {
+              kpi.value = null;
+              kpiError.value = e.message || "Impossible de charger les indicateurs.";
+            } finally {
+              kpiLoading.value = false;
+            }
+          };
 
           const generateDocument = async () => {
             error.value = "";
@@ -166,7 +319,48 @@
             }
           };
 
-          return { showForm, loading, error, success, form, generateDocument };
+          const fetchKpiYear = async () => {
+            kpiYearError.value = "";
+            const year = parseInt(selectedYear.value, 10);
+            if (!year || year < 2000 || year > 2100) return;
+            kpiYearLoading.value = true;
+            try {
+              const res = await fetch(`/api/dashboard/kpi-year?year=${year}`);
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) throw new Error(data.detail || "Impossible de charger les indicateurs.");
+              kpiYear.value = data;
+            } catch (e) {
+              kpiYear.value = null;
+              kpiYearError.value = e.message || "Impossible de charger les indicateurs.";
+            } finally {
+              kpiYearLoading.value = false;
+            }
+          };
+
+          fetchKpi();
+          fetchKpiYear();
+
+          return {
+            showForm,
+            loading,
+            error,
+            success,
+            form,
+            generateDocument,
+            selectedMonth,
+            kpi,
+            kpiLoading,
+            kpiError,
+            fetchKpi,
+            selectedYear,
+            kpiYear,
+            kpiYearLoading,
+            kpiYearError,
+            fetchKpiYear,
+            formatMoney,
+            formatPeriod,
+            resultClass,
+          };
         },
       }).mount("#app");
     </script>

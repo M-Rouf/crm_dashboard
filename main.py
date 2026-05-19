@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import json
 import os
@@ -501,6 +502,41 @@ class RegistreGenerateBody(BaseModel):
     type_document: str
     date_debut: datetime.date
     date_fin: datetime.date
+
+
+class DashboardKpiSchema(BaseModel):
+    year: int
+    month: int
+    date_debut: datetime.date
+    date_fin: datetime.date
+    vente_ht: float
+    vente_ttc: float
+    achat_ht: float
+    achat_ttc: float
+    impots_ht: float
+    impots_ttc: float
+    resultat_avant_impots_ht: float
+    resultat_avant_impots_ttc: float
+    resultat_apres_impots_ht: float
+    resultat_apres_impots_ttc: float
+    nb_factures: int
+
+
+class DashboardKpiYearSchema(BaseModel):
+    year: int
+    date_debut: datetime.date
+    date_fin: datetime.date
+    vente_ht: float
+    vente_ttc: float
+    achat_ht: float
+    achat_ttc: float
+    impots_ht: float
+    impots_ttc: float
+    resultat_avant_impots_ht: float
+    resultat_avant_impots_ttc: float
+    resultat_apres_impots_ht: float
+    resultat_apres_impots_ttc: float
+    nb_factures: int
 
 
 # --- Initialisation FastAPI ---
@@ -1728,37 +1764,54 @@ def page_dashboard(request: Request):
     return templates.TemplateResponse(request=request, name="dashboard.html", context={})
 
 
-@app.post("/api/registres")
-def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_db)):
-    document_configs = {
-        "registre_achats": {
-            "label": "Registre des achats",
-            "flux": "achat",
-            "file_prefix": "reg_achat",
-        },
-        "registre_ventes": {
-            "label": "Registre des ventes",
-            "flux": "vente",
-            "file_prefix": "reg_ventes",
-        },
-        "livre_comptes": {
-            "label": "Livre des comptes",
-            "flux": None,
-            "file_prefix": "liv_comptes",
-        },
-    }
-    type_document = (payload.type_document or "").strip().lower()
-    config = document_configs.get(type_document)
-    if not config:
-        raise HTTPException(status_code=400, detail="Type de document invalide.")
-    if payload.date_debut > payload.date_fin:
-        raise HTTPException(
-            status_code=400,
-            detail="La date de début doit être antérieure ou égale à la date de fin.",
-        )
+def _month_period(year: int, month: int) -> tuple[datetime.date, datetime.date]:
+    last_day = calendar.monthrange(year, month)[1]
+    return datetime.date(year, month, 1), datetime.date(year, month, last_day)
 
-    date_debut_dt = datetime.datetime.combine(payload.date_debut, datetime.time.min)
-    date_fin_dt = datetime.datetime.combine(payload.date_fin, datetime.time.max)
+
+def _year_period(year: int) -> tuple[datetime.date, datetime.date]:
+    return datetime.date(year, 1, 1), datetime.date(year, 12, 31)
+
+
+def _validate_dashboard_year(year: int) -> None:
+    if year < 2000 or year > 2100:
+        raise HTTPException(status_code=400, detail="Année invalide.")
+
+
+def _compute_dashboard_kpi(
+    db: Session, date_debut: datetime.date, date_fin: datetime.date
+) -> dict:
+    factures = _query_paid_factures(db, date_debut, date_fin)
+    _, totals = _build_registre_data(factures)
+
+    def _f(key: str) -> float:
+        return float(totals.get(key, Decimal("0.00")))
+
+    return {
+        "date_debut": date_debut,
+        "date_fin": date_fin,
+        "vente_ht": _f("vente_ht"),
+        "vente_ttc": _f("vente_ttc"),
+        "achat_ht": _f("achat_ht"),
+        "achat_ttc": _f("achat_ttc"),
+        "impots_ht": _f("impots_ht"),
+        "impots_ttc": _f("impots_ttc"),
+        "resultat_avant_impots_ht": _f("resultat_avant_impots_ht"),
+        "resultat_avant_impots_ttc": _f("resultat_avant_impots_ttc"),
+        "resultat_apres_impots_ht": _f("resultat_ht"),
+        "resultat_apres_impots_ttc": _f("resultat_ttc"),
+        "nb_factures": len(factures),
+    }
+
+
+def _query_paid_factures(
+    db: Session,
+    date_debut: datetime.date,
+    date_fin: datetime.date,
+    flux: Optional[str] = None,
+) -> list:
+    date_debut_dt = datetime.datetime.combine(date_debut, datetime.time.min)
+    date_fin_dt = datetime.datetime.combine(date_fin, datetime.time.max)
     statut_expr = func.lower(func.trim(func.coalesce(Facture.statut_paiement, "")))
     flux_expr = func.lower(func.trim(cast(Facture.flux, String)))
 
@@ -1772,11 +1825,12 @@ def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_d
             Facture.date_paiement <= date_fin_dt,
         )
     )
-    if config["flux"]:
-        query = query.filter(flux_expr == config["flux"])
+    if flux:
+        query = query.filter(flux_expr == flux.strip().lower())
+    return query.order_by(Facture.date_paiement.asc(), Facture.id.asc()).all()
 
-    factures = query.order_by(Facture.date_paiement.asc(), Facture.id.asc()).all()
 
+def _build_registre_data(factures: list) -> tuple[list, dict]:
     totals = {
         "vente_ht": Decimal("0.00"),
         "vente_ttc": Decimal("0.00"),
@@ -1845,6 +1899,74 @@ def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_d
     totals["resultat_avant_impots_ttc"] = (
         totals["resultat_ttc"] + totals["impots_ttc"]
     )
+    return items, totals
+
+
+@app.get("/api/dashboard/kpi", response_model=DashboardKpiSchema)
+def dashboard_kpi(
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    today = datetime.date.today()
+    year = year or today.year
+    month = month or today.month
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="Le mois doit être entre 1 et 12.")
+    _validate_dashboard_year(year)
+
+    date_debut, date_fin = _month_period(year, month)
+    data = _compute_dashboard_kpi(db, date_debut, date_fin)
+    return DashboardKpiSchema(year=year, month=month, **data)
+
+
+@app.get("/api/dashboard/kpi-year", response_model=DashboardKpiYearSchema)
+def dashboard_kpi_year(
+    year: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    today = datetime.date.today()
+    year = year or today.year
+    _validate_dashboard_year(year)
+
+    date_debut, date_fin = _year_period(year)
+    data = _compute_dashboard_kpi(db, date_debut, date_fin)
+    return DashboardKpiYearSchema(year=year, **data)
+
+
+@app.post("/api/registres")
+def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_db)):
+    document_configs = {
+        "registre_achats": {
+            "label": "Registre des achats",
+            "flux": "achat",
+            "file_prefix": "reg_achat",
+        },
+        "registre_ventes": {
+            "label": "Registre des ventes",
+            "flux": "vente",
+            "file_prefix": "reg_ventes",
+        },
+        "livre_comptes": {
+            "label": "Livre des comptes",
+            "flux": None,
+            "file_prefix": "liv_comptes",
+        },
+    }
+    type_document = (payload.type_document or "").strip().lower()
+    config = document_configs.get(type_document)
+    if not config:
+        raise HTTPException(status_code=400, detail="Type de document invalide.")
+    if payload.date_debut > payload.date_fin:
+        raise HTTPException(
+            status_code=400,
+            detail="La date de début doit être antérieure ou égale à la date de fin.",
+        )
+
+    factures = _query_paid_factures(
+        db, payload.date_debut, payload.date_fin, flux=config["flux"]
+    )
+    items, totals = _build_registre_data(factures)
 
     generations = generate_registre_files(
         document_type=type_document,
