@@ -6,7 +6,7 @@ import shutil
 import sys
 import urllib.request
 from decimal import ROUND_HALF_UP, Decimal
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, Response
@@ -537,6 +537,31 @@ class DashboardKpiYearSchema(BaseModel):
     resultat_apres_impots_ht: float
     resultat_apres_impots_ttc: float
     nb_factures: int
+
+
+FACTURE_CATEGORIES = (
+    "PRESTATION",
+    "ABONNEMENT",
+    "MATERIEL",
+    "LOGICIEL",
+    "FRAIS_DEPLACEMENT",
+    "SOUS_TRAITANCE",
+    "ASSURANCE",
+    "IMPOTS_TAXES",
+    "AUTRE",
+)
+
+
+class DashboardChartsSchema(BaseModel):
+    mois_debut: str
+    mois_fin: str
+    months: List[str]
+    categories: List[str]
+    achats_ttc: List[float]
+    ventes_ttc: List[float]
+    resultat_apres_impots_ht: List[float]
+    ventes_par_categorie: Dict[str, List[float]]
+    achats_par_categorie: Dict[str, List[float]]
 
 
 # --- Initialisation FastAPI ---
@@ -1932,6 +1957,164 @@ def dashboard_kpi_year(
     date_debut, date_fin = _year_period(year)
     data = _compute_dashboard_kpi(db, date_debut, date_fin)
     return DashboardKpiYearSchema(year=year, **data)
+
+
+def _parse_year_month(value: str) -> tuple[int, int]:
+    raw = (value or "").strip()
+    parts = raw.split("-")
+    if len(parts) != 2:
+        raise HTTPException(
+            status_code=400, detail="Format de mois invalide (attendu AAAA-MM)."
+        )
+    try:
+        year = int(parts[0])
+        month = int(parts[1])
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail="Format de mois invalide (attendu AAAA-MM)."
+        ) from exc
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="Le mois doit être entre 1 et 12.")
+    _validate_dashboard_year(year)
+    return year, month
+
+
+def _format_year_month(year: int, month: int) -> str:
+    return f"{year:04d}-{month:02d}"
+
+
+def _default_chart_period() -> tuple[str, str]:
+    today = datetime.date.today()
+    end_year, end_month = today.year, today.month
+    start_year, start_month = end_year, end_month - 11
+    while start_month <= 0:
+        start_month += 12
+        start_year -= 1
+    return _format_year_month(start_year, start_month), _format_year_month(
+        end_year, end_month
+    )
+
+
+def _month_keys_between(mois_debut: str, mois_fin: str) -> list[str]:
+    y1, m1 = _parse_year_month(mois_debut)
+    y2, m2 = _parse_year_month(mois_fin)
+    if (y1, m1) > (y2, m2):
+        raise HTTPException(
+            status_code=400,
+            detail="Le mois de début doit être antérieur ou égal au mois de fin.",
+        )
+
+    keys: list[str] = []
+    year, month = y1, m1
+    while (year, month) <= (y2, m2):
+        keys.append(_format_year_month(year, month))
+        month += 1
+        if month > 12:
+            month = 1
+            year += 1
+    if len(keys) > 36:
+        raise HTTPException(
+            status_code=400, detail="La période ne peut pas dépasser 36 mois."
+        )
+    return keys
+
+
+def _normalize_facture_categorie(categorie: Optional[str]) -> str:
+    key = (categorie or "AUTRE").strip().upper() or "AUTRE"
+    return key if key in FACTURE_CATEGORIES else "AUTRE"
+
+
+def _facture_payment_month_key(date_paiement) -> Optional[str]:
+    if not date_paiement:
+        return None
+    if isinstance(date_paiement, datetime.datetime):
+        date_paiement = date_paiement.date()
+    return _format_year_month(date_paiement.year, date_paiement.month)
+
+
+def _build_monthly_charts_data(
+    db: Session, mois_debut: str, mois_fin: str
+) -> DashboardChartsSchema:
+    month_keys = _month_keys_between(mois_debut, mois_fin)
+    y1, m1 = _parse_year_month(mois_debut)
+    y2, m2 = _parse_year_month(mois_fin)
+    date_debut, _ = _month_period(y1, m1)
+    _, date_fin = _month_period(y2, m2)
+
+    n = len(month_keys)
+    key_index = {key: idx for idx, key in enumerate(month_keys)}
+    ventes_ttc = [Decimal("0.00")] * n
+    achats_ttc = [Decimal("0.00")] * n
+    ventes_ht = [Decimal("0.00")] * n
+    achats_ht = [Decimal("0.00")] * n
+    ventes_par_categorie = {
+        cat: [Decimal("0.00")] * n for cat in FACTURE_CATEGORIES
+    }
+    achats_par_categorie = {cat: [Decimal("0.00")] * n for cat in FACTURE_CATEGORIES}
+
+    for facture in _query_paid_factures(db, date_debut, date_fin):
+        flux = (facture.flux or "").strip().lower()
+        if flux not in ("vente", "achat"):
+            continue
+        month_key = _facture_payment_month_key(facture.date_paiement)
+        if not month_key or month_key not in key_index:
+            continue
+
+        idx = key_index[month_key]
+        is_avoir = (facture.type_facture or "").strip().lower() == "avoir"
+        sign = Decimal("-1.00") if is_avoir else Decimal("1.00")
+        montant_ht = (_money_dec(facture.montant_ht) * sign).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        montant_ttc = (_money_dec(facture.montant_ttc) * sign).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        categorie = _normalize_facture_categorie(facture.categorie)
+
+        if flux == "vente":
+            ventes_ttc[idx] += montant_ttc
+            ventes_ht[idx] += montant_ht
+            ventes_par_categorie[categorie][idx] += montant_ttc
+        else:
+            achats_ttc[idx] += montant_ttc
+            achats_ht[idx] += montant_ht
+            achats_par_categorie[categorie][idx] += montant_ttc
+
+    def _series(values: list[Decimal]) -> list[float]:
+        return [float(v.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)) for v in values]
+
+    resultat_apres_impots_ht = [
+        (ventes_ht[i] - achats_ht[i]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        for i in range(n)
+    ]
+
+    return DashboardChartsSchema(
+        mois_debut=mois_debut,
+        mois_fin=mois_fin,
+        months=month_keys,
+        categories=list(FACTURE_CATEGORIES),
+        achats_ttc=_series(achats_ttc),
+        ventes_ttc=_series(ventes_ttc),
+        resultat_apres_impots_ht=_series(resultat_apres_impots_ht),
+        ventes_par_categorie={
+            cat: _series(ventes_par_categorie[cat]) for cat in FACTURE_CATEGORIES
+        },
+        achats_par_categorie={
+            cat: _series(achats_par_categorie[cat]) for cat in FACTURE_CATEGORIES
+        },
+    )
+
+
+@app.get("/api/dashboard/charts", response_model=DashboardChartsSchema)
+def dashboard_charts(
+    mois_debut: Optional[str] = None,
+    mois_fin: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    default_debut, default_fin = _default_chart_period()
+    mois_debut = (mois_debut or default_debut).strip()
+    mois_fin = (mois_fin or default_fin).strip()
+    return _build_monthly_charts_data(db, mois_debut, mois_fin)
 
 
 @app.post("/api/registres")

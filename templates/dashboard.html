@@ -17,6 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/css/style.css" />
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   </head>
 
   <body class="min-h-screen text-slate-900 antialiased leading-normal tracking-normal">
@@ -215,6 +216,46 @@
             Période du {{ formatPeriod(kpiYear.date_debut) }} au {{ formatPeriod(kpiYear.date_fin) }} — {{ kpiYear.nb_factures }} facture(s) payée(s).
           </p>
         </section>
+
+        <section class="rounded-lg border border-slate-300/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/10">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-wide text-sky-600">Graphiques</p>
+              <h2 class="mt-1 text-xl font-bold text-slate-900">Évolution sur la période</h2>
+              <p class="mt-1 text-sm text-slate-600">
+                Factures payées, agrégées par mois (12 derniers mois par défaut).
+              </p>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div class="sm:w-44">
+                <label for="chart_mois_debut" class="block text-sm font-medium text-slate-700">Mois de début</label>
+                <input id="chart_mois_debut" v-model="chartMoisDebut" type="month" @change="fetchCharts"
+                  class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              </div>
+              <div class="sm:w-44">
+                <label for="chart_mois_fin" class="block text-sm font-medium text-slate-700">Mois de fin</label>
+                <input id="chart_mois_fin" v-model="chartMoisFin" type="month" @change="fetchCharts"
+                  class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              </div>
+            </div>
+          </div>
+          <p v-if="chartsError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ chartsError }}</p>
+          <div v-if="chartsLoading" class="mt-6 text-center text-sm text-slate-500">Chargement des graphiques…</div>
+          <div v-else-if="chartsData" class="mt-6 grid grid-cols-1 gap-8 xl:grid-cols-2">
+            <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+              <h3 class="text-sm font-semibold text-slate-800">Achats, ventes et résultat après impôts</h3>
+              <div class="mt-4 h-72 sm:h-80">
+                <canvas ref="lineChartCanvas"></canvas>
+              </div>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+              <h3 class="text-sm font-semibold text-slate-800">Ventes et achats par catégorie</h3>
+              <div class="mt-4 h-72 sm:h-80">
+                <canvas ref="barChartCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
       {% endraw %}
       {% include "_app_footer.html" %}
@@ -222,12 +263,20 @@
     </div>
 
     <script>
-      const { createApp, ref } = Vue;
+      const { createApp, ref, nextTick, onUnmounted } = Vue;
 
       createApp({
         setup() {
           const today = new Date().toISOString().slice(0, 10);
           const now = new Date();
+          const formatYearMonth = (date) =>
+            `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+          const defaultChartEnd = new Date(now.getFullYear(), now.getMonth(), 1);
+          const defaultChartStart = new Date(
+            defaultChartEnd.getFullYear(),
+            defaultChartEnd.getMonth() - 11,
+            1
+          );
           const showForm = ref(false);
           const loading = ref(false);
           const error = ref("");
@@ -248,6 +297,44 @@
           const kpiYear = ref(null);
           const kpiYearLoading = ref(false);
           const kpiYearError = ref("");
+          const chartMoisDebut = ref(formatYearMonth(defaultChartStart));
+          const chartMoisFin = ref(formatYearMonth(defaultChartEnd));
+          const chartsData = ref(null);
+          const chartsLoading = ref(false);
+          const chartsError = ref("");
+          const lineChartCanvas = ref(null);
+          const barChartCanvas = ref(null);
+          let lineChartInstance = null;
+          let barChartInstance = null;
+
+          const CATEGORIE_OPTIONS = [
+            { value: "PRESTATION", label: "Prestation", color: "#0ea5e9" },
+            { value: "ABONNEMENT", label: "Abonnement", color: "#38bdf8" },
+            { value: "MATERIEL", label: "Matériel", color: "#6366f1" },
+            { value: "LOGICIEL", label: "Logiciel", color: "#818cf8" },
+            { value: "FRAIS_DEPLACEMENT", label: "Frais déplacement", color: "#f97316" },
+            { value: "SOUS_TRAITANCE", label: "Sous-traitance", color: "#fb923c" },
+            { value: "ASSURANCE", label: "Assurance", color: "#f43f5e" },
+            { value: "IMPOTS_TAXES", label: "Impôts / taxes", color: "#e11d48" },
+            { value: "AUTRE", label: "Autre", color: "#94a3b8" },
+          ];
+
+          const categorieLabel = (value) => {
+            const option = CATEGORIE_OPTIONS.find((cat) => cat.value === value);
+            return option ? option.label : value || "Autre";
+          };
+
+          const monthChartLabel = (ym) => {
+            const parts = (ym || "").split("-");
+            if (parts.length !== 2) return ym;
+            const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+            return d.toLocaleDateString("fr-FR", { month: "short", year: "numeric" });
+          };
+
+          const euroAxisTick = (value) =>
+            Number(value).toLocaleString("fr-FR", {
+              maximumFractionDigits: 0,
+            }) + " €";
 
           const formatMoney = (v) => {
             if (v == null || v === "") return "—";
@@ -337,8 +424,163 @@
             }
           };
 
+          const destroyCharts = () => {
+            if (lineChartInstance) {
+              lineChartInstance.destroy();
+              lineChartInstance = null;
+            }
+            if (barChartInstance) {
+              barChartInstance.destroy();
+              barChartInstance = null;
+            }
+          };
+
+          const renderCharts = async () => {
+            const data = chartsData.value;
+            if (!data || typeof Chart === "undefined") return;
+            await nextTick();
+            destroyCharts();
+
+            const labels = (data.months || []).map(monthChartLabel);
+
+            if (lineChartCanvas.value) {
+              lineChartInstance = new Chart(lineChartCanvas.value, {
+                type: "line",
+                data: {
+                  labels,
+                  datasets: [
+                    {
+                      label: "Achats (TTC)",
+                      data: data.achats_ttc,
+                      borderColor: "#e11d48",
+                      backgroundColor: "rgba(225, 29, 72, 0.08)",
+                      tension: 0.25,
+                      fill: false,
+                    },
+                    {
+                      label: "Ventes (TTC)",
+                      data: data.ventes_ttc,
+                      borderColor: "#059669",
+                      backgroundColor: "rgba(5, 150, 105, 0.08)",
+                      tension: 0.25,
+                      fill: false,
+                    },
+                    {
+                      label: "Résultat après impôts (HT)",
+                      data: data.resultat_apres_impots_ht,
+                      borderColor: "#4f46e5",
+                      backgroundColor: "rgba(79, 70, 229, 0.08)",
+                      tension: 0.25,
+                      fill: false,
+                    },
+                  ],
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  interaction: { mode: "index", intersect: false },
+                  plugins: {
+                    legend: { position: "bottom" },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx) =>
+                          `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}`,
+                      },
+                    },
+                  },
+                  scales: {
+                    y: {
+                      ticks: { callback: euroAxisTick },
+                    },
+                  },
+                },
+              });
+            }
+
+            if (barChartCanvas.value) {
+              const hasAmount = (series) =>
+                (series || []).some((value) => Math.abs(Number(value)) > 0.005);
+              const activeCategories = CATEGORIE_OPTIONS.filter(
+                (cat) =>
+                  hasAmount(data.ventes_par_categorie[cat.value]) ||
+                  hasAmount(data.achats_par_categorie[cat.value])
+              );
+              const barDatasets = [];
+              activeCategories.forEach((cat) => {
+                barDatasets.push({
+                  label: `${categorieLabel(cat.value)} (ventes)`,
+                  data: data.ventes_par_categorie[cat.value] || [],
+                  stack: "ventes",
+                  backgroundColor: cat.color,
+                  borderRadius: 2,
+                });
+                barDatasets.push({
+                  label: `${categorieLabel(cat.value)} (achats)`,
+                  data: data.achats_par_categorie[cat.value] || [],
+                  stack: "achats",
+                  backgroundColor: cat.color + "99",
+                  borderRadius: 2,
+                });
+              });
+
+              barChartInstance = new Chart(barChartCanvas.value, {
+                type: "bar",
+                data: { labels, datasets: barDatasets },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: "bottom",
+                      labels: { boxWidth: 10, font: { size: 10 } },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx) =>
+                          `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}`,
+                      },
+                    },
+                  },
+                  scales: {
+                    x: { stacked: true },
+                    y: {
+                      stacked: true,
+                      ticks: { callback: euroAxisTick },
+                    },
+                  },
+                },
+              });
+            }
+          };
+
+          const fetchCharts = async () => {
+            chartsError.value = "";
+            if (!chartMoisDebut.value || !chartMoisFin.value) return;
+            chartsLoading.value = true;
+            destroyCharts();
+            try {
+              const params = new URLSearchParams({
+                mois_debut: chartMoisDebut.value,
+                mois_fin: chartMoisFin.value,
+              });
+              const res = await fetch(`/api/dashboard/charts?${params}`);
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) throw new Error(data.detail || "Impossible de charger les graphiques.");
+              chartsData.value = data;
+              chartsLoading.value = false;
+              await renderCharts();
+            } catch (e) {
+              chartsData.value = null;
+              chartsError.value = e.message || "Impossible de charger les graphiques.";
+              chartsLoading.value = false;
+            }
+          };
+
+          onUnmounted(() => destroyCharts());
+
           fetchKpi();
           fetchKpiYear();
+          fetchCharts();
 
           return {
             showForm,
@@ -360,6 +602,14 @@
             formatMoney,
             formatPeriod,
             resultClass,
+            chartMoisDebut,
+            chartMoisFin,
+            chartsData,
+            chartsLoading,
+            chartsError,
+            fetchCharts,
+            lineChartCanvas,
+            barChartCanvas,
           };
         },
       }).mount("#app");
