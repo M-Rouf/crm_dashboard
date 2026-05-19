@@ -605,7 +605,7 @@
             }
           };
 
-          const destroyCharts = () => {
+          const destroyLineBarCharts = () => {
             if (lineChartInstance) {
               lineChartInstance.destroy();
               lineChartInstance = null;
@@ -614,6 +614,9 @@
               barChartInstance.destroy();
               barChartInstance = null;
             }
+          };
+
+          const destroyPieCharts = () => {
             if (achatPieInstance) {
               achatPieInstance.destroy();
               achatPieInstance = null;
@@ -622,6 +625,11 @@
               ventePieInstance.destroy();
               ventePieInstance = null;
             }
+          };
+
+          const destroyAllCharts = () => {
+            destroyLineBarCharts();
+            destroyPieCharts();
           };
 
           const createPieChart = (canvas, pieData, title) => {
@@ -650,14 +658,7 @@
             const data = pieChartsData.value;
             if (!data || typeof Chart === "undefined") return;
             await nextTick();
-            if (achatPieInstance) {
-              achatPieInstance.destroy();
-              achatPieInstance = null;
-            }
-            if (ventePieInstance) {
-              ventePieInstance.destroy();
-              ventePieInstance = null;
-            }
+            destroyPieCharts();
 
             const achatPie = buildPieChartData(data.achats_par_categorie);
             if (achatPie.total > 0 && achatPieCanvas.value) {
@@ -681,7 +682,7 @@
             const data = chartsData.value;
             if (!data || typeof Chart === "undefined") return;
             await nextTick();
-            destroyCharts();
+            destroyLineBarCharts();
 
             const labels = (data.months || []).map(monthChartLabel);
 
@@ -801,14 +802,7 @@
             pieChartsError.value = "";
             if (!pieMoisDebut.value || !pieMoisFin.value) return;
             pieChartsLoading.value = true;
-            if (achatPieInstance) {
-              achatPieInstance.destroy();
-              achatPieInstance = null;
-            }
-            if (ventePieInstance) {
-              ventePieInstance.destroy();
-              ventePieInstance = null;
-            }
+            destroyPieCharts();
             try {
               const params = new URLSearchParams({
                 mois_debut: pieMoisDebut.value,
@@ -831,7 +825,7 @@
             chartsError.value = "";
             if (!chartMoisDebut.value || !chartMoisFin.value) return;
             chartsLoading.value = true;
-            destroyCharts();
+            destroyLineBarCharts();
             try {
               const params = new URLSearchParams({
                 mois_debut: chartMoisDebut.value,
@@ -850,7 +844,7 @@
             }
           };
 
-          onUnmounted(() => destroyCharts());
+          onUnmounted(() => destroyAllCharts());
 
           const fetchPendingPayments = async () => {
             pendingPaymentsError.value = "";
