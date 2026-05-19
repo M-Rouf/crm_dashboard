@@ -280,27 +280,6 @@ def _facture_signed_ttc_reste(facture: Facture) -> tuple[Decimal, Decimal]:
     return montant_ttc, reste
 
 
-def _aggregate_pending_payments(factures: list, flux: str) -> DashboardPendingFluxSchema:
-    flux_key = flux.strip().lower()
-    total_ttc = Decimal("0.00")
-    total_reste = Decimal("0.00")
-    nb = 0
-    for facture in factures:
-        if (facture.flux or "").strip().lower() != flux_key:
-            continue
-        ttc, reste = _facture_signed_ttc_reste(facture)
-        nb += 1
-        total_ttc += ttc
-        total_reste += reste
-    return DashboardPendingFluxSchema(
-        nb_factures=nb,
-        total_ttc=float(total_ttc.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
-        total_reste_ttc=float(
-            total_reste.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        ),
-    )
-
-
 def _sync_facture_paiement_from_montants(facture: Facture, db: Session) -> None:
     """Aligne statut_paiement et date_paiement sur les montants si la ligne est incohérente."""
     _reconcile_paiement_rows([facture], db)
@@ -1854,6 +1833,27 @@ def page_factures(request: Request):
 @app.get("/dashboard", response_class=HTMLResponse)
 def page_dashboard(request: Request):
     return templates.TemplateResponse(request=request, name="dashboard.html", context={})
+
+
+def _aggregate_pending_payments(factures: list, flux: str) -> DashboardPendingFluxSchema:
+    flux_key = flux.strip().lower()
+    total_ttc = Decimal("0.00")
+    total_reste = Decimal("0.00")
+    nb = 0
+    for facture in factures:
+        if (facture.flux or "").strip().lower() != flux_key:
+            continue
+        ttc, reste = _facture_signed_ttc_reste(facture)
+        nb += 1
+        total_ttc += ttc
+        total_reste += reste
+    return DashboardPendingFluxSchema(
+        nb_factures=nb,
+        total_ttc=float(total_ttc.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+        total_reste_ttc=float(
+            total_reste.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        ),
+    )
 
 
 @app.get("/api/dashboard/pending-payments", response_model=DashboardPendingPaymentsSchema)
