@@ -9,7 +9,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -1799,8 +1799,13 @@ app.mount(
 templates = Jinja2Templates(directory="templates")
 
 
-@app.get("/", response_class=HTMLResponse)
-def dashboard(request: Request):
+@app.get("/")
+def root():
+    return RedirectResponse(url="/dashboard", status_code=303)
+
+
+@app.get("/requetes", response_class=HTMLResponse)
+def page_requetes(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
