@@ -84,6 +84,17 @@ def get_one(db: Session, model, pk: int, entreprise_id: int, detail: str = "Ress
     return row
 
 
+def require_admin(request: Request, db: Session, utilisateur_model):
+    user = get_session_user(request, db, utilisateur_model)
+    if not user:
+        raise HTTPException(status_code=401, detail="Non authentifié.")
+    if (user.role or "").strip().lower() != "admin":
+        raise HTTPException(
+            status_code=403, detail="Accès réservé aux administrateurs."
+        )
+    return user
+
+
 def get_session_user(request: Request, db: Session, utilisateur_model):
     user_id = request.session.get("user_id")
     if not user_id:

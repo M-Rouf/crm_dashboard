@@ -45,6 +45,7 @@ from tenant_auth import (
     get_one,
     get_session_user,
     hash_password,
+    require_admin,
     scoped,
     setup_auth_middleware,
     setup_session_middleware,
@@ -744,7 +745,134 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
     }
 
 
+UTILISATEUR_ROLES_VALIDES = frozenset({"admin", "user"})
+
+
+class UtilisateurSchema(BaseModel):
+    id: int
+    nom: str
+    prenom: str
+    email: str
+    role: str
+    actif: bool
+    date_creation: Optional[datetime.datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UtilisateurCreateBody(BaseModel):
+    nom: str
+    prenom: str
+    email: str
+    password: str
+    role: str = "user"
+    actif: bool = True
+
+
+class UtilisateurUpdateBody(BaseModel):
+    nom: str
+    prenom: str
+    email: str
+    password: Optional[str] = ""
+    role: str
+    actif: bool
+
+
+def _normalize_utilisateur_role(role: str) -> str:
+    r = (role or "user").strip().lower()
+    if r not in UTILISATEUR_ROLES_VALIDES:
+        raise HTTPException(status_code=400, detail="Rôle invalide (admin ou user).")
+    return r
+
+
 # --- Routes de l'API ---
+@app.get("/api/utilisateurs", response_model=List[UtilisateurSchema])
+def list_utilisateurs(request: Request, db: Session = Depends(get_db)):
+    require_admin(request, db, Utilisateur)
+    rows = (
+        scoped(db, Utilisateur, eid(request))
+        .order_by(Utilisateur.nom, Utilisateur.prenom)
+        .all()
+    )
+    return rows
+
+
+@app.get("/api/utilisateurs/{user_id}", response_model=UtilisateurSchema)
+def get_utilisateur(user_id: int, request: Request, db: Session = Depends(get_db)):
+    require_admin(request, db, Utilisateur)
+    return get_one(db, Utilisateur, user_id, eid(request), "Utilisateur non trouvé.")
+
+
+@app.post("/api/utilisateurs", response_model=UtilisateurSchema)
+def create_utilisateur_api(
+    body: UtilisateurCreateBody, request: Request, db: Session = Depends(get_db)
+):
+    require_admin(request, db, Utilisateur)
+    email = (body.email or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email requis.")
+    if not (body.password or "").strip():
+        raise HTTPException(status_code=400, detail="Mot de passe requis.")
+    if db.query(Utilisateur).filter(Utilisateur.email == email).first():
+        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé.")
+    role = _normalize_utilisateur_role(body.role)
+    user = Utilisateur(
+        entreprise_id=eid(request),
+        nom=(body.nom or "").strip(),
+        prenom=(body.prenom or "").strip(),
+        email=email,
+        mot_de_passe_hash=hash_password(body.password),
+        role=role,
+        actif=bool(body.actif),
+    )
+    if not user.nom or not user.prenom:
+        raise HTTPException(status_code=400, detail="Nom et prénom requis.")
+    db.add(user)
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    db.refresh(user)
+    return user
+
+
+@app.put("/api/utilisateurs/{user_id}", response_model=UtilisateurSchema)
+def update_utilisateur_api(
+    user_id: int,
+    body: UtilisateurUpdateBody,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    require_admin(request, db, Utilisateur)
+    user = get_one(db, Utilisateur, user_id, eid(request), "Utilisateur non trouvé.")
+    email = (body.email or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email requis.")
+    existing = db.query(Utilisateur).filter(Utilisateur.email == email).first()
+    if existing and existing.id != user.id:
+        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé.")
+    nom = (body.nom or "").strip()
+    prenom = (body.prenom or "").strip()
+    if not nom or not prenom:
+        raise HTTPException(status_code=400, detail="Nom et prénom requis.")
+    user.nom = nom
+    user.prenom = prenom
+    user.email = email
+    user.role = _normalize_utilisateur_role(body.role)
+    user.actif = bool(body.actif)
+    if (body.password or "").strip():
+        user.mot_de_passe_hash = hash_password(body.password)
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    db.refresh(user)
+    return user
+
+
 @app.get("/api/data", response_model=List[RequeteSchema])
 def get_data(request: Request, db: Session = Depends(get_db)):
     return scoped(db, Requete, eid(request)).all()
@@ -1924,6 +2052,7 @@ def trigger_devis_facture_webhook(
 
 # --- Frontend (Static files & Templates) ---
 app.mount("/css", StaticFiles(directory="css"), name="css")
+app.mount("/js", StaticFiles(directory="js"), name="js")
 app.mount("/img", StaticFiles(directory="img"), name="img")
 app.mount("/files", StaticFiles(directory="files"), name="files")
 app.mount(
@@ -2711,3 +2840,13 @@ def confirm_devis_creation(
 @app.get("/devis", response_class=HTMLResponse)
 def page_devis(request: Request):
     return templates.TemplateResponse(request=request, name="devis.html", context={})
+
+
+@app.get("/utilisateurs", response_class=HTMLResponse)
+def page_utilisateurs(request: Request, db: Session = Depends(get_db)):
+    user = get_session_user(request, db, Utilisateur)
+    if not user or (user.role or "").strip().lower() != "admin":
+        return RedirectResponse(url="/dashboard", status_code=303)
+    return templates.TemplateResponse(
+        request=request, name="utilisateurs.html", context={}
+    )
