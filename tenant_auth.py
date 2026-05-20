@@ -33,6 +33,23 @@ SESSION_SECRET = os.getenv(
     "SESSION_SECRET", "changez-moi-en-production-via-env-SESSION_SECRET"
 )
 DEFAULT_ENTREPRISE_ID = int(os.getenv("DEFAULT_ENTREPRISE_ID", "1"))
+PRIMARY_USER_ID = int(os.getenv("PRIMARY_USER_ID", "1"))
+
+
+def is_primary_user(user) -> bool:
+    return user is not None and int(user.id) == PRIMARY_USER_ID
+
+
+def require_primary_user(request: Request, db: Session, utilisateur_model):
+    user = get_session_user(request, db, utilisateur_model)
+    if not user:
+        raise HTTPException(status_code=401, detail="Non authentifié.")
+    if not is_primary_user(user):
+        raise HTTPException(
+            status_code=403,
+            detail="Cette action est réservée à l'utilisateur principal.",
+        )
+    return user
 
 
 def hash_password(password: str) -> str:

@@ -45,7 +45,9 @@ from tenant_auth import (
     get_one,
     get_session_user,
     hash_password,
+    is_primary_user,
     require_admin,
+    require_primary_user,
     scoped,
     setup_auth_middleware,
     setup_session_middleware,
@@ -742,6 +744,7 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
         "role": user.role,
         "entreprise_id": user.entreprise_id,
         "entreprise_nom": entreprise.nom_usage if entreprise else None,
+        "is_primary_user": is_primary_user(user),
     }
 
 
@@ -875,6 +878,7 @@ def update_utilisateur_api(
 
 @app.get("/api/data", response_model=List[RequeteSchema])
 def get_data(request: Request, db: Session = Depends(get_db)):
+    require_primary_user(request, db, Utilisateur)
     return scoped(db, Requete, eid(request)).all()
 
 
@@ -885,6 +889,7 @@ def update_statut(
     request: Request,
     db: Session = Depends(get_db),
 ):
+    require_primary_user(request, db, Utilisateur)
     requete = get_one(db, Requete, requete_id, eid(request), "Requête non trouvée")
     if statut_update.statut not in ["nouveau", "traite"]:
         raise HTTPException(status_code=400, detail="Statut invalide.")
@@ -1224,6 +1229,7 @@ def update_facture_statut_plateforme(
             status_code=400,
             detail="statut_plateforme doit être « validated », « rejected » ou « sent ».",
         )
+    require_primary_user(request, db, Utilisateur)
     facture = (
         scoped(db, Facture, eid(request))
         .options(
@@ -2074,12 +2080,11 @@ def root():
 
 
 @app.get("/requetes", response_class=HTMLResponse)
-def page_requetes(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={},  # Tu peux ajouter tes variables ici si besoin
-    )
+def page_requetes(request: Request, db: Session = Depends(get_db)):
+    user = get_session_user(request, db, Utilisateur)
+    if not is_primary_user(user):
+        return RedirectResponse(url="/dashboard", status_code=303)
+    return templates.TemplateResponse(request=request, name="index.html", context={})
 
 
 @app.get("/contacts", response_class=HTMLResponse)
@@ -2811,8 +2816,9 @@ def confirm_devis_creation(
 
         db.commit()
         db.refresh(devis)
-        # Webhook final vers N8N
-        if payload.envoi == 1:
+        # Webhook final vers N8N (envoi email — utilisateur principal uniquement)
+        user = get_session_user(request, db, Utilisateur)
+        if payload.envoi == 1 and is_primary_user(user):
             try:
                 webhook_payload = {
                     "prenom": payload.prenom,

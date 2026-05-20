@@ -595,7 +595,18 @@
             }
           };
 
-          onMounted(() => {
+          onMounted(async () => {
+            try {
+              const meRes = await fetch("/api/auth/me");
+              const me = meRes.ok ? await meRes.json() : null;
+              if (!me || !me.is_primary_user) {
+                window.location.href = "/dashboard";
+                return;
+              }
+            } catch (e) {
+              window.location.href = "/dashboard";
+              return;
+            }
             fetchData();
             setInterval(fetchData, 30000); // Rafraîchissement automatique toutes les 30s
           });
