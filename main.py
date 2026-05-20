@@ -568,6 +568,7 @@ FACTURE_CATEGORIES = (
     "PRESTATION",
     "ABONNEMENT",
     "MATERIEL",
+    "CONSOMMABLES",
     "LOGICIEL",
     "FRAIS_DEPLACEMENT",
     "SOUS_TRAITANCE",
@@ -575,6 +576,8 @@ FACTURE_CATEGORIES = (
     "IMPOTS_TAXES",
     "AUTRE",
 )
+
+FACTURE_CATEGORIES_VALIDES = frozenset(FACTURE_CATEGORIES)
 
 
 class DashboardChartsSchema(BaseModel):
@@ -1024,19 +1027,8 @@ def update_facture_categorie(
     body: FactureCategorieUpdate,
     db: Session = Depends(get_db),
 ):
-    categories_valides = {
-        "PRESTATION",
-        "ABONNEMENT",
-        "MATERIEL",
-        "LOGICIEL",
-        "FRAIS_DEPLACEMENT",
-        "SOUS_TRAITANCE",
-        "ASSURANCE",
-        "IMPOTS_TAXES",
-        "AUTRE",
-    }
     categorie = (body.categorie or "AUTRE").strip().upper() or "AUTRE"
-    if categorie not in categories_valides:
+    if categorie not in FACTURE_CATEGORIES_VALIDES:
         raise HTTPException(status_code=400, detail="Catégorie de facture invalide.")
 
     facture = (
@@ -1334,19 +1326,8 @@ def create_manual_facture(
             detail="flux doit être « vente » ou « achat ».",
         )
 
-    categories_valides = {
-        "PRESTATION",
-        "ABONNEMENT",
-        "MATERIEL",
-        "LOGICIEL",
-        "FRAIS_DEPLACEMENT",
-        "SOUS_TRAITANCE",
-        "ASSURANCE",
-        "IMPOTS_TAXES",
-        "AUTRE",
-    }
     categorie_db = (categorie or "AUTRE").strip().upper() or "AUTRE"
-    if categorie_db not in categories_valides:
+    if categorie_db not in FACTURE_CATEGORIES_VALIDES:
         categorie_db = "AUTRE"
 
     d_id: Optional[int] = None
@@ -1663,19 +1644,8 @@ def confirm_facture_creation(
     if not payload.articles:
         raise HTTPException(status_code=400, detail="Au moins un article est requis.")
 
-    categories_valides = {
-        "PRESTATION",
-        "ABONNEMENT",
-        "MATERIEL",
-        "LOGICIEL",
-        "FRAIS_DEPLACEMENT",
-        "SOUS_TRAITANCE",
-        "ASSURANCE",
-        "IMPOTS_TAXES",
-        "AUTRE",
-    }
     categorie = (payload.categorie or "AUTRE").strip().upper() or "AUTRE"
-    if categorie not in categories_valides:
+    if categorie not in FACTURE_CATEGORIES_VALIDES:
         raise HTTPException(status_code=400, detail="Catégorie de facture invalide.")
 
     total_ht = Decimal("0")
