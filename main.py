@@ -1645,9 +1645,11 @@ def trigger_update_devis_webhook(
 
 
 @app.post("/api/actions/webhook")
-def trigger_action_webhook(payload: WebhookPayload):
+def trigger_action_webhook(payload: WebhookPayload, request: Request):
     try:
-        data = json.dumps({"action": payload.texte}).encode("utf-8")
+        data = json.dumps(
+            {"action": payload.texte, "entreprise_id": eid(request)}
+        ).encode("utf-8")
         req = urllib.request.Request(
             "https://n8n.mrliw.fr/webhook/dashboard-actions",
             data=data,

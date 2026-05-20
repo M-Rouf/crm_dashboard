@@ -23,7 +23,6 @@ AUTH_PUBLIC_PREFIXES = (
 AUTH_PUBLIC_EXACT = frozenset({"/login", "/api/auth/login", "/api/auth/logout"})
 
 WEBHOOK_PATH_PREFIXES = (
-    "/api/actions/webhook",
     "/api/factures/webhook",
     "/api/factures/confirm",
     "/api/devis/webhook",
@@ -61,7 +60,6 @@ def is_webhook_path(path: str) -> bool:
         "/api/factures/confirm",
         "/api/devis/webhook",
         "/api/devis/confirm",
-        "/api/actions/webhook",
     ):
         return True
     if path.startswith("/api/devis/") and path.endswith("/update_webhook"):
