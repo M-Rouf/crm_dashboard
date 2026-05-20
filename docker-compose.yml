@@ -8,6 +8,8 @@ services:
       - ./templates:/app/templates
     environment:
       - DATABASE_URL=postgresql://admin:crm_Mot2P%40sse@crm-postgres:5432/crm_db
+      - SESSION_SECRET=${SESSION_SECRET}
+      - DEFAULT_ENTREPRISE_ID=${DEFAULT_ENTREPRISE_ID:-1}
     networks:
       - n8n_default
     labels:
@@ -20,8 +22,6 @@ services:
       - "traefik.http.routers.crm-dash.tls=true"
       - "traefik.http.routers.crm-dash.tls.certresolver=myresolver"
       - "traefik.http.services.crm-dash.loadbalancer.server.port=8000"
-      - "traefik.http.routers.crm-dash.middlewares=dash-auth"
-      - "traefik.http.middlewares.dash-auth.basicauth.users=mrliw:$$2b$$12$$4gi3Q6xGMdQ6y1pH9z7bHe6H5pGXuiZn.IsLjNwE5Hv.B3SntIBgu"
 
 networks:
   n8n_default:

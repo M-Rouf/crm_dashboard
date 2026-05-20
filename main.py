@@ -9,11 +9,12 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     ForeignKey,
@@ -40,6 +41,16 @@ from scripts.generate_devis import generate_devis_files
 from scripts.generate_avoir import generate_avoir_files
 from scripts.generate_facture import generate_facture_files
 from scripts.generate_registre import generate_registre_files
+from tenant_auth import (
+    get_one,
+    get_session_user,
+    hash_password,
+    scoped,
+    setup_auth_middleware,
+    setup_session_middleware,
+    verify_password,
+    webhook_entreprise_id,
+)
 
 # --- Configurations de la Base de Données ---
 # Par défaut, utilise SQLite en local pour faciliter les tests avec Pixi
@@ -55,9 +66,44 @@ Base = declarative_base()
 
 
 # --- Modèles SQLAlchemy ---
+class Entreprise(Base):
+    __tablename__ = "entreprises"
+    id = Column(Integer, primary_key=True, index=True)
+    nom_usage = Column(String(100), nullable=False)
+    raison_sociale = Column(String(150))
+    siret = Column(String(14), unique=True, nullable=False)
+    adresse = Column(Text)
+    code_postal = Column(String(10))
+    ville = Column(String(100))
+    telephone = Column(String(20))
+    email_contact = Column(String(100))
+    id_super_pdp = Column(String(100))
+    date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+
+
+class Utilisateur(Base):
+    __tablename__ = "utilisateurs"
+    id = Column(Integer, primary_key=True, index=True)
+    entreprise_id = Column(
+        Integer, ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False
+    )
+    nom = Column(String(50), nullable=False)
+    prenom = Column(String(50), nullable=False)
+    email = Column(String(100), unique=True, nullable=False)
+    mot_de_passe_hash = Column(Text, nullable=False)
+    role = Column(String(20), default="admin")
+    actif = Column(Boolean, default=True)
+    date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+
+    entreprise = relationship("Entreprise")
+
+
 class Contact(Base):
     __tablename__ = "contacts"
     id = Column(Integer, primary_key=True, index=True)
+    entreprise_id = Column(
+        Integer, ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False
+    )
     prenom = Column(String(100))
     nom = Column(String(100))
     entreprise = Column(String(150))
@@ -67,7 +113,7 @@ class Contact(Base):
     poste = Column(String(150))
     adresse_livraison = Column(Text)
     adresse_facturation = Column(Text)
-    email = Column(String(255), unique=True, index=True, nullable=False)
+    email = Column(String(255), index=True, nullable=False)
     telephone = Column(String(30))
     date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
@@ -81,6 +127,9 @@ class Contact(Base):
 class Requete(Base):
     __tablename__ = "requetes"
     id = Column(Integer, primary_key=True, index=True)
+    entreprise_id = Column(
+        Integer, ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False
+    )
     contact_id = Column(
         Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
     )
@@ -97,6 +146,9 @@ class Requete(Base):
 class Action(Base):
     __tablename__ = "actions"
     id = Column(Integer, primary_key=True, index=True)
+    entreprise_id = Column(
+        Integer, ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False
+    )
     nom = Column(String(255), nullable=False)
     contact_id = Column(
         Integer, ForeignKey("contacts.id", ondelete="SET NULL"), nullable=True
@@ -112,6 +164,9 @@ class Action(Base):
 class Devis(Base):
     __tablename__ = "devis"
     id = Column(Integer, primary_key=True, index=True)
+    entreprise_id = Column(
+        Integer, ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False
+    )
     nom = Column(String(255), nullable=False)
     client = Column(
         Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
@@ -132,7 +187,10 @@ class Devis(Base):
 class Commande(Base):
     __tablename__ = "commandes"
     id = Column(Integer, primary_key=True, index=True)
-    reference = Column(String(100), unique=True)
+    entreprise_id = Column(
+        Integer, ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False
+    )
+    reference = Column(String(100))
     description = Column(Text)
     contact_id = Column(
         Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
@@ -158,7 +216,10 @@ class Commande(Base):
 class Facture(Base):
     __tablename__ = "factures"
     id = Column(Integer, primary_key=True, index=True)
-    numero_facture = Column(String(50), unique=True, nullable=False)
+    entreprise_id = Column(
+        Integer, ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False
+    )
+    numero_facture = Column(String(50), nullable=False)
     contact_id = Column(
         Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
     )
@@ -618,6 +679,22 @@ app = FastAPI(
     title="Dashboard CRM personnel", description="API pour CRM dashboard.mrliw.fr"
 )
 
+# Dernier middleware ajouté = exécuté en premier : session avant auth.
+setup_auth_middleware(app, Utilisateur, SessionLocal)
+setup_session_middleware(app)
+
+
+def eid(request: Request) -> int:
+    entreprise_id = getattr(request.state, "entreprise_id", None)
+    if entreprise_id is None:
+        raise HTTPException(status_code=401, detail="Non authentifié.")
+    return int(entreprise_id)
+
+
+class LoginBody(BaseModel):
+    email: str
+    password: str
+
 
 @app.on_event("startup")
 def on_startup():
@@ -633,19 +710,54 @@ def get_db():
         db.close()
 
 
+# --- Authentification (API) ---
+@app.post("/api/auth/login")
+def auth_login(body: LoginBody, request: Request, db: Session = Depends(get_db)):
+    email = (body.email or "").strip().lower()
+    user = db.query(Utilisateur).filter(Utilisateur.email == email).first()
+    if not user or not user.actif or not verify_password(body.password, user.mot_de_passe_hash):
+        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect.")
+    request.session["user_id"] = user.id
+    return {"status": "ok", "redirect": "/dashboard"}
+
+
+@app.post("/api/auth/logout")
+def auth_logout(request: Request):
+    request.session.clear()
+    return {"status": "ok"}
+
+
+@app.get("/api/auth/me")
+def auth_me(request: Request, db: Session = Depends(get_db)):
+    user = get_session_user(request, db, Utilisateur)
+    if not user:
+        raise HTTPException(status_code=401, detail="Non authentifié.")
+    entreprise = db.query(Entreprise).filter(Entreprise.id == user.entreprise_id).first()
+    return {
+        "id": user.id,
+        "email": user.email,
+        "nom": user.nom,
+        "prenom": user.prenom,
+        "role": user.role,
+        "entreprise_id": user.entreprise_id,
+        "entreprise_nom": entreprise.nom_usage if entreprise else None,
+    }
+
+
 # --- Routes de l'API ---
 @app.get("/api/data", response_model=List[RequeteSchema])
-def get_data(db: Session = Depends(get_db)):
-    return db.query(Requete).all()
+def get_data(request: Request, db: Session = Depends(get_db)):
+    return scoped(db, Requete, eid(request)).all()
 
 
 @app.patch("/api/requete/{requete_id}/statut", response_model=RequeteSchema)
 def update_statut(
-    requete_id: int, statut_update: StatutUpdate, db: Session = Depends(get_db)
+    requete_id: int,
+    statut_update: StatutUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
-    requete = db.query(Requete).filter(Requete.id == requete_id).first()
-    if not requete:
-        raise HTTPException(status_code=404, detail="Requête non trouvée")
+    requete = get_one(db, Requete, requete_id, eid(request), "Requête non trouvée")
     if statut_update.statut not in ["nouveau", "traite"]:
         raise HTTPException(status_code=400, detail="Statut invalide.")
 
@@ -656,16 +768,23 @@ def update_statut(
 
 
 @app.get("/api/contacts", response_model=List[ContactSchema])
-def get_contacts(db: Session = Depends(get_db)):
-    return db.query(Contact).all()
+def get_contacts(request: Request, db: Session = Depends(get_db)):
+    return scoped(db, Contact, eid(request)).all()
 
 
 @app.post("/api/contacts", response_model=ContactSchema)
-def create_contact(contact: ContactCreate, db: Session = Depends(get_db)):
-    db_contact = db.query(Contact).filter(Contact.email == contact.email).first()
+def create_contact(
+    contact: ContactCreate, request: Request, db: Session = Depends(get_db)
+):
+    db_contact = (
+        scoped(db, Contact, eid(request))
+        .filter(Contact.email == contact.email)
+        .first()
+    )
     if db_contact:
         raise HTTPException(status_code=400, detail="Le contact est déjà enregistré.")
     new_contact = Contact(
+        entreprise_id=eid(request),
         prenom=contact.prenom,
         nom=contact.nom,
         entreprise=contact.entreprise,
@@ -686,11 +805,12 @@ def create_contact(contact: ContactCreate, db: Session = Depends(get_db)):
 
 @app.put("/api/contacts/{contact_id}", response_model=ContactSchema)
 def update_contact(
-    contact_id: int, contact_update: ContactCreate, db: Session = Depends(get_db)
+    contact_id: int,
+    contact_update: ContactCreate,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
-    contact = db.query(Contact).filter(Contact.id == contact_id).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact non trouvé")
+    contact = get_one(db, Contact, contact_id, eid(request), "Contact non trouvé")
 
     contact.prenom = contact_update.prenom
     contact.nom = contact_update.nom
@@ -710,18 +830,19 @@ def update_contact(
 
 
 @app.get("/api/actions", response_model=List[ActionSchema])
-def get_actions(db: Session = Depends(get_db)):
-    actions = db.query(Action).all()
+def get_actions(request: Request, db: Session = Depends(get_db)):
+    actions = scoped(db, Action, eid(request)).all()
     return [ActionSchema.from_orm(a) for a in actions]
 
 
 @app.patch("/api/actions/{action_id}/statut", response_model=ActionSchema)
 def update_action_statut(
-    action_id: int, statut_update: ActionStatutUpdate, db: Session = Depends(get_db)
+    action_id: int,
+    statut_update: ActionStatutUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
-    action = db.query(Action).filter(Action.id == action_id).first()
-    if not action:
-        raise HTTPException(status_code=404, detail="Action non trouvée")
+    action = get_one(db, Action, action_id, eid(request), "Action non trouvée")
 
     action.statut = statut_update.statut
     db.commit()
@@ -730,17 +851,20 @@ def update_action_statut(
 
 
 @app.get("/api/commandes", response_model=List[CommandeSchema])
-def get_commandes(db: Session = Depends(get_db)):
-    return db.query(Commande).all()
+def get_commandes(request: Request, db: Session = Depends(get_db)):
+    return scoped(db, Commande, eid(request)).all()
 
 
 @app.patch("/api/commandes/{commande_id}/statut", response_model=CommandeSchema)
 def update_commande_statut(
-    commande_id: int, statut_update: StatutCommandeUpdate, db: Session = Depends(get_db)
+    commande_id: int,
+    statut_update: StatutCommandeUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
-    commande = db.query(Commande).filter(Commande.id == commande_id).first()
-    if not commande:
-        raise HTTPException(status_code=404, detail="Commande non trouvée")
+    commande = get_one(
+        db, Commande, commande_id, eid(request), "Commande non trouvée"
+    )
 
     commande.statut = statut_update.statut
     db.commit()
@@ -750,20 +874,18 @@ def update_commande_statut(
 
 @app.patch("/api/commandes/{commande_id}", response_model=CommandeSchema)
 def update_commande(
-    commande_id: int, payload: CommandeUpdate, db: Session = Depends(get_db)
+    commande_id: int,
+    payload: CommandeUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
-    commande = db.query(Commande).filter(Commande.id == commande_id).first()
-    if not commande:
-        raise HTTPException(status_code=404, detail="Commande non trouvée")
-
-    contact = db.query(Contact).filter(Contact.id == payload.contact_id).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact introuvable")
+    commande = get_one(
+        db, Commande, commande_id, eid(request), "Commande non trouvée"
+    )
+    get_one(db, Contact, payload.contact_id, eid(request), "Contact introuvable")
 
     if payload.devis_id:
-        devis = db.query(Devis).filter(Devis.id == payload.devis_id).first()
-        if not devis:
-            raise HTTPException(status_code=404, detail="Devis introuvable")
+        get_one(db, Devis, payload.devis_id, eid(request), "Devis introuvable")
 
     commande.description = payload.description
     commande.contact_id = payload.contact_id
@@ -789,6 +911,7 @@ def update_commande(
 
 @app.post("/api/commandes/manuel")
 def create_manual_commande(
+    request: Request,
     reference: str = Form(...),
     description: str = Form(""),
     contact_id: int = Form(...),
@@ -802,14 +925,10 @@ def create_manual_commande(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    contact = db.query(Contact).filter(Contact.id == contact_id).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact introuvable")
+    get_one(db, Contact, contact_id, eid(request), "Contact introuvable")
 
     if devis_id:
-        devis = db.query(Devis).filter(Devis.id == devis_id).first()
-        if not devis:
-            raise HTTPException(status_code=404, detail="Devis introuvable")
+        get_one(db, Devis, devis_id, eid(request), "Devis introuvable")
 
     os.makedirs("./files/commandes", exist_ok=True)
     filename = file.filename
@@ -840,6 +959,7 @@ def create_manual_commande(
             pass
 
     commande = Commande(
+        entreprise_id=eid(request),
         reference=reference,
         description=description,
         contact_id=contact_id,
@@ -861,9 +981,10 @@ def create_manual_commande(
 
 
 @app.get("/api/factures/stats-unpaid")
-def factures_unpaid_stats(db: Session = Depends(get_db)):
+def factures_unpaid_stats(request: Request, db: Session = Depends(get_db)):
+    tenant_id = eid(request)
     unpaid = (
-        db.query(Facture)
+        scoped(db, Facture, tenant_id)
         .filter(
             and_(
                 _facture_reste_montant_clause(),
@@ -888,7 +1009,7 @@ def factures_unpaid_stats(db: Session = Depends(get_db)):
     ttc_expr = func.coalesce(Facture.montant_ttc, 0)
     rejected_expr = func.lower(func.trim(func.coalesce(Facture.statut_plateforme, "")))
     out["partiel"] = (
-        db.query(Facture)
+        scoped(db, Facture, tenant_id)
         .filter(
             and_(
                 pay_expr > 0,
@@ -903,12 +1024,14 @@ def factures_unpaid_stats(db: Session = Depends(get_db)):
 
 @app.get("/api/factures", response_model=List[FactureSchema])
 def list_factures(
+    request: Request,
     ref: Optional[str] = None,
     client: Optional[str] = None,
     include_paid: bool = True,
     db: Session = Depends(get_db),
 ):
-    q = db.query(Facture).options(
+    tenant_id = eid(request)
+    q = scoped(db, Facture, tenant_id).options(
         joinedload(Facture.contact),
         joinedload(Facture.devis),
         joinedload(Facture.commande),
@@ -934,7 +1057,8 @@ def list_factures(
         cterm = f"%{client.strip()}%"
         contact_ids = [
             row[0]
-            for row in db.query(Contact.id)
+            for row in scoped(db, Contact, tenant_id)
+            .with_entities(Contact.id)
             .filter(
                 or_(
                     Contact.prenom.ilike(cterm),
@@ -963,6 +1087,7 @@ def list_factures(
 def update_facture_statut_plateforme(
     facture_id: int,
     body: FacturePlateformeUpdate,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     raw = (body.statut_plateforme or "").strip().lower()
@@ -972,7 +1097,7 @@ def update_facture_statut_plateforme(
             detail="statut_plateforme doit être « validated », « rejected » ou « sent ».",
         )
     facture = (
-        db.query(Facture)
+        scoped(db, Facture, eid(request))
         .options(
             joinedload(Facture.contact),
             joinedload(Facture.devis),
@@ -1025,14 +1150,16 @@ def update_facture_statut_plateforme(
 def update_facture_categorie(
     facture_id: int,
     body: FactureCategorieUpdate,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     categorie = (body.categorie or "AUTRE").strip().upper() or "AUTRE"
     if categorie not in FACTURE_CATEGORIES_VALIDES:
         raise HTTPException(status_code=400, detail="Catégorie de facture invalide.")
 
+    tenant_id = eid(request)
     facture = (
-        db.query(Facture)
+        scoped(db, Facture, tenant_id)
         .options(
             joinedload(Facture.contact),
             joinedload(Facture.devis),
@@ -1051,7 +1178,7 @@ def update_facture_categorie(
         )
 
     facture.categorie = categorie
-    db.query(Facture).filter(
+    scoped(db, Facture, tenant_id).filter(
         Facture.id_facture_associee == facture.id,
         func.lower(func.trim(func.coalesce(Facture.type_facture, ""))) == "avoir",
     ).update({Facture.categorie: categorie}, synchronize_session=False)
@@ -1067,9 +1194,9 @@ def head_list_factures():
 
 
 @app.get("/api/factures/{facture_id}", response_model=FactureSchema)
-def get_facture(facture_id: int, db: Session = Depends(get_db)):
+def get_facture(facture_id: int, request: Request, db: Session = Depends(get_db)):
     facture = (
-        db.query(Facture)
+        scoped(db, Facture, eid(request))
         .options(
             joinedload(Facture.contact),
             joinedload(Facture.devis),
@@ -1089,6 +1216,7 @@ def get_facture(facture_id: int, db: Session = Depends(get_db)):
 def add_facture_versement(
     facture_id: int,
     body: FactureVersementBody,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     ajout = _money_dec(body.montant)
@@ -1098,7 +1226,7 @@ def add_facture_versement(
             detail="Le montant du versement doit être strictement positif.",
         )
     facture = (
-        db.query(Facture)
+        scoped(db, Facture, eid(request))
         .options(
             joinedload(Facture.contact),
             joinedload(Facture.devis),
@@ -1158,6 +1286,7 @@ def add_facture_versement(
 def generate_facture_avoir(
     facture_id: int,
     body: FactureAvoirBody,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     raison = (body.raison or "").strip()
@@ -1171,8 +1300,9 @@ def generate_facture_avoir(
             detail="Le montant de l'avoir ne peut pas être négatif.",
         )
 
+    tenant_id = eid(request)
     facture = (
-        db.query(Facture)
+        scoped(db, Facture, tenant_id)
         .options(joinedload(Facture.contact))
         .filter(Facture.id == facture_id)
         .first()
@@ -1211,7 +1341,7 @@ def generate_facture_avoir(
     if not contact:
         raise HTTPException(status_code=400, detail="Contact client introuvable.")
 
-    ref_avoir = _next_avoir_reference(db)
+    ref_avoir = _next_avoir_reference(db, tenant_id)
     entreprise = (contact.entreprise or "").strip()
     prenom_nom = f"{contact.prenom or ''} {contact.nom or ''}".strip()
     nom_client = f"{prenom_nom} ({entreprise})" if entreprise else prenom_nom
@@ -1252,6 +1382,7 @@ def generate_facture_avoir(
     facture.date_paiement = now if facture.statut_paiement == "paye" else None
 
     avoir = Facture(
+        entreprise_id=tenant_id,
         numero_facture=ref_avoir,
         contact_id=contact.id,
         devis_id=facture.devis_id,
@@ -1294,6 +1425,7 @@ def generate_facture_avoir(
 
 @app.post("/api/factures/manuel")
 def create_manual_facture(
+    request: Request,
     contact_id: int = Form(...),
     flux: str = Form("vente"),
     categorie: str = Form("AUTRE"),
@@ -1311,9 +1443,8 @@ def create_manual_facture(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    contact = db.query(Contact).filter(Contact.id == contact_id).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact introuvable")
+    tenant_id = eid(request)
+    get_one(db, Contact, contact_id, tenant_id, "Contact introuvable")
 
     flux_clean = (flux or "").strip().lower()
     if flux_clean in ("vente", "envoyee", "envoyée"):
@@ -1337,8 +1468,7 @@ def create_manual_facture(
         except ValueError:
             d_id = None
         if d_id is not None:
-            if not db.query(Devis).filter(Devis.id == d_id).first():
-                raise HTTPException(status_code=404, detail="Devis introuvable")
+            get_one(db, Devis, d_id, tenant_id, "Devis introuvable")
 
     c_id: Optional[int] = None
     if commande_id and str(commande_id).strip():
@@ -1347,8 +1477,7 @@ def create_manual_facture(
         except ValueError:
             c_id = None
         if c_id is not None:
-            if not db.query(Commande).filter(Commande.id == c_id).first():
-                raise HTTPException(status_code=404, detail="Commande introuvable")
+            get_one(db, Commande, c_id, tenant_id, "Commande introuvable")
 
     def _parse_day(s: str) -> Optional[datetime.datetime]:
         if not s or not str(s).strip():
@@ -1398,7 +1527,7 @@ def create_manual_facture(
 
     num = base_num
     n = 0
-    while db.query(Facture).filter(Facture.numero_facture == num).first():
+    while scoped(db, Facture, tenant_id).filter(Facture.numero_facture == num).first():
         n += 1
         suf = f"-{n}"
         num = (
@@ -1408,6 +1537,7 @@ def create_manual_facture(
         )
 
     facture = Facture(
+        entreprise_id=tenant_id,
         numero_facture=num,
         contact_id=contact_id,
         devis_id=d_id,
@@ -1488,11 +1618,12 @@ class UpdateDevisPayload(BaseModel):
 
 @app.post("/api/devis/{devis_id}/update_webhook")
 def trigger_update_devis_webhook(
-    devis_id: int, payload: UpdateDevisPayload, db: Session = Depends(get_db)
+    devis_id: int,
+    payload: UpdateDevisPayload,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
-    devis = db.query(Devis).filter(Devis.id == devis_id).first()
-    if not devis:
-        raise HTTPException(status_code=404, detail="Devis non trouvé")
+    devis = get_one(db, Devis, devis_id, eid(request), "Devis non trouvé")
 
     try:
         webhook_data = {
@@ -1528,27 +1659,40 @@ def trigger_action_webhook(payload: WebhookPayload):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def _resolve_devis_associe_label(value: str, db: Session) -> str:
+def _resolve_devis_associe_label(
+    value: str, db: Session, entreprise_id: int
+) -> str:
     value = (value or "").strip()
     if not value:
         return ""
     if value.isdigit():
-        devis = db.query(Devis).filter(Devis.id == int(value)).first()
+        devis = (
+            scoped(db, Devis, entreprise_id)
+            .filter(Devis.id == int(value))
+            .first()
+        )
         return devis.nom if devis else value
-    devis = db.query(Devis).filter(Devis.nom == value).first()
+    devis = scoped(db, Devis, entreprise_id).filter(Devis.nom == value).first()
     return devis.nom if devis else value
 
 
 def _enrich_facture_webhook_response(
-    data, db: Session, fallback_devis_id: Optional[int] = None
+    data,
+    db: Session,
+    entreprise_id: int,
+    fallback_devis_id: Optional[int] = None,
 ):
     if not isinstance(data, dict):
         return data
     assoc = (data.get("devis_associe") or "").strip()
     if assoc:
-        data["devis_associe"] = _resolve_devis_associe_label(assoc, db)
+        data["devis_associe"] = _resolve_devis_associe_label(assoc, db, entreprise_id)
     elif fallback_devis_id:
-        devis = db.query(Devis).filter(Devis.id == fallback_devis_id).first()
+        devis = (
+            scoped(db, Devis, entreprise_id)
+            .filter(Devis.id == fallback_devis_id)
+            .first()
+        )
         if devis:
             data["devis_associe"] = devis.nom
     return data
@@ -1570,13 +1714,15 @@ def _post_invoices_dashboard_webhook(payload: dict):
 
 
 @app.post("/api/factures/webhook")
-def trigger_factures_webhook(payload: WebhookPayload, db: Session = Depends(get_db)):
+def trigger_factures_webhook(
+    payload: WebhookPayload, request: Request, db: Session = Depends(get_db)
+):
     texte = (payload.texte or "").strip()
     if not texte:
         raise HTTPException(status_code=400, detail="Le texte ne peut pas être vide.")
     try:
         result = _post_invoices_dashboard_webhook({"texte": texte})
-        return _enrich_facture_webhook_response(result, db)
+        return _enrich_facture_webhook_response(result, db, eid(request))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1593,13 +1739,14 @@ class ConfirmFacturePayload(BaseModel):
     articles: List[ArticlePayload] = []
 
 
-def _next_facture_reference(db: Session) -> str:
+def _next_facture_reference(db: Session, entreprise_id: int) -> str:
     now = datetime.datetime.now()
     yy = now.strftime("%y")
     mm = now.strftime("%m")
     prefix = f"mrliw_f{yy}{mm}"
     rows = (
-        db.query(Facture.numero_facture)
+        scoped(db, Facture, entreprise_id)
+        .with_entities(Facture.numero_facture)
         .filter(Facture.numero_facture.like(f"{prefix}%"))
         .all()
     )
@@ -1613,13 +1760,14 @@ def _next_facture_reference(db: Session) -> str:
     return f"{prefix}{max_xx + 1:02d}"
 
 
-def _next_avoir_reference(db: Session) -> str:
+def _next_avoir_reference(db: Session, entreprise_id: int) -> str:
     now = datetime.datetime.now()
     yy = now.strftime("%y")
     mm = now.strftime("%m")
     prefix = f"mrliw_a{yy}{mm}"
     rows = (
-        db.query(Facture.numero_facture)
+        scoped(db, Facture, entreprise_id)
+        .with_entities(Facture.numero_facture)
         .filter(Facture.numero_facture.like(f"{prefix}%"))
         .all()
     )
@@ -1636,7 +1784,7 @@ def _next_avoir_reference(db: Session) -> str:
 
 @app.post("/api/factures/confirm")
 def confirm_facture_creation(
-    payload: ConfirmFacturePayload, db: Session = Depends(get_db)
+    payload: ConfirmFacturePayload, request: Request, db: Session = Depends(get_db)
 ):
     email = (payload.email or "").strip()
     if not email:
@@ -1658,9 +1806,10 @@ def confirm_facture_creation(
     montant_tva = Decimal("0")
     montant_ttc = total_ht
 
-    contact = db.query(Contact).filter(Contact.email == email).first()
+    tenant_id = eid(request)
+    contact = scoped(db, Contact, tenant_id).filter(Contact.email == email).first()
     if not contact:
-        contact = Contact(email=email)
+        contact = Contact(entreprise_id=tenant_id, email=email)
         db.add(contact)
     contact.prenom = payload.prenom or ""
     contact.nom = payload.nom or ""
@@ -1670,7 +1819,7 @@ def confirm_facture_creation(
     db.commit()
     db.refresh(contact)
 
-    ref_facture = _next_facture_reference(db)
+    ref_facture = _next_facture_reference(db, tenant_id)
     entreprise = (payload.entreprise or "").strip()
     prenom_nom = f"{payload.prenom or ''} {payload.nom or ''}".strip()
     nom_client = (
@@ -1680,7 +1829,7 @@ def confirm_facture_creation(
     ref_devis = (payload.devis_associe or "").strip()
     devis_id = None
     if ref_devis:
-        devis = db.query(Devis).filter(Devis.nom == ref_devis).first()
+        devis = scoped(db, Devis, tenant_id).filter(Devis.nom == ref_devis).first()
         if devis:
             devis_id = devis.id
 
@@ -1700,6 +1849,7 @@ def confirm_facture_creation(
     file_path = generations.get("url_path") or f"/files/factures/{ref_facture}.pdf"
 
     facture = Facture(
+        entreprise_id=tenant_id,
         numero_facture=ref_facture,
         contact_id=contact.id,
         devis_id=devis_id,
@@ -1739,11 +1889,12 @@ def confirm_facture_creation(
 
 @app.post("/api/devis/{devis_id}/facture_webhook")
 def trigger_devis_facture_webhook(
-    devis_id: int, payload: WebhookPayload, db: Session = Depends(get_db)
+    devis_id: int,
+    payload: WebhookPayload,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
-    devis = db.query(Devis).filter(Devis.id == devis_id).first()
-    if not devis:
-        raise HTTPException(status_code=404, detail="Devis non trouvé")
+    devis = get_one(db, Devis, devis_id, eid(request), "Devis non trouvé")
     if devis.statut != "Signé":
         raise HTTPException(
             status_code=400,
@@ -1754,7 +1905,9 @@ def trigger_devis_facture_webhook(
         raise HTTPException(status_code=400, detail="Le texte ne peut pas être vide.")
     try:
         result = _post_invoices_dashboard_webhook({"texte": texte, "devis_id": devis_id})
-        return _enrich_facture_webhook_response(result, db, fallback_devis_id=devis_id)
+        return _enrich_facture_webhook_response(
+            result, db, eid(request), fallback_devis_id=devis_id
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1767,6 +1920,13 @@ app.mount(
     "/app/files", StaticFiles(directory="files"), name="app_files"
 )  # Rétro-compatibilité pour les tests
 templates = Jinja2Templates(directory="templates")
+
+
+@app.get("/login", response_class=HTMLResponse)
+def page_login(request: Request, db: Session = Depends(get_db)):
+    if get_session_user(request, db, Utilisateur):
+        return RedirectResponse(url="/dashboard", status_code=303)
+    return templates.TemplateResponse(request=request, name="login.html", context={})
 
 
 @app.get("/")
@@ -1832,9 +1992,11 @@ def _aggregate_pending_payments(factures: list, flux: str) -> DashboardPendingFl
 
 
 @app.get("/api/dashboard/pending-payments", response_model=DashboardPendingPaymentsSchema)
-def dashboard_pending_payments(db: Session = Depends(get_db)):
+def dashboard_pending_payments(
+    request: Request, db: Session = Depends(get_db)
+):
     factures = (
-        db.query(Facture)
+        scoped(db, Facture, eid(request))
         .filter(
             _facture_reste_montant_clause(),
             _facture_platform_validated_or_sent_clause(),
@@ -1862,9 +2024,12 @@ def _validate_dashboard_year(year: int) -> None:
 
 
 def _compute_dashboard_kpi(
-    db: Session, date_debut: datetime.date, date_fin: datetime.date
+    db: Session,
+    date_debut: datetime.date,
+    date_fin: datetime.date,
+    entreprise_id: int,
 ) -> dict:
-    factures = _query_paid_factures(db, date_debut, date_fin)
+    factures = _query_paid_factures(db, date_debut, date_fin, entreprise_id)
     _, totals = _build_registre_data(factures)
 
     def _f(key: str) -> float:
@@ -1891,6 +2056,7 @@ def _query_paid_factures(
     db: Session,
     date_debut: datetime.date,
     date_fin: datetime.date,
+    entreprise_id: int,
     flux: Optional[str] = None,
 ) -> list:
     date_debut_dt = datetime.datetime.combine(date_debut, datetime.time.min)
@@ -1899,7 +2065,7 @@ def _query_paid_factures(
     flux_expr = func.lower(func.trim(cast(Facture.flux, String)))
 
     query = (
-        db.query(Facture)
+        scoped(db, Facture, entreprise_id)
         .options(joinedload(Facture.contact))
         .filter(
             statut_expr == "paye",
@@ -1987,6 +2153,7 @@ def _build_registre_data(factures: list) -> tuple[list, dict]:
 
 @app.get("/api/dashboard/kpi", response_model=DashboardKpiSchema)
 def dashboard_kpi(
+    request: Request,
     year: Optional[int] = None,
     month: Optional[int] = None,
     db: Session = Depends(get_db),
@@ -1999,12 +2166,13 @@ def dashboard_kpi(
     _validate_dashboard_year(year)
 
     date_debut, date_fin = _month_period(year, month)
-    data = _compute_dashboard_kpi(db, date_debut, date_fin)
+    data = _compute_dashboard_kpi(db, date_debut, date_fin, eid(request))
     return DashboardKpiSchema(year=year, month=month, **data)
 
 
 @app.get("/api/dashboard/kpi-year", response_model=DashboardKpiYearSchema)
 def dashboard_kpi_year(
+    request: Request,
     year: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
@@ -2013,7 +2181,7 @@ def dashboard_kpi_year(
     _validate_dashboard_year(year)
 
     date_debut, date_fin = _year_period(year)
-    data = _compute_dashboard_kpi(db, date_debut, date_fin)
+    data = _compute_dashboard_kpi(db, date_debut, date_fin, eid(request))
     return DashboardKpiYearSchema(year=year, **data)
 
 
@@ -2091,7 +2259,7 @@ def _facture_payment_month_key(date_paiement) -> Optional[str]:
 
 
 def _build_monthly_charts_data(
-    db: Session, mois_debut: str, mois_fin: str
+    db: Session, mois_debut: str, mois_fin: str, entreprise_id: int
 ) -> DashboardChartsSchema:
     month_keys = _month_keys_between(mois_debut, mois_fin)
     y1, m1 = _parse_year_month(mois_debut)
@@ -2110,7 +2278,7 @@ def _build_monthly_charts_data(
     }
     achats_par_categorie = {cat: [Decimal("0.00")] * n for cat in FACTURE_CATEGORIES}
 
-    for facture in _query_paid_factures(db, date_debut, date_fin):
+    for facture in _query_paid_factures(db, date_debut, date_fin, entreprise_id):
         flux = (facture.flux or "").strip().lower()
         if flux not in ("vente", "achat"):
             continue
@@ -2165,6 +2333,7 @@ def _build_monthly_charts_data(
 
 @app.get("/api/dashboard/charts", response_model=DashboardChartsSchema)
 def dashboard_charts(
+    request: Request,
     mois_debut: Optional[str] = None,
     mois_fin: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -2172,7 +2341,7 @@ def dashboard_charts(
     default_debut, default_fin = _default_chart_period()
     mois_debut = (mois_debut or default_debut).strip()
     mois_fin = (mois_fin or default_fin).strip()
-    return _build_monthly_charts_data(db, mois_debut, mois_fin)
+    return _build_monthly_charts_data(db, mois_debut, mois_fin, eid(request))
 
 
 def _default_pie_period() -> tuple[str, str]:
@@ -2183,9 +2352,9 @@ def _default_pie_period() -> tuple[str, str]:
 
 
 def _build_pie_charts_data(
-    db: Session, mois_debut: str, mois_fin: str
+    db: Session, mois_debut: str, mois_fin: str, entreprise_id: int
 ) -> DashboardPieChartsSchema:
-    monthly = _build_monthly_charts_data(db, mois_debut, mois_fin)
+    monthly = _build_monthly_charts_data(db, mois_debut, mois_fin, entreprise_id)
     achats_par_categorie: dict[str, float] = {}
     ventes_par_categorie: dict[str, float] = {}
     for cat in FACTURE_CATEGORIES:
@@ -2208,6 +2377,7 @@ def _build_pie_charts_data(
 
 @app.get("/api/dashboard/pie-charts", response_model=DashboardPieChartsSchema)
 def dashboard_pie_charts(
+    request: Request,
     mois_debut: Optional[str] = None,
     mois_fin: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -2215,11 +2385,13 @@ def dashboard_pie_charts(
     default_debut, default_fin = _default_pie_period()
     mois_debut = (mois_debut or default_debut).strip()
     mois_fin = (mois_fin or default_fin).strip()
-    return _build_pie_charts_data(db, mois_debut, mois_fin)
+    return _build_pie_charts_data(db, mois_debut, mois_fin, eid(request))
 
 
 @app.post("/api/registres")
-def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_db)):
+def generate_registre(
+    payload: RegistreGenerateBody, request: Request, db: Session = Depends(get_db)
+):
     document_configs = {
         "registre_achats": {
             "label": "Registre des achats",
@@ -2248,7 +2420,11 @@ def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_d
         )
 
     factures = _query_paid_factures(
-        db, payload.date_debut, payload.date_fin, flux=config["flux"]
+        db,
+        payload.date_debut,
+        payload.date_fin,
+        eid(request),
+        flux=config["flux"],
     )
     items, totals = _build_registre_data(factures)
 
@@ -2271,18 +2447,18 @@ def generate_registre(payload: RegistreGenerateBody, db: Session = Depends(get_d
 
 
 @app.get("/api/devis", response_model=List[DevisSchema])
-def get_devis_list(db: Session = Depends(get_db)):
-    devis_all = db.query(Devis).all()
-    return devis_all
+def get_devis_list(request: Request, db: Session = Depends(get_db)):
+    return scoped(db, Devis, eid(request)).all()
 
 
 @app.patch("/api/devis/{devis_id}/statut", response_model=DevisSchema)
 def update_devis_statut(
-    devis_id: int, statut_update: DevisStatutUpdate, db: Session = Depends(get_db)
+    devis_id: int,
+    statut_update: DevisStatutUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
-    devis_item = db.query(Devis).filter(Devis.id == devis_id).first()
-    if not devis_item:
-        raise HTTPException(status_code=404, detail="Devis non trouvé")
+    devis_item = get_one(db, Devis, devis_id, eid(request), "Devis non trouvé")
 
     if devis_item.statut == "Signé":
         raise HTTPException(
@@ -2297,11 +2473,12 @@ def update_devis_statut(
 
 @app.post("/api/devis/{devis_id}/upload_signed")
 def upload_signed_devis(
-    devis_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)
+    devis_id: int,
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
 ):
-    devis_item = db.query(Devis).filter(Devis.id == devis_id).first()
-    if not devis_item:
-        raise HTTPException(status_code=404, detail="Devis non trouvé")
+    devis_item = get_one(db, Devis, devis_id, eid(request), "Devis non trouvé")
     if devis_item.statut == "Signé":
         raise HTTPException(status_code=400, detail="Ce devis est déjà signé")
 
@@ -2324,6 +2501,7 @@ def upload_signed_devis(
 
 @app.post("/api/devis/manuel")
 def create_manual_devis(
+    request: Request,
     nom: str = Form(""),
     client: int = Form(...),
     type: str = Form("émis"),
@@ -2333,9 +2511,7 @@ def create_manual_devis(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    contact = db.query(Contact).filter(Contact.id == client).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Client introuvable")
+    get_one(db, Contact, client, eid(request), "Client introuvable")
 
     filename = file.filename
     safe_nom = "".join([c if c.isalnum() else "_" for c in nom]) if nom else "manuel"
@@ -2355,6 +2531,7 @@ def create_manual_devis(
         raise HTTPException(status_code=500, detail=f"Erreur système fichier: {e}")
 
     devis = Devis(
+        entreprise_id=eid(request),
         nom=nom or f"Devis manuel ({safe_filename})",
         client=client,
         description=description,
@@ -2391,11 +2568,18 @@ def trigger_devis_webhook(payload: WebhookPayload):
 
 
 @app.post("/api/devis/confirm")
-def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(get_db)):
+def confirm_devis_creation(
+    payload: ConfirmDevisPayload, request: Request, db: Session = Depends(get_db)
+):
     try:
-        contact = db.query(Contact).filter(Contact.email == payload.email).first()
+        tenant_id = eid(request)
+        contact = (
+            scoped(db, Contact, tenant_id)
+            .filter(Contact.email == payload.email)
+            .first()
+        )
         if not contact:
-            contact = Contact(email=payload.email)
+            contact = Contact(entreprise_id=tenant_id, email=payload.email)
             db.add(contact)
 
         contact.prenom = payload.prenom
@@ -2413,18 +2597,22 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
         db.refresh(contact)
 
         if payload.id:
-            devis = db.query(Devis).filter(Devis.id == payload.id).first()
-            if not devis:
-                raise HTTPException(
-                    status_code=404, detail="Devis non trouvé pour la mise à jour."
-                )
+            devis = get_one(
+                db,
+                Devis,
+                payload.id,
+                tenant_id,
+                "Devis non trouvé pour la mise à jour.",
+            )
             ref_devis = devis.nom
         else:
             now = datetime.datetime.now()
             month = now.strftime("%m")
             year = now.strftime("%y")
             count = (
-                db.query(Devis).filter(Devis.nom.like(f"mrliw_d{month}{year}%")).count()
+                scoped(db, Devis, tenant_id)
+                .filter(Devis.nom.like(f"mrliw_d{month}{year}%"))
+                .count()
             )
             ref_devis = f"mrliw_d{month}{year}{count:02d}"
 
@@ -2468,6 +2656,7 @@ def confirm_devis_creation(payload: ConfirmDevisPayload, db: Session = Depends(g
             devis.file_path = file_path
         else:
             devis = Devis(
+                entreprise_id=tenant_id,
                 nom=ref_devis,
                 client=contact.id,
                 description="\n".join(desc_lines),
