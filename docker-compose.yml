@@ -21,7 +21,7 @@ services:
       - "traefik.http.routers.crm-dash.tls.certresolver=myresolver"
       - "traefik.http.services.crm-dash.loadbalancer.server.port=8000"
       - "traefik.http.routers.crm-dash.middlewares=dash-auth"
-      - "traefik.http.middlewares.dash-auth.basicauth.users=admin:$$2b$$12$$4gi3Q6xGMdQ6y1pH9z7bHe6H5pGXuiZn.IsLjNwE5Hv.B3SntIBgu"
+      - "traefik.http.middlewares.dash-auth.basicauth.users=mrliw:$$2b$$12$$4gi3Q6xGMdQ6y1pH9z7bHe6H5pGXuiZn.IsLjNwE5Hv.B3SntIBgu"
 
 networks:
   n8n_default:
