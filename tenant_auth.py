@@ -56,15 +56,11 @@ def is_public_path(path: str) -> bool:
 
 def is_webhook_path(path: str) -> bool:
     if path in (
-        "/api/factures/webhook",
         "/api/factures/confirm",
-        "/api/devis/webhook",
         "/api/devis/confirm",
     ):
         return True
     if path.startswith("/api/devis/") and path.endswith("/update_webhook"):
-        return True
-    if path.startswith("/api/devis/") and path.endswith("/facture_webhook"):
         return True
     return False
 

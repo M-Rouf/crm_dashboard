@@ -1723,7 +1723,9 @@ def trigger_factures_webhook(
     if not texte:
         raise HTTPException(status_code=400, detail="Le texte ne peut pas être vide.")
     try:
-        result = _post_invoices_dashboard_webhook({"texte": texte})
+        result = _post_invoices_dashboard_webhook(
+            {"texte": texte, "entreprise_id": eid(request)}
+        )
         return _enrich_facture_webhook_response(result, db, eid(request))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1906,7 +1908,13 @@ def trigger_devis_facture_webhook(
     if not texte:
         raise HTTPException(status_code=400, detail="Le texte ne peut pas être vide.")
     try:
-        result = _post_invoices_dashboard_webhook({"texte": texte, "devis_id": devis_id})
+        result = _post_invoices_dashboard_webhook(
+            {
+                "texte": texte,
+                "devis_id": devis_id,
+                "entreprise_id": eid(request),
+            }
+        )
         return _enrich_facture_webhook_response(
             result, db, eid(request), fallback_devis_id=devis_id
         )
@@ -2551,9 +2559,11 @@ def create_manual_devis(
 
 
 @app.post("/api/devis/webhook")
-def trigger_devis_webhook(payload: WebhookPayload):
+def trigger_devis_webhook(payload: WebhookPayload, request: Request):
     try:
-        data = json.dumps({"devis_request": payload.texte}).encode("utf-8")
+        data = json.dumps(
+            {"devis_request": payload.texte, "entreprise_id": eid(request)}
+        ).encode("utf-8")
         req = urllib.request.Request(
             "https://n8n.mrliw.fr/webhook/devis_dashboard_request",
             data=data,
