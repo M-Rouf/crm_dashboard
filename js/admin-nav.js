@@ -1,6 +1,11 @@
 (function () {
   function injectAdminNav() {
-    if (document.querySelector("[data-admin-nav-link]")) return;
+    if (
+      document.querySelector("[data-admin-nav-link]") ||
+      document.querySelector('a[href="/utilisateurs"]')
+    ) {
+      return;
+    }
     fetch("/api/auth/me")
       .then(function (r) {
         return r.ok ? r.json() : null;
