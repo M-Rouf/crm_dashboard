@@ -1703,7 +1703,7 @@ def _enrich_facture_webhook_response(
 def _post_invoices_dashboard_webhook(payload: dict):
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
-        "https://n8n.mrliw.fr/webhook-test/invoces_dashboard_request",
+        "https://n8n.mrliw.fr/webhook/invoces_dashboard_request",
         data=data,
         headers={"Content-Type": "application/json"},
     )
