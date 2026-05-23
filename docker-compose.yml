@@ -6,6 +6,7 @@ services:
     volumes:
       - ./files:/app/files
       - ./templates:/app/templates
+      - ./css:/app/css
       - ./js:/app/js
     environment:
       - DATABASE_URL=postgresql://admin:crm_Mot2P%40sse@crm-postgres:5432/crm_db
