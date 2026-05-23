@@ -1,20 +1,31 @@
 (function () {
   function applyEntrepriseBrand(me) {
-    if (!me) return;
-    var nom = me.entreprise_nom || "Dashboard";
-    document.querySelectorAll("[data-entreprise-name]").forEach(function (el) {
-      el.textContent = nom;
-    });
-    document.querySelectorAll("[data-entreprise-logo]").forEach(function (img) {
-      if (me.entreprise_logo_url) {
-        img.src = me.entreprise_logo_url;
-        img.alt = nom + " — logo";
-        img.classList.remove("hidden");
-      } else {
-        img.removeAttribute("src");
-        img.classList.add("hidden");
-      }
-    });
+    if (!me || !me.entreprise_nom) return;
+    if (document.getElementById("entreprise-context-bar")) return;
+    var header = document.querySelector("header");
+    if (!header) return;
+
+    var nom = me.entreprise_nom;
+    var bar = document.createElement("div");
+    bar.id = "entreprise-context-bar";
+    bar.className =
+      "border-b border-slate-200 bg-slate-50/95 shadow-sm";
+    bar.innerHTML =
+      '<div class="container mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 md:px-8">' +
+      '<img id="entreprise-context-logo" alt="" class="hidden h-8 w-auto max-h-8 max-w-[10rem] flex-shrink-0 object-contain" />' +
+      '<span id="entreprise-context-name" class="text-sm font-semibold tracking-tight text-slate-800 sm:text-base"></span>' +
+      "</div>";
+
+    header.insertAdjacentElement("afterend", bar);
+
+    var nameEl = document.getElementById("entreprise-context-name");
+    var logoEl = document.getElementById("entreprise-context-logo");
+    if (nameEl) nameEl.textContent = nom;
+    if (logoEl && me.entreprise_logo_url) {
+      logoEl.src = me.entreprise_logo_url;
+      logoEl.alt = nom + " — logo";
+      logoEl.classList.remove("hidden");
+    }
   }
 
   function applyNavAccess(me) {
