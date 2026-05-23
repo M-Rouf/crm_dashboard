@@ -227,6 +227,23 @@
                             class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">{{ createError }}
                         </div>
                         <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2">
+                                <label for="facture-numero-ref" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Référence facture *
+                                </label>
+                                <input id="facture-numero-ref" type="text" v-model="parsedFactureData.numero_facture"
+                                    maxlength="50" required autocomplete="off"
+                                    @input="scheduleFactureRefCheck"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-sky-500"
+                                    :class="refCheckError ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'" />
+                                <p v-if="refCheckError" class="mt-1 text-sm text-red-600">{{ refCheckError }}</p>
+                                <p v-else-if="refChecking" class="mt-1 text-xs text-gray-500">Vérification de la référence…</p>
+                                <p v-else-if="refCheckOk" class="mt-1 text-xs text-emerald-700">Référence disponible.</p>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Format suggéré : <span class="font-mono">{{ entrepriseRefSlug }}_fAAMMNN</span>
+                                    (nom d'usage de votre entreprise).
+                                </p>
+                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
                                 <input type="text" v-model="parsedFactureData.prenom"
@@ -366,7 +383,8 @@
                         <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-white shrink-0 rounded-b-2xl">
                             <button type="button" @click="createStep = 1"
                                 class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Retour</button>
-                            <button type="submit" :disabled="isConfirmSubmitting"
+                            <button type="submit"
+                                :disabled="isConfirmSubmitting || refChecking || !!refCheckError || !parsedFactureData.numero_facture || !parsedFactureData.numero_facture.trim()"
                                 class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 inline-flex items-center gap-2">
                                 <svg v-if="isConfirmSubmitting" class="animate-spin h-4 w-4 text-white"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -880,6 +898,11 @@
                 const isCreateSubmitting = ref(false);
                 const isConfirmSubmitting = ref(false);
                 const parsedFactureData = ref(null);
+                const refCheckError = ref("");
+                const refChecking = ref(false);
+                const refCheckOk = ref(false);
+                const entrepriseRefSlug = ref("entreprise");
+                let refCheckTimer = null;
 
                 const mapFactureDraftFromWebhook = (data) => {
                     const c = data.client || {};
@@ -916,16 +939,88 @@
                     );
                 });
 
-                const openFactureValidation = (data) => {
+                const fetchSuggestedFactureReference = async () => {
+                    try {
+                        const res = await fetch("/api/factures/next-reference");
+                        if (!res.ok) return "";
+                        const data = await res.json();
+                        if (data.prefix) {
+                            const m = String(data.prefix).match(/^(.+)_f\d{4}$/);
+                            if (m) entrepriseRefSlug.value = m[1];
+                        }
+                        return (data.numero_facture || "").trim();
+                    } catch (e) {
+                        return "";
+                    }
+                };
+
+                const checkFactureReference = async (numero) => {
+                    const num = (numero || "").trim();
+                    if (!num) {
+                        refCheckError.value = "La référence de facture est requise.";
+                        refCheckOk.value = false;
+                        return false;
+                    }
+                    refChecking.value = true;
+                    refCheckOk.value = false;
+                    try {
+                        const res = await fetch(
+                            `/api/factures/check-reference?numero=${encodeURIComponent(num)}`,
+                        );
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            const msg = typeof data.detail === "string"
+                                ? data.detail
+                                : "Référence invalide.";
+                            refCheckError.value = msg;
+                            return false;
+                        }
+                        if (!data.available) {
+                            refCheckError.value = `La référence « ${num} » existe déjà.`;
+                            return false;
+                        }
+                        refCheckError.value = "";
+                        refCheckOk.value = true;
+                        return true;
+                    } catch (e) {
+                        refCheckError.value = "Impossible de vérifier la référence.";
+                        return false;
+                    } finally {
+                        refChecking.value = false;
+                    }
+                };
+
+                const scheduleFactureRefCheck = () => {
+                    refCheckOk.value = false;
+                    if (refCheckTimer) clearTimeout(refCheckTimer);
+                    const num = parsedFactureData.value?.numero_facture;
+                    if (!(num || "").trim()) {
+                        refCheckError.value = "";
+                        return;
+                    }
+                    refCheckTimer = setTimeout(() => {
+                        checkFactureReference(num);
+                    }, 400);
+                };
+
+                const openFactureValidation = async (data) => {
+                    refCheckError.value = "";
+                    refCheckOk.value = false;
                     parsedFactureData.value = {
                         ...mapFactureDraftFromWebhook(data),
                         tva_applicable: entrepriseTvaApplicable.value,
                         taux_tva: 20,
+                        numero_facture: "",
                     };
                     createStep.value = 2;
                     createError.value = "";
                     createRequestText.value = "";
                     showCreateModal.value = true;
+                    const suggested = await fetchSuggestedFactureReference();
+                    if (parsedFactureData.value && suggested) {
+                        parsedFactureData.value.numero_facture = suggested;
+                        await checkFactureReference(suggested);
+                    }
                 };
 
                 const openCreateModal = () => {
@@ -940,6 +1035,9 @@
                     showCreateModal.value = false;
                     createStep.value = 1;
                     parsedFactureData.value = null;
+                    refCheckError.value = "";
+                    refCheckOk.value = false;
+                    if (refCheckTimer) clearTimeout(refCheckTimer);
                 };
 
                 const submitCreateWebhook = async () => {
@@ -980,8 +1078,18 @@
                         createError.value = "Ajoutez au moins un article.";
                         return;
                     }
+                    const numeroRef = (d.numero_facture || "").trim();
+                    if (!numeroRef) {
+                        createError.value = "La référence de facture est requise.";
+                        return;
+                    }
                     isConfirmSubmitting.value = true;
                     createError.value = "";
+                    const refOk = await checkFactureReference(numeroRef);
+                    if (!refOk) {
+                        isConfirmSubmitting.value = false;
+                        return;
+                    }
                     try {
                         const res = await fetch("/api/factures/confirm", {
                             method: "POST",
@@ -998,6 +1106,7 @@
                                 articles: d.articles,
                                 tva_applicable: Boolean(d.tva_applicable),
                                 taux_tva: d.tva_applicable ? (parseFloat(d.taux_tva) || 20) : 0,
+                                numero_facture: numeroRef,
                             }),
                         });
                         const data = await res.json().catch(() => ({}));
@@ -1612,6 +1721,7 @@
                     showCreateModal, createStep, createRequestText, createError, isCreateSubmitting, isConfirmSubmitting,
                     parsedFactureData, computedFactureTotalHt, computedFactureMontantTva, computedFactureTotalTtc,
                     tauxTvaOptions, articleLineTotal,
+                    refCheckError, refChecking, refCheckOk, entrepriseRefSlug, scheduleFactureRefCheck,
                     openCreateModal, closeCreateModal, submitCreateWebhook, confirmFactureDraft, openFactureValidation,
                 };
             },

@@ -2,6 +2,7 @@ import calendar
 import datetime
 import json
 import os
+import re
 import shutil
 import sys
 import urllib.request
@@ -2048,13 +2049,54 @@ class ConfirmFacturePayload(BaseModel):
     articles: List[ArticlePayload] = []
     tva_applicable: bool = False
     taux_tva: float = 20.0
+    numero_facture: Optional[str] = ""
 
 
-def _next_facture_reference(db: Session, entreprise_id: int) -> str:
+_NUMERO_FACTURE_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,50}$")
+
+
+def _entreprise_ref_slug(nom_usage: Optional[str]) -> str:
+    s = (nom_usage or "entreprise").strip().lower()
+    s = re.sub(r"[^a-z0-9]+", "_", s)
+    s = re.sub(r"_+", "_", s).strip("_")
+    if not s:
+        s = "entreprise"
+    return s[:32]
+
+
+def _normalize_numero_facture(value: str) -> str:
+    return (value or "").strip()[:50]
+
+
+def _validate_numero_facture_format(num: str) -> None:
+    if not num:
+        raise HTTPException(status_code=400, detail="La référence de facture est requise.")
+    if not _NUMERO_FACTURE_PATTERN.match(num):
+        raise HTTPException(
+            status_code=400,
+            detail="Référence invalide (50 car. max., lettres, chiffres, tirets et underscores).",
+        )
+
+
+def _facture_numero_exists(db: Session, entreprise_id: int, numero: str) -> bool:
+    return (
+        scoped(db, Facture, entreprise_id)
+        .filter(Facture.numero_facture == numero)
+        .first()
+        is not None
+    )
+
+
+def _document_ref_prefix(db: Session, entreprise_id: int, kind: str) -> str:
+    org = get_entreprise_row(db, entreprise_id)
+    slug = _entreprise_ref_slug(org.nom_usage if org else None)
     now = datetime.datetime.now()
-    yy = now.strftime("%y")
-    mm = now.strftime("%m")
-    prefix = f"mrliw_f{yy}{mm}"
+    return f"{slug}_{kind}{now.strftime('%y')}{now.strftime('%m')}"
+
+
+def _next_sequential_reference(
+    db: Session, entreprise_id: int, prefix: str
+) -> str:
     rows = (
         scoped(db, Facture, entreprise_id)
         .with_entities(Facture.numero_facture)
@@ -2071,26 +2113,32 @@ def _next_facture_reference(db: Session, entreprise_id: int) -> str:
     return f"{prefix}{max_xx + 1:02d}"
 
 
+def _next_facture_reference(db: Session, entreprise_id: int) -> str:
+    prefix = _document_ref_prefix(db, entreprise_id, "f")
+    return _next_sequential_reference(db, entreprise_id, prefix)
+
+
 def _next_avoir_reference(db: Session, entreprise_id: int) -> str:
-    now = datetime.datetime.now()
-    yy = now.strftime("%y")
-    mm = now.strftime("%m")
-    prefix = f"mrliw_a{yy}{mm}"
-    rows = (
-        scoped(db, Facture, entreprise_id)
-        .with_entities(Facture.numero_facture)
-        .filter(Facture.numero_facture.like(f"{prefix}%"))
-        .all()
-    )
-    max_xx = -1
-    for (num,) in rows:
-        suffix = (num or "")[len(prefix) :]
-        if num and num.startswith(prefix) and len(suffix) == 2:
-            try:
-                max_xx = max(max_xx, int(suffix))
-            except ValueError:
-                pass
-    return f"{prefix}{max_xx + 1:02d}"
+    prefix = _document_ref_prefix(db, entreprise_id, "a")
+    return _next_sequential_reference(db, entreprise_id, prefix)
+
+
+@app.get("/api/factures/next-reference")
+def get_next_facture_reference(request: Request, db: Session = Depends(get_db)):
+    tenant_id = eid(request)
+    ref = _next_facture_reference(db, tenant_id)
+    return {"numero_facture": ref, "prefix": _document_ref_prefix(db, tenant_id, "f")}
+
+
+@app.get("/api/factures/check-reference")
+def check_facture_reference(
+    numero: str, request: Request, db: Session = Depends(get_db)
+):
+    num = _normalize_numero_facture(numero)
+    _validate_numero_facture_format(num)
+    tenant_id = eid(request)
+    exists = _facture_numero_exists(db, tenant_id, num)
+    return {"numero_facture": num, "available": not exists}
 
 
 @app.post("/api/factures/confirm")
@@ -2131,7 +2179,18 @@ def confirm_facture_creation(
     db.commit()
     db.refresh(contact)
 
-    ref_facture = _next_facture_reference(db, tenant_id)
+    num_saisi = _normalize_numero_facture(payload.numero_facture or "")
+    if num_saisi:
+        _validate_numero_facture_format(num_saisi)
+        if _facture_numero_exists(db, tenant_id, num_saisi):
+            raise HTTPException(
+                status_code=400,
+                detail=f"La référence « {num_saisi} » existe déjà.",
+            )
+        ref_facture = num_saisi
+    else:
+        ref_facture = _next_facture_reference(db, tenant_id)
+
     entreprise = (payload.entreprise or "").strip()
     prenom_nom = f"{payload.prenom or ''} {payload.nom or ''}".strip()
     nom_client = (
