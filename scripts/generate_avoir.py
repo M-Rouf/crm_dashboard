@@ -11,6 +11,16 @@ def _format_money(amount: float) -> str:
     return f"{amount:.2f}"
 
 
+def _format_taux(taux: float) -> str:
+    if taux == int(taux):
+        return str(int(taux))
+    return f"{taux:g}"
+
+
+TVA_AVOIR_FRANCHISE = "Franchise en base de TVA, art. 293 B du CGI."
+TVA_AVOIR_APPLICABLE = "TVA soumise au taux en vigueur."
+
+
 def generate_avoir_files(
     ref_avoir: str,
     ref_facture: str,
@@ -18,7 +28,10 @@ def generate_avoir_files(
     adresse_client: str,
     contact_client: str,
     description_avoir: str,
-    montant: float,
+    montant_ht: float,
+    montant_tva: float,
+    montant_ttc: float,
+    taux_tva: float,
     date_facture: Optional[datetime],
     entreprise=None,
 ):
@@ -33,6 +46,13 @@ def generate_avoir_files(
     with open(template_path, "r", encoding="utf-8") as f:
         html_content = f.read()
 
+    taux = float(taux_tva or 0)
+    tva = float(montant_tva or 0)
+    ht = float(montant_ht or 0)
+    ttc = float(montant_ttc or 0)
+    tva_legal = TVA_AVOIR_FRANCHISE if taux <= 0 else TVA_AVOIR_APPLICABLE
+    taux_str = _format_taux(taux)
+
     replacements = {
         "#ref_avoir": ref_avoir,
         "#ref_facture": ref_facture,
@@ -41,8 +61,12 @@ def generate_avoir_files(
         "#adresse_client": adresse_client or "",
         "#contact_client": contact_client or "",
         "#description_avoir": description_avoir,
-        "#Tot_HT": _format_money(montant),
-        "#Tot_TTC": _format_money(montant),
+        "#Tot_HT": _format_money(ht),
+        "#Tot_TTC": _format_money(ttc),
+        "#taux_tva": taux_str,
+        "#taux_TVA": taux_str,
+        "#tot_TVA": _format_money(tva),
+        "#tva_applicable": tva_legal,
         "#date_facture": date_facture.strftime("%d/%m/%Y") if date_facture else "",
     }
     for key, val in replacements.items():

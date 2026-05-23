@@ -342,6 +342,51 @@ def _money_dec(value) -> Decimal:
     return Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
+def _facture_taux_tva(facture: Facture) -> Decimal:
+    ht = _money_dec(facture.montant_ht)
+    tva = _money_dec(facture.montant_tva)
+    if ht <= 0:
+        return Decimal("0")
+    return (tva / ht * Decimal("100")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+
+
+def _calc_avoir_montants(
+    montant_ht: Decimal, montant_ttc: Decimal, taux_tva: Decimal
+) -> tuple[Decimal, Decimal, Decimal]:
+    montant_ht = _money_dec(montant_ht)
+    montant_ttc = _money_dec(montant_ttc)
+    if montant_ht < 0 or montant_ttc < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Les montants de l'avoir ne peuvent pas être négatifs.",
+        )
+    if montant_ttc < montant_ht:
+        raise HTTPException(
+            status_code=400,
+            detail="Le montant TTC de l'avoir ne peut pas être inférieur au montant HT.",
+        )
+    montant_tva = (montant_ttc - montant_ht).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    if taux_tva > 0 and montant_ht > 0:
+        attendu_ttc = (
+            montant_ht + montant_ht * taux_tva / Decimal("100")
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if abs(attendu_ttc - montant_ttc) > Decimal("0.02"):
+            raise HTTPException(
+                status_code=400,
+                detail="Les montants HT et TTC ne correspondent pas au taux de TVA de la facture.",
+            )
+    elif taux_tva <= 0 and montant_tva > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="La facture d'origine n'a pas de TVA : le montant TTC doit être égal au montant HT.",
+        )
+    return montant_ht, montant_tva, montant_ttc
+
+
 def _statut_paiement_from_montants(montant_paye: Decimal, montant_ttc: Decimal) -> str:
     if montant_ttc <= 0:
         return "non_paye"
@@ -618,7 +663,8 @@ class FactureVersementBody(BaseModel):
 
 class FactureAvoirBody(BaseModel):
     raison: str
-    montant: float
+    montant_ht: float
+    montant_ttc: float
     numero_facture: Optional[str] = ""
 
 
@@ -1601,13 +1647,6 @@ def generate_facture_avoir(
     if not raison:
         raise HTTPException(status_code=400, detail="La raison de l'avoir est requise.")
 
-    montant_avoir = _money_dec(body.montant)
-    if montant_avoir < 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Le montant de l'avoir ne peut pas être négatif.",
-        )
-
     tenant_id = eid(request)
     facture = (
         scoped(db, Facture, tenant_id)
@@ -1638,11 +1677,15 @@ def generate_facture_avoir(
             detail="Un avoir ne peut être généré que pour une facture plateforme validée ou envoyée.",
         )
 
-    montant_ttc = _money_dec(facture.montant_ttc)
-    if montant_avoir > montant_ttc:
+    montant_ttc_facture = _money_dec(facture.montant_ttc)
+    taux_tva = _facture_taux_tva(facture)
+    montant_ht_avoir, montant_tva_avoir, montant_ttc_avoir = _calc_avoir_montants(
+        body.montant_ht, body.montant_ttc, taux_tva
+    )
+    if montant_ttc_avoir > montant_ttc_facture:
         raise HTTPException(
             status_code=400,
-            detail="Le montant de l'avoir ne peut pas dépasser le montant TTC de la facture.",
+            detail="Le montant TTC de l'avoir ne peut pas dépasser le montant TTC de la facture.",
         )
 
     contact = facture.contact
@@ -1672,23 +1715,26 @@ def generate_facture_avoir(
         adresse_client=adresse_client,
         contact_client=contact.email or "",
         description_avoir=raison,
-        montant=float(montant_avoir),
+        montant_ht=float(montant_ht_avoir),
+        montant_tva=float(montant_tva_avoir),
+        montant_ttc=float(montant_ttc_avoir),
+        taux_tva=float(taux_tva),
         date_facture=facture.date_emission,
         entreprise=org,
     )
 
     montant_paye_initial = _money_dec(facture.montant_paye)
-    montant_paye_avec_avoir = (montant_paye_initial + montant_avoir).quantize(
+    montant_paye_avec_avoir = (montant_paye_initial + montant_ttc_avoir).quantize(
         Decimal("0.01"), rounding=ROUND_HALF_UP
     )
     ecart_montant = Decimal("0.00")
-    if montant_paye_avec_avoir > montant_ttc:
-        ecart_montant = (montant_paye_avec_avoir - montant_ttc).quantize(
+    if montant_paye_avec_avoir > montant_ttc_facture:
+        ecart_montant = (montant_paye_avec_avoir - montant_ttc_facture).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
-        montant_paye_avec_avoir = montant_ttc
+        montant_paye_avec_avoir = montant_ttc_facture
 
-    montant_paye_avoir = (montant_avoir - ecart_montant).quantize(
+    montant_paye_avoir = (montant_ttc_avoir - ecart_montant).quantize(
         Decimal("0.01"), rounding=ROUND_HALF_UP
     )
     if montant_paye_avoir < 0:
@@ -1697,7 +1743,7 @@ def generate_facture_avoir(
     now = datetime.datetime.now(datetime.timezone.utc)
     facture.montant_paye = montant_paye_avec_avoir
     facture.statut_paiement = _statut_paiement_from_montants(
-        montant_paye_avec_avoir, montant_ttc
+        montant_paye_avec_avoir, montant_ttc_facture
     )
     facture.date_paiement = now if facture.statut_paiement == "paye" else None
 
@@ -1708,19 +1754,19 @@ def generate_facture_avoir(
         devis_id=facture.devis_id,
         commande_id=facture.commande_id,
         flux="vente",
-        montant_ht=montant_avoir,
-        montant_tva=Decimal("0.00"),
-        montant_ttc=montant_avoir,
+        montant_ht=montant_ht_avoir,
+        montant_tva=montant_tva_avoir,
+        montant_ttc=montant_ttc_avoir,
         devise=facture.devise or "EUR",
         file_path=generations.get("url_path") or f"/files/avoirs/{ref_avoir}.pdf",
         external_id=None,
         statut_plateforme="draft",
         statut_paiement=_statut_paiement_from_montants(
-            montant_paye_avoir, montant_avoir
+            montant_paye_avoir, montant_ttc_avoir
         ),
         date_emission=now,
         date_echeance=None,
-        date_paiement=now if montant_paye_avoir >= montant_avoir and montant_avoir > 0 else None,
+        date_paiement=now if montant_paye_avoir >= montant_ttc_avoir and montant_ttc_avoir > 0 else None,
         type_facture="Avoir",
         montant_paye=montant_paye_avoir,
         categorie=facture.categorie or "AUTRE",
