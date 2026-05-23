@@ -100,6 +100,13 @@ def resolve_entreprise_logo_url(nom_usage: Optional[str]) -> Optional[str]:
     return None
 
 
+def get_entreprise_row(db: Session, entreprise_id: int) -> Entreprise:
+    row = db.query(Entreprise).filter(Entreprise.id == entreprise_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Entreprise non trouvée.")
+    return row
+
+
 # --- Modèles SQLAlchemy ---
 class Entreprise(Base):
     __tablename__ = "entreprises"
@@ -113,6 +120,9 @@ class Entreprise(Base):
     telephone = Column(String(20))
     email_contact = Column(String(100))
     id_super_pdp = Column(String(100))
+    rib = Column(String(34))
+    bic = Column(String(11))
+    tva_applicable = Column(Boolean, default=False)
     date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
 
@@ -1510,10 +1520,11 @@ def generate_facture_avoir(
         raise HTTPException(status_code=400, detail="Contact client introuvable.")
 
     ref_avoir = _next_avoir_reference(db, tenant_id)
-    entreprise = (contact.entreprise or "").strip()
+    client_societe = (contact.entreprise or "").strip()
     prenom_nom = f"{contact.prenom or ''} {contact.nom or ''}".strip()
-    nom_client = f"{prenom_nom} ({entreprise})" if entreprise else prenom_nom
+    nom_client = f"{prenom_nom} ({client_societe})" if client_societe else prenom_nom
     adresse_client = contact.adresse_facturation or contact.adresse_livraison or ""
+    org = get_entreprise_row(db, tenant_id)
     generations = generate_avoir_files(
         ref_avoir=ref_avoir,
         ref_facture=facture.numero_facture,
@@ -1523,6 +1534,7 @@ def generate_facture_avoir(
         description_avoir=raison,
         montant=float(montant_avoir),
         date_facture=facture.date_emission,
+        entreprise=org,
     )
 
     montant_paye_initial = _money_dec(facture.montant_paye)
@@ -2005,6 +2017,7 @@ def confirm_facture_creation(
         if devis:
             devis_id = devis.id
 
+    org = get_entreprise_row(db, tenant_id)
     generations = generate_facture_files(
         ref_facture=ref_facture,
         nom_client=nom_client,
@@ -2014,6 +2027,7 @@ def confirm_facture_creation(
         total_ht=float(total_ht),
         ref_devis=ref_devis,
         description=payload.description or "",
+        entreprise=org,
     )
 
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -2628,6 +2642,7 @@ def generate_registre(
     )
     items, totals = _build_registre_data(factures)
 
+    org = get_entreprise_row(db, eid(request))
     generations = generate_registre_files(
         document_type=type_document,
         document_label=config["label"],
@@ -2636,6 +2651,7 @@ def generate_registre(
         items=items,
         totals=totals,
         file_prefix=config["file_prefix"],
+        entreprise=org,
     )
     if not os.path.exists(generations["pdf_path"]):
         raise HTTPException(
@@ -2827,6 +2843,7 @@ def confirm_devis_creation(
         if contact.telephone:
             contact_client = f"{contact.telephone} | {payload.email}"
 
+        org = get_entreprise_row(db, tenant_id)
         generations = generate_devis_files(
             ref_devis=ref_devis,
             nom_client=nom_client,
@@ -2838,6 +2855,7 @@ def confirm_devis_creation(
             total_ttc=payload.montant_ttc,
             delai=payload.delai,
             notes=payload.note,
+            entreprise=org,
         )
 
         desc_lines = ["Articles:"]

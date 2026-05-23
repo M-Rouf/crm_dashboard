@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 
 import pdfkit
 
+from scripts.entreprise_template import apply_entreprise_placeholders
+
 
 def _format_money(amount: float) -> str:
     return f"{amount:.2f} €"
@@ -20,6 +22,7 @@ def generate_facture_files(
     ref_commande: str = "",
     description: str = "",
     mode_reglement: str = "Au choix du client",
+    entreprise=None,
 ):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     template_path = os.path.join(
@@ -53,8 +56,7 @@ def generate_facture_files(
     for key, val in replacements.items():
         html_content = html_content.replace(key, str(val))
 
-    logo_path = os.path.join(base_dir, "files", "templates", "logo_devis.png")
-    html_content = html_content.replace('src="logo_devis.png"', f'src="{logo_path}"')
+    html_content = apply_entreprise_placeholders(html_content, entreprise, base_dir)
 
     ref_devis = (ref_devis or "").strip()
     ref_commande = (ref_commande or "").strip()

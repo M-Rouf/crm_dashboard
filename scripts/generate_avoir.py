@@ -4,6 +4,8 @@ from typing import Optional
 
 import pdfkit
 
+from scripts.entreprise_template import apply_entreprise_placeholders
+
 
 def _format_money(amount: float) -> str:
     return f"{amount:.2f}"
@@ -18,6 +20,7 @@ def generate_avoir_files(
     description_avoir: str,
     montant: float,
     date_facture: Optional[datetime],
+    entreprise=None,
 ):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     template_path = os.path.join(base_dir, "files", "templates", "template_avoirs.html")
@@ -45,8 +48,7 @@ def generate_avoir_files(
     for key, val in replacements.items():
         html_content = html_content.replace(key, str(val))
 
-    logo_path = os.path.join(base_dir, "files", "templates", "logo_devis.png")
-    html_content = html_content.replace('src="logo_devis.png"', f'src="{logo_path}"')
+    html_content = apply_entreprise_placeholders(html_content, entreprise, base_dir)
 
     with open(html_output_path, "w", encoding="utf-8") as f:
         f.write(html_content)

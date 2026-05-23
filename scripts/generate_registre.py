@@ -6,6 +6,8 @@ from typing import Iterable
 
 import pdfkit
 
+from scripts.entreprise_template import apply_entreprise_placeholders
+
 
 def _format_money(amount) -> str:
     return f"{float(amount):.2f}"
@@ -123,6 +125,8 @@ def generate_registre_files(
     }
     for key, value in replacements.items():
         html_content = html_content.replace(key, value)
+
+    html_content = apply_entreprise_placeholders(html_content, entreprise, base_dir)
 
     rows_html = _build_item_rows(items)
     html_content = re.sub(

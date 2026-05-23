@@ -3,6 +3,8 @@ import re
 from datetime import datetime, timedelta
 import pdfkit
 
+from scripts.entreprise_template import apply_entreprise_placeholders
+
 
 def generate_devis_files(
     ref_devis,
@@ -15,6 +17,7 @@ def generate_devis_files(
     total_ttc=0,
     delai="",
     notes="",
+    entreprise=None,
 ):
     # Chemin vers les fichiers
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -71,9 +74,7 @@ def generate_devis_files(
     for key, val in replacements.items():
         html_content = html_content.replace(key, str(val))
 
-    # Correction du logo
-    logo_path = os.path.join(base_dir, "files", "templates", "logo_devis.png")
-    html_content = html_content.replace('src="logo_devis.png"', f'src="{logo_path}"')
+    html_content = apply_entreprise_placeholders(html_content, entreprise, base_dir)
 
     # Tableau d'articles
     # Extraction de la structure: <tr> ... <td>#ID</td> ... </tr>
