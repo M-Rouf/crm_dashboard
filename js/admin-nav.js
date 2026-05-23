@@ -29,13 +29,13 @@
     }
     if (me.role !== "admin") return;
 
-    document.querySelectorAll("nav.hidden.md\\:flex").forEach(function (nav) {
+    document.querySelectorAll("header nav").forEach(function (nav) {
       ADMIN_LINKS.forEach(function (link) {
         appendAdminLink(nav, link.href, link.label, true);
       });
     });
-    document.querySelectorAll("details.group > div").forEach(function (menu) {
-      if (!menu.querySelector('a[href="/factures"]')) return;
+    document.querySelectorAll("header details.group > div").forEach(function (menu) {
+      if (!menu.querySelector('a[href="/dashboard"]')) return;
       ADMIN_LINKS.forEach(function (link) {
         appendAdminLink(menu, link.href, link.label, false);
       });
