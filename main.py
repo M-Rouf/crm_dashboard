@@ -619,6 +619,7 @@ class FactureVersementBody(BaseModel):
 class FactureAvoirBody(BaseModel):
     raison: str
     montant: float
+    numero_facture: Optional[str] = ""
 
 
 class FactureCategorieUpdate(BaseModel):
@@ -813,6 +814,9 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
         "entreprise_logo_url": resolve_entreprise_logo_url(entreprise_nom),
         "is_primary_user": is_primary_user(user),
         "tva_applicable": bool(entreprise.tva_applicable) if entreprise else False,
+        "entreprise_slug": _entreprise_ref_slug(
+            entreprise.nom_usage if entreprise else None
+        ),
     }
 
 
@@ -1645,7 +1649,17 @@ def generate_facture_avoir(
     if not contact:
         raise HTTPException(status_code=400, detail="Contact client introuvable.")
 
-    ref_avoir = _next_avoir_reference(db, tenant_id)
+    num_saisi = _normalize_numero_facture(body.numero_facture or "")
+    if num_saisi:
+        _validate_numero_facture_format(num_saisi)
+        if _facture_numero_exists(db, tenant_id, num_saisi):
+            raise HTTPException(
+                status_code=400,
+                detail=f"La référence « {num_saisi} » existe déjà.",
+            )
+        ref_avoir = num_saisi
+    else:
+        ref_avoir = _next_avoir_reference(db, tenant_id)
     client_societe = (contact.entreprise or "").strip()
     prenom_nom = f"{contact.prenom or ''} {contact.nom or ''}".strip()
     nom_client = f"{prenom_nom} ({client_societe})" if client_societe else prenom_nom
@@ -2124,10 +2138,29 @@ def _next_avoir_reference(db: Session, entreprise_id: int) -> str:
 
 
 @app.get("/api/factures/next-reference")
-def get_next_facture_reference(request: Request, db: Session = Depends(get_db)):
+def get_next_facture_reference(
+    request: Request,
+    db: Session = Depends(get_db),
+    kind: str = "f",
+):
     tenant_id = eid(request)
-    ref = _next_facture_reference(db, tenant_id)
-    return {"numero_facture": ref, "prefix": _document_ref_prefix(db, tenant_id, "f")}
+    k = (kind or "f").strip().lower()
+    if k not in ("f", "a"):
+        raise HTTPException(status_code=400, detail="Le paramètre kind doit être « f » ou « a ».")
+    if k == "a":
+        ref = _next_avoir_reference(db, tenant_id)
+        prefix = _document_ref_prefix(db, tenant_id, "a")
+    else:
+        ref = _next_facture_reference(db, tenant_id)
+        prefix = _document_ref_prefix(db, tenant_id, "f")
+    org = get_entreprise_row(db, tenant_id)
+    slug = _entreprise_ref_slug(org.nom_usage if org else None)
+    return {
+        "numero_facture": ref,
+        "prefix": prefix,
+        "entreprise_slug": slug,
+        "kind": k,
+    }
 
 
 @app.get("/api/factures/check-reference")

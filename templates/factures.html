@@ -427,6 +427,22 @@
                             Facture concernée : <span class="font-semibold text-gray-900">{{ detail.numero_facture }}</span>
                         </div>
                         <div>
+                            <label for="avoir-numero-ref" class="block text-sm font-medium text-gray-700 mb-1">
+                                Référence avoir *
+                            </label>
+                            <input id="avoir-numero-ref" type="text" v-model="avoirForm.numero_facture"
+                                maxlength="50" required autocomplete="off"
+                                @input="scheduleAvoirRefCheck"
+                                class="w-full px-3 py-2 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-violet-500"
+                                :class="avoirRefCheckError ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'" />
+                            <p v-if="avoirRefCheckError" class="mt-1 text-sm text-red-600">{{ avoirRefCheckError }}</p>
+                            <p v-else-if="avoirRefChecking" class="mt-1 text-xs text-gray-500">Vérification de la référence…</p>
+                            <p v-else-if="avoirRefCheckOk" class="mt-1 text-xs text-emerald-700">Référence disponible.</p>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Format suggéré : <span class="font-mono">{{ entrepriseRefSlug }}_aAAMMNN</span>
+                            </p>
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Raison de l'avoir *</label>
                             <textarea v-model="avoirForm.raison" rows="4" required
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 resize-none"
@@ -444,7 +460,8 @@
                         <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
                             <button type="button" @click="closeAvoirModal" :disabled="avoirSubmitting"
                                 class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Annuler</button>
-                            <button type="submit" :disabled="avoirSubmitting"
+                            <button type="submit"
+                                :disabled="avoirSubmitting || avoirRefChecking || !!avoirRefCheckError || !avoirForm.numero_facture || !avoirForm.numero_facture.trim()"
                                 class="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50">
                                 {{ avoirSubmitting ? 'Création…' : 'Générer l’avoir' }}
                             </button>
@@ -901,8 +918,12 @@
                 const refCheckError = ref("");
                 const refChecking = ref(false);
                 const refCheckOk = ref(false);
+                const avoirRefCheckError = ref("");
+                const avoirRefChecking = ref(false);
+                const avoirRefCheckOk = ref(false);
                 const entrepriseRefSlug = ref("entreprise");
                 let refCheckTimer = null;
+                let avoirRefCheckTimer = null;
 
                 const mapFactureDraftFromWebhook = (data) => {
                     const c = data.client || {};
@@ -939,30 +960,39 @@
                     );
                 });
 
-                const fetchSuggestedFactureReference = async () => {
+                const applyReferenceMeta = (data) => {
+                    if (data && data.entreprise_slug) {
+                        entrepriseRefSlug.value = data.entreprise_slug;
+                    }
+                };
+
+                const fetchSuggestedReference = async (kind) => {
                     try {
-                        const res = await fetch("/api/factures/next-reference");
+                        const res = await fetch(
+                            `/api/factures/next-reference?kind=${encodeURIComponent(kind)}`,
+                        );
                         if (!res.ok) return "";
                         const data = await res.json();
-                        if (data.prefix) {
-                            const m = String(data.prefix).match(/^(.+)_f\d{4}$/);
-                            if (m) entrepriseRefSlug.value = m[1];
-                        }
+                        applyReferenceMeta(data);
                         return (data.numero_facture || "").trim();
                     } catch (e) {
                         return "";
                     }
                 };
 
-                const checkFactureReference = async (numero) => {
+                const checkDocumentReference = async (numero, target) => {
                     const num = (numero || "").trim();
+                    const errRef = target === "avoir" ? avoirRefCheckError : refCheckError;
+                    const okRef = target === "avoir" ? avoirRefCheckOk : refCheckOk;
+                    const checkingRef = target === "avoir" ? avoirRefChecking : refChecking;
+                    const label = target === "avoir" ? "avoir" : "facture";
                     if (!num) {
-                        refCheckError.value = "La référence de facture est requise.";
-                        refCheckOk.value = false;
+                        errRef.value = `La référence de ${label} est requise.`;
+                        okRef.value = false;
                         return false;
                     }
-                    refChecking.value = true;
-                    refCheckOk.value = false;
+                    checkingRef.value = true;
+                    okRef.value = false;
                     try {
                         const res = await fetch(
                             `/api/factures/check-reference?numero=${encodeURIComponent(num)}`,
@@ -972,21 +1002,21 @@
                             const msg = typeof data.detail === "string"
                                 ? data.detail
                                 : "Référence invalide.";
-                            refCheckError.value = msg;
+                            errRef.value = msg;
                             return false;
                         }
                         if (!data.available) {
-                            refCheckError.value = `La référence « ${num} » existe déjà.`;
+                            errRef.value = `La référence « ${num} » existe déjà.`;
                             return false;
                         }
-                        refCheckError.value = "";
-                        refCheckOk.value = true;
+                        errRef.value = "";
+                        okRef.value = true;
                         return true;
                     } catch (e) {
-                        refCheckError.value = "Impossible de vérifier la référence.";
+                        errRef.value = "Impossible de vérifier la référence.";
                         return false;
                     } finally {
-                        refChecking.value = false;
+                        checkingRef.value = false;
                     }
                 };
 
@@ -999,27 +1029,39 @@
                         return;
                     }
                     refCheckTimer = setTimeout(() => {
-                        checkFactureReference(num);
+                        checkDocumentReference(num, "facture");
+                    }, 400);
+                };
+
+                const scheduleAvoirRefCheck = () => {
+                    avoirRefCheckOk.value = false;
+                    if (avoirRefCheckTimer) clearTimeout(avoirRefCheckTimer);
+                    const num = avoirForm.value?.numero_facture;
+                    if (!(num || "").trim()) {
+                        avoirRefCheckError.value = "";
+                        return;
+                    }
+                    avoirRefCheckTimer = setTimeout(() => {
+                        checkDocumentReference(num, "avoir");
                     }, 400);
                 };
 
                 const openFactureValidation = async (data) => {
                     refCheckError.value = "";
                     refCheckOk.value = false;
+                    const suggested = await fetchSuggestedReference("f");
                     parsedFactureData.value = {
                         ...mapFactureDraftFromWebhook(data),
                         tva_applicable: entrepriseTvaApplicable.value,
                         taux_tva: 20,
-                        numero_facture: "",
+                        numero_facture: suggested,
                     };
                     createStep.value = 2;
                     createError.value = "";
                     createRequestText.value = "";
                     showCreateModal.value = true;
-                    const suggested = await fetchSuggestedFactureReference();
-                    if (parsedFactureData.value && suggested) {
-                        parsedFactureData.value.numero_facture = suggested;
-                        await checkFactureReference(suggested);
+                    if (suggested) {
+                        await checkDocumentReference(suggested, "facture");
                     }
                 };
 
@@ -1085,7 +1127,7 @@
                     }
                     isConfirmSubmitting.value = true;
                     createError.value = "";
-                    const refOk = await checkFactureReference(numeroRef);
+                    const refOk = await checkDocumentReference(numeroRef, "facture");
                     if (!refOk) {
                         isConfirmSubmitting.value = false;
                         return;
@@ -1205,7 +1247,7 @@
                 const versementError = ref("");
                 const versementSubmitting = ref(false);
                 const showAvoirModal = ref(false);
-                const avoirForm = ref({ raison: "", montant: 0 });
+                const avoirForm = ref({ raison: "", montant: 0, numero_facture: "" });
                 const avoirError = ref("");
                 const avoirSubmitting = ref(false);
 
@@ -1281,18 +1323,28 @@
                     }
                 };
 
-                const openAvoirModal = () => {
+                const openAvoirModal = async () => {
                     if (!detail.value) return;
+                    avoirRefCheckError.value = "";
+                    avoirRefCheckOk.value = false;
+                    const suggested = await fetchSuggestedReference("a");
                     avoirForm.value = {
                         raison: "",
                         montant: roundMoney(detail.value.montant_ttc),
+                        numero_facture: suggested,
                     };
                     avoirError.value = "";
                     showAvoirModal.value = true;
+                    if (suggested) {
+                        await checkDocumentReference(suggested, "avoir");
+                    }
                 };
 
                 const closeAvoirModal = () => {
                     showAvoirModal.value = false;
+                    avoirRefCheckError.value = "";
+                    avoirRefCheckOk.value = false;
+                    if (avoirRefCheckTimer) clearTimeout(avoirRefCheckTimer);
                 };
 
                 const submitAvoir = async () => {
@@ -1313,12 +1365,22 @@
                         avoirError.value = "Le montant dépasse le TTC de la facture (" + formatMoney(max) + ").";
                         return;
                     }
+                    const numeroRef = (avoirForm.value.numero_facture || "").trim();
+                    if (!numeroRef) {
+                        avoirError.value = "La référence de l'avoir est requise.";
+                        return;
+                    }
                     avoirSubmitting.value = true;
+                    const refOk = await checkDocumentReference(numeroRef, "avoir");
+                    if (!refOk) {
+                        avoirSubmitting.value = false;
+                        return;
+                    }
                     try {
                         const res = await fetch("/api/factures/" + detail.value.id + "/avoir", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ raison, montant }),
+                            body: JSON.stringify({ raison, montant, numero_facture: numeroRef }),
                         });
                         const data = await res.json().catch(() => ({}));
                         if (!res.ok) {
@@ -1677,6 +1739,9 @@
                         const me = meRes.ok ? await meRes.json() : null;
                         isPrimaryUser.value = Boolean(me && me.is_primary_user);
                         entrepriseTvaApplicable.value = Boolean(me && me.tva_applicable);
+                        if (me && me.entreprise_slug) {
+                            entrepriseRefSlug.value = me.entreprise_slug;
+                        }
                     } catch (e) {
                         isPrimaryUser.value = false;
                         entrepriseTvaApplicable.value = false;
@@ -1721,7 +1786,9 @@
                     showCreateModal, createStep, createRequestText, createError, isCreateSubmitting, isConfirmSubmitting,
                     parsedFactureData, computedFactureTotalHt, computedFactureMontantTva, computedFactureTotalTtc,
                     tauxTvaOptions, articleLineTotal,
-                    refCheckError, refChecking, refCheckOk, entrepriseRefSlug, scheduleFactureRefCheck,
+                    refCheckError, refChecking, refCheckOk,
+                    avoirRefCheckError, avoirRefChecking, avoirRefCheckOk,
+                    entrepriseRefSlug, scheduleFactureRefCheck, scheduleAvoirRefCheck,
                     openCreateModal, closeCreateModal, submitCreateWebhook, confirmFactureDraft, openFactureValidation,
                 };
             },
