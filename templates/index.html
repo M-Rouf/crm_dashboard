@@ -153,20 +153,17 @@
                 />
               </div>
 
-              <div class="flex flex-wrap gap-1" role="group" aria-label="Filtrer par priorité">
-                <button
-                  v-for="opt in priorityOptions"
-                  :key="opt.value || 'all'"
-                  type="button"
-                  @click="priorityFilter = opt.value"
-                  :class="priorityFilter === opt.value
-                    ? 'bg-sky-600 text-white border-sky-600'
-                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
-                  class="px-3 py-2 text-sm font-medium rounded-lg border transition-colors"
-                >
-                  {{ opt.label }}
-                </button>
-              </div>
+              <select
+                v-model="priorityFilter"
+                aria-label="Filtrer par priorité"
+                class="w-full sm:w-auto min-w-[10rem] px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors cursor-pointer"
+              >
+                <option value="">Toutes les priorités</option>
+                <option value="basse">Basse</option>
+                <option value="normale">Normale</option>
+                <option value="haute">Haute</option>
+                <option value="urgente">Urgente</option>
+              </select>
 
               <button
                 @click="showTreated = !showTreated"
@@ -582,13 +579,6 @@
           const requetes = ref([]);
           const searchQuery = ref("");
           const priorityFilter = ref("");
-          const priorityOptions = [
-            { value: "", label: "Toutes" },
-            { value: "basse", label: "Basse" },
-            { value: "normale", label: "Normale" },
-            { value: "haute", label: "Haute" },
-            { value: "urgente", label: "Urgente" },
-          ];
           const showTreated = ref(false);
           const selectedRequete = ref(null);
 
@@ -702,7 +692,6 @@
             requetes,
             searchQuery,
             priorityFilter,
-            priorityOptions,
             showTreated,
             selectedRequete,
             filteredRequetes,
