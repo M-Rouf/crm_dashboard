@@ -1694,7 +1694,6 @@ def generate_facture_avoir(
 
     num_saisi = _normalize_numero_facture(body.numero_facture or "")
     if num_saisi:
-        _validate_numero_facture_format(num_saisi)
         if _facture_numero_exists(db, tenant_id, num_saisi):
             raise HTTPException(
                 status_code=400,
@@ -2112,9 +2111,6 @@ class ConfirmFacturePayload(BaseModel):
     numero_facture: Optional[str] = ""
 
 
-_NUMERO_FACTURE_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,50}$")
-
-
 def _entreprise_ref_slug(nom_usage: Optional[str]) -> str:
     s = (nom_usage or "entreprise").strip().lower()
     s = re.sub(r"[^a-z0-9]+", "_", s)
@@ -2128,14 +2124,11 @@ def _normalize_numero_facture(value: str) -> str:
     return (value or "").strip()[:50]
 
 
-def _validate_numero_facture_format(num: str) -> None:
+def _require_numero_facture(numero: str) -> str:
+    num = _normalize_numero_facture(numero)
     if not num:
-        raise HTTPException(status_code=400, detail="La référence de facture est requise.")
-    if not _NUMERO_FACTURE_PATTERN.match(num):
-        raise HTTPException(
-            status_code=400,
-            detail="Référence invalide (50 car. max., lettres, chiffres, tirets et underscores).",
-        )
+        raise HTTPException(status_code=400, detail="La référence est requise.")
+    return num
 
 
 def _facture_numero_exists(db: Session, entreprise_id: int, numero: str) -> bool:
@@ -2213,8 +2206,7 @@ def get_next_facture_reference(
 def check_facture_reference(
     numero: str, request: Request, db: Session = Depends(get_db)
 ):
-    num = _normalize_numero_facture(numero)
-    _validate_numero_facture_format(num)
+    num = _require_numero_facture(numero)
     tenant_id = eid(request)
     exists = _facture_numero_exists(db, tenant_id, num)
     return {"numero_facture": num, "available": not exists}
@@ -2260,7 +2252,6 @@ def confirm_facture_creation(
 
     num_saisi = _normalize_numero_facture(payload.numero_facture or "")
     if num_saisi:
-        _validate_numero_facture_format(num_saisi)
         if _facture_numero_exists(db, tenant_id, num_saisi):
             raise HTTPException(
                 status_code=400,

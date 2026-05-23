@@ -865,7 +865,7 @@
     </div>
 
     <script>
-        const { createApp, ref, computed, watch, onMounted } = Vue;
+        const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
         createApp({
             setup() {
@@ -986,18 +986,39 @@
                     }
                 };
 
+                const apiDetailMessage = (data, fallback) => {
+                    const d = data && data.detail;
+                    if (typeof d === "string") return d;
+                    if (Array.isArray(d) && d.length) {
+                        return d.map((x) => x.msg || x.message || String(x)).join(" ");
+                    }
+                    return fallback;
+                };
+
+                const buildFallbackReference = (kind) => {
+                    const slug = (entrepriseRefSlug.value || "entreprise").replace(/\s+/g, "_");
+                    const now = new Date();
+                    const yy = String(now.getFullYear()).slice(-2);
+                    const mm = String(now.getMonth() + 1).padStart(2, "0");
+                    return `${slug}_${kind}${yy}${mm}01`;
+                };
+
                 const fetchSuggestedReference = async (kind) => {
                     try {
                         const res = await fetch(
                             `/api/factures/next-reference?kind=${encodeURIComponent(kind)}`,
+                            { credentials: "same-origin" },
                         );
-                        if (!res.ok) return "";
-                        const data = await res.json();
-                        applyReferenceMeta(data);
-                        return (data.numero_facture || "").trim();
+                        if (res.ok) {
+                            const data = await res.json();
+                            applyReferenceMeta(data);
+                            const num = (data.numero_facture || "").trim();
+                            if (num) return num;
+                        }
                     } catch (e) {
-                        return "";
+                        /* fallback local */
                     }
+                    return buildFallbackReference(kind);
                 };
 
                 const checkDocumentReference = async (numero, target) => {
@@ -1016,13 +1037,14 @@
                     try {
                         const res = await fetch(
                             `/api/factures/check-reference?numero=${encodeURIComponent(num)}`,
+                            { credentials: "same-origin" },
                         );
                         const data = await res.json().catch(() => ({}));
                         if (!res.ok) {
-                            const msg = typeof data.detail === "string"
-                                ? data.detail
-                                : "Référence invalide.";
-                            errRef.value = msg;
+                            errRef.value = apiDetailMessage(
+                                data,
+                                "Impossible de vérifier la référence.",
+                            );
                             return false;
                         }
                         if (!data.available) {
@@ -1080,6 +1102,10 @@
                     createError.value = "";
                     createRequestText.value = "";
                     showCreateModal.value = true;
+                    await nextTick();
+                    if (parsedFactureData.value) {
+                        parsedFactureData.value.numero_facture = suggested;
+                    }
                     if (suggested) {
                         await checkDocumentReference(suggested, "facture");
                     }
@@ -1415,6 +1441,8 @@
                     };
                     avoirError.value = "";
                     showAvoirModal.value = true;
+                    await nextTick();
+                    avoirForm.value.numero_facture = suggested;
                     if (suggested) {
                         await checkDocumentReference(suggested, "avoir");
                     }
