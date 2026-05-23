@@ -65,6 +65,7 @@ def generate_registre_files(
     items,
     totals: dict,
     file_prefix: str,
+    entreprise=None,
 ):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     template_path = os.path.join(
@@ -152,7 +153,10 @@ def generate_registre_files(
         "margin-bottom": "0mm",
         "margin-left": "0mm",
     }
-    pdfkit.from_file(html_output_path, pdf_output_path, options=options)
+    try:
+        pdfkit.from_file(html_output_path, pdf_output_path, options=options)
+    except Exception as e:
+        print(f"Erreur PDF generation registre: {e}")
 
     return {
         "html_path": html_output_path,
