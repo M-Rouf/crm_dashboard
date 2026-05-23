@@ -168,14 +168,14 @@
             </div>
         </div>
 
-        <div v-if="showCreateModal" class="fixed inset-0 z-[100] overflow-y-auto" role="dialog" aria-modal="true"
+        <div v-if="showCreateModal" class="fixed inset-0 z-[100]" role="dialog" aria-modal="true"
             aria-labelledby="modal-create-facture-title">
-            <div class="flex min-h-screen items-center justify-center p-4 sm:p-0">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" @click="closeCreateModal" aria-hidden="true">
-                </div>
+            <div class="fixed inset-0 z-0 bg-gray-900/50" @click="closeCreateModal" aria-hidden="true"></div>
+            <div class="fixed inset-0 z-10 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
                 <div
                     :class="createStep === 2 ? 'max-w-3xl' : 'max-w-lg'"
-                    class="bg-white rounded-2xl shadow-xl w-full relative z-10 text-left my-8 max-h-[90vh] flex flex-col overflow-hidden">
+                    class="modal-sheet pointer-events-auto w-full sm:mx-auto bg-white rounded-t-2xl sm:rounded-2xl shadow-xl text-left flex flex-col overflow-hidden"
+                    @click.stop>
                     <div
                         class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl shrink-0">
                         <h3 id="modal-create-facture-title" class="text-lg font-bold text-gray-900">
@@ -403,13 +403,13 @@
         </div>
 
 
-        <div v-if="showAvoirModal" class="fixed inset-0 z-[100] overflow-y-auto" role="dialog" aria-modal="true">
-            <div class="flex min-h-screen items-center justify-center p-4 sm:p-0">
-                <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" @click="closeAvoirModal" aria-hidden="true">
-                </div>
-                <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full relative z-10 text-left my-8">
+        <div v-if="showAvoirModal" class="fixed inset-0 z-[100]" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 z-0 bg-gray-900/50" @click="closeAvoirModal" aria-hidden="true"></div>
+            <div class="fixed inset-0 z-10 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
+                <div class="modal-sheet pointer-events-auto w-full max-w-lg sm:mx-auto bg-white rounded-t-2xl sm:rounded-2xl shadow-xl text-left flex flex-col overflow-hidden"
+                    @click.stop>
                     <div
-                        class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
+                        class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl shrink-0">
                         <h3 class="text-lg font-bold text-gray-900">Générer un avoir</h3>
                         <button type="button" @click="closeAvoirModal"
                             class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-200">
@@ -419,7 +419,8 @@
                             </svg>
                         </button>
                     </div>
-                    <form @submit.prevent="submitAvoir" class="p-6 space-y-4">
+                    <form @submit.prevent="submitAvoir" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="flex-1 overflow-y-auto p-6 space-y-4 stylised-scrollbar">
                         <div v-if="avoirError"
                             class="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">{{ avoirError }}
                         </div>
@@ -477,7 +478,8 @@
                             Maximum TTC : {{ formatMoney(detail.montant_ttc) }}
                             · TVA calculée : <span class="font-semibold tabular-nums">{{ formatMoney(avoirMontantTva) }}</span>
                         </p>
-                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                    </div>
+                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-white shrink-0">
                             <button type="button" @click="closeAvoirModal" :disabled="avoirSubmitting"
                                 class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Annuler</button>
                             <button type="submit"

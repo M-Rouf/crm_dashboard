@@ -10,7 +10,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -1433,6 +1433,44 @@ def list_factures(
     ).all()
 
 
+@app.get("/api/factures/next-reference")
+def get_next_facture_reference(
+    request: Request,
+    db: Session = Depends(get_db),
+    kind: str = Query("f"),
+):
+    tenant_id = eid(request)
+    k = (kind or "f").strip().lower()
+    if k not in ("f", "a"):
+        raise HTTPException(status_code=400, detail="Le paramètre kind doit être « f » ou « a ».")
+    if k == "a":
+        ref = _next_avoir_reference(db, tenant_id)
+        prefix = _document_ref_prefix(db, tenant_id, "a")
+    else:
+        ref = _next_facture_reference(db, tenant_id)
+        prefix = _document_ref_prefix(db, tenant_id, "f")
+    org = get_entreprise_row(db, tenant_id)
+    slug = _entreprise_ref_slug(org.nom_usage if org else None)
+    return {
+        "numero_facture": ref,
+        "prefix": prefix,
+        "entreprise_slug": slug,
+        "kind": k,
+    }
+
+
+@app.get("/api/factures/check-reference")
+def check_facture_reference(
+    request: Request,
+    db: Session = Depends(get_db),
+    numero: str = Query(..., min_length=1),
+):
+    num = _require_numero_facture(numero)
+    tenant_id = eid(request)
+    exists = _facture_numero_exists(db, tenant_id, num)
+    return {"numero_facture": num, "available": not exists}
+
+
 @app.patch(
     "/api/factures/{facture_id}/statut-plateforme",
     response_model=FactureSchema,
@@ -2174,42 +2212,6 @@ def _next_facture_reference(db: Session, entreprise_id: int) -> str:
 def _next_avoir_reference(db: Session, entreprise_id: int) -> str:
     prefix = _document_ref_prefix(db, entreprise_id, "a")
     return _next_sequential_reference(db, entreprise_id, prefix)
-
-
-@app.get("/api/factures/next-reference")
-def get_next_facture_reference(
-    request: Request,
-    db: Session = Depends(get_db),
-    kind: str = "f",
-):
-    tenant_id = eid(request)
-    k = (kind or "f").strip().lower()
-    if k not in ("f", "a"):
-        raise HTTPException(status_code=400, detail="Le paramètre kind doit être « f » ou « a ».")
-    if k == "a":
-        ref = _next_avoir_reference(db, tenant_id)
-        prefix = _document_ref_prefix(db, tenant_id, "a")
-    else:
-        ref = _next_facture_reference(db, tenant_id)
-        prefix = _document_ref_prefix(db, tenant_id, "f")
-    org = get_entreprise_row(db, tenant_id)
-    slug = _entreprise_ref_slug(org.nom_usage if org else None)
-    return {
-        "numero_facture": ref,
-        "prefix": prefix,
-        "entreprise_slug": slug,
-        "kind": k,
-    }
-
-
-@app.get("/api/factures/check-reference")
-def check_facture_reference(
-    numero: str, request: Request, db: Session = Depends(get_db)
-):
-    num = _require_numero_facture(numero)
-    tenant_id = eid(request)
-    exists = _facture_numero_exists(db, tenant_id, num)
-    return {"numero_facture": num, "available": not exists}
 
 
 @app.post("/api/factures/confirm")

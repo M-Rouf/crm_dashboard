@@ -146,3 +146,15 @@ input[type="month"] {
   position: relative;
   z-index: 10;
 }
+
+/* Modales — feuille mobile, scroll tactile, au-dessus du fond */
+.modal-sheet {
+  max-height: min(92dvh, 100%);
+  -webkit-overflow-scrolling: touch;
+}
+
+@supports (height: 92dvh) {
+  .modal-sheet {
+    max-height: 92dvh;
+  }
+}
