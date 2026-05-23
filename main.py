@@ -6,6 +6,7 @@ import shutil
 import sys
 import urllib.request
 from decimal import ROUND_HALF_UP, Decimal
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -66,6 +67,22 @@ else:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+ENTREPRISE_LOGOS_DIR = Path(__file__).resolve().parent / "files" / "logos"
+
+
+def resolve_entreprise_logo_url(nom_usage: Optional[str]) -> Optional[str]:
+    """URL publique du logo : files/logos/{nom_usage}.png ou .jpg"""
+    if not nom_usage:
+        return None
+    name = nom_usage.strip()
+    if not name or "/" in name or "\\" in name or ".." in name:
+        return None
+    for ext in (".png", ".jpg", ".jpeg"):
+        path = ENTREPRISE_LOGOS_DIR / f"{name}{ext}"
+        if path.is_file():
+            return f"/files/logos/{name}{ext}"
+    return None
 
 
 # --- Modèles SQLAlchemy ---
@@ -736,6 +753,7 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="Non authentifié.")
     entreprise = db.query(Entreprise).filter(Entreprise.id == user.entreprise_id).first()
+    entreprise_nom = entreprise.nom_usage if entreprise else None
     return {
         "id": user.id,
         "email": user.email,
@@ -743,7 +761,8 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
         "prenom": user.prenom,
         "role": user.role,
         "entreprise_id": user.entreprise_id,
-        "entreprise_nom": entreprise.nom_usage if entreprise else None,
+        "entreprise_nom": entreprise_nom,
+        "entreprise_logo_url": resolve_entreprise_logo_url(entreprise_nom),
         "is_primary_user": is_primary_user(user),
     }
 

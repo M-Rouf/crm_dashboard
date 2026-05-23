@@ -1,6 +1,25 @@
 (function () {
+  function applyEntrepriseBrand(me) {
+    if (!me) return;
+    var nom = me.entreprise_nom || "Dashboard";
+    document.querySelectorAll("[data-entreprise-name]").forEach(function (el) {
+      el.textContent = nom;
+    });
+    document.querySelectorAll("[data-entreprise-logo]").forEach(function (img) {
+      if (me.entreprise_logo_url) {
+        img.src = me.entreprise_logo_url;
+        img.alt = nom + " — logo";
+        img.classList.remove("hidden");
+      } else {
+        img.removeAttribute("src");
+        img.classList.add("hidden");
+      }
+    });
+  }
+
   function applyNavAccess(me) {
     if (!me) return;
+    applyEntrepriseBrand(me);
     if (!me.is_primary_user) {
       document.querySelectorAll('a[href="/requetes"]').forEach(function (a) {
         a.remove();
