@@ -100,13 +100,6 @@ def resolve_entreprise_logo_url(nom_usage: Optional[str]) -> Optional[str]:
     return None
 
 
-def get_entreprise_row(db: Session, entreprise_id: int) -> Entreprise:
-    row = db.query(Entreprise).filter(Entreprise.id == entreprise_id).first()
-    if not row:
-        raise HTTPException(status_code=404, detail="Entreprise non trouvée.")
-    return row
-
-
 # --- Modèles SQLAlchemy ---
 class Entreprise(Base):
     __tablename__ = "entreprises"
@@ -124,6 +117,13 @@ class Entreprise(Base):
     bic = Column(String(11))
     tva_applicable = Column(Boolean, default=False)
     date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+
+
+def get_entreprise_row(db: Session, entreprise_id: int) -> Entreprise:
+    row = db.query(Entreprise).filter(Entreprise.id == entreprise_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Entreprise non trouvée.")
+    return row
 
 
 class Utilisateur(Base):
