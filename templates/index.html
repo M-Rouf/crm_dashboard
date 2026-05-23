@@ -105,7 +105,7 @@
         <main class="order-2 flex w-full flex-col gap-8 lg:order-1 lg:w-3/4 lg:min-w-0">
           <!-- Header / Filtres -->
           <div
-            class="flex flex-col gap-4 rounded-lg border border-slate-300/80 bg-white p-5 shadow-sm ring-1 ring-slate-900/10 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+            class="flex flex-col gap-4 overflow-visible rounded-lg border border-slate-300/80 bg-white p-5 shadow-sm ring-1 ring-slate-900/10 sm:flex-row sm:items-center sm:justify-between sm:p-6"
           >
             <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
               <svg
@@ -153,16 +153,20 @@
                 />
               </div>
 
-              <select
-                v-model="priorityFilter"
-                class="w-full sm:w-auto px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors cursor-pointer"
-              >
-                <option value="">Toutes les priorités</option>
-                <option value="basse">Basse</option>
-                <option value="normale">Normale</option>
-                <option value="haute">Haute</option>
-                <option value="urgente">Urgente</option>
-              </select>
+              <div class="flex flex-wrap gap-1" role="group" aria-label="Filtrer par priorité">
+                <button
+                  v-for="opt in priorityOptions"
+                  :key="opt.value || 'all'"
+                  type="button"
+                  @click="priorityFilter = opt.value"
+                  :class="priorityFilter === opt.value
+                    ? 'bg-sky-600 text-white border-sky-600'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                  class="px-3 py-2 text-sm font-medium rounded-lg border transition-colors"
+                >
+                  {{ opt.label }}
+                </button>
+              </div>
 
               <button
                 @click="showTreated = !showTreated"
@@ -578,6 +582,13 @@
           const requetes = ref([]);
           const searchQuery = ref("");
           const priorityFilter = ref("");
+          const priorityOptions = [
+            { value: "", label: "Toutes" },
+            { value: "basse", label: "Basse" },
+            { value: "normale", label: "Normale" },
+            { value: "haute", label: "Haute" },
+            { value: "urgente", label: "Urgente" },
+          ];
           const showTreated = ref(false);
           const selectedRequete = ref(null);
 
@@ -691,6 +702,7 @@
             requetes,
             searchQuery,
             priorityFilter,
+            priorityOptions,
             showTreated,
             selectedRequete,
             filteredRequetes,

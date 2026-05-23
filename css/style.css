@@ -114,37 +114,18 @@ body {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
-/* Listes déroulantes et champs date — clics / calendrier natifs */
-select,
+/* Champs date / mois : fond lisible, pas de z-index (évite de bloquer le calendrier desktop) */
 input[type="date"],
 input[type="month"],
 input[type="datetime-local"] {
-  position: relative;
-  z-index: 2;
   cursor: pointer;
   min-height: 2.5rem;
   background-color: #fff;
 }
 
-select {
-  -webkit-appearance: menulist;
-  appearance: menulist;
-}
-
-input[type="date"],
-input[type="month"] {
-  -webkit-appearance: auto;
-  appearance: auto;
-}
-
-.filters-toolbar {
-  position: relative;
-  z-index: 20;
-}
-
+.filters-toolbar,
 .form-native-controls {
-  position: relative;
-  z-index: 10;
+  overflow: visible;
 }
 
 /* Modales — feuille mobile, scroll tactile, au-dessus du fond */
