@@ -30,6 +30,28 @@
             <a href="/mon-entreprise" data-admin-nav-link class="px-4 py-2 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white">Mon entreprise</a>
             <a href="/utilisateurs" data-admin-nav-link aria-current="page" class="px-4 py-2 rounded-md text-sm font-medium border border-sky-500/40 bg-slate-800 text-sky-400">Utilisateurs</a>
           </nav>
+          <details class="relative md:hidden group">
+            <summary class="mobile-nav-summary flex cursor-pointer items-center gap-2 rounded-md border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800 hover:text-white">
+              <span>Menu</span>
+              <svg class="h-4 w-4 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <div class="absolute left-0 top-full z-50 mt-2 flex w-56 flex-col gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/20">
+              <a href="/dashboard" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Dashboard</a>
+              <a href="/requetes" data-requetes-nav class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Requêtes</a>
+              <a href="/contacts" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Contacts</a>
+              <a href="/actions" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Actions</a>
+              <a href="/devis" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Devis</a>
+              <a href="/commandes" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Commandes</a>
+              <a href="/factures" class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Factures (achats/ventes)</a>
+              <a href="/mon-entreprise" data-admin-nav-link class="block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Mon entreprise</a>
+              <a href="/utilisateurs" data-admin-nav-link aria-current="page" class="block rounded-md px-4 py-2 text-sm font-medium border-l-2 border-sky-500 bg-slate-100 text-slate-900">Utilisateurs</a>
+            </div>
+          </details>
+        </div>
+        <div class="h-8 w-8 rounded-md bg-slate-800 flex items-center justify-center text-sky-400 font-bold text-xs font-mono tracking-widest shadow-inner border border-slate-600">
+          MR
         </div>
       </div>
     </header>
