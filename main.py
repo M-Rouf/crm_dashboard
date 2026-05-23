@@ -2015,6 +2015,7 @@ class ConfirmDevisPayload(BaseModel):
     note: Optional[str] = ""
     texte: str
     designation: Optional[str] = ""
+    nom_devis: Optional[str] = ""
 
 
 class UpdateDevisPayload(BaseModel):
@@ -2214,6 +2215,45 @@ def _next_facture_reference(db: Session, entreprise_id: int) -> str:
 def _next_avoir_reference(db: Session, entreprise_id: int) -> str:
     prefix = _document_ref_prefix(db, entreprise_id, "a")
     return _next_sequential_reference(db, entreprise_id, prefix)
+
+
+def _normalize_devis_nom(value: str) -> str:
+    return _normalize_numero_facture(value)
+
+
+def _require_devis_nom(nom: str) -> str:
+    return _require_numero_facture(nom)
+
+
+def _devis_nom_exists(
+    db: Session, entreprise_id: int, nom: str, exclude_id: Optional[int] = None
+) -> bool:
+    q = scoped(db, Devis, entreprise_id).filter(Devis.nom == nom)
+    if exclude_id is not None:
+        q = q.filter(Devis.id != exclude_id)
+    return q.first() is not None
+
+
+def _next_sequential_devis_nom(db: Session, entreprise_id: int, prefix: str) -> str:
+    rows = (
+        scoped(db, Devis, entreprise_id)
+        .with_entities(Devis.nom)
+        .filter(Devis.nom.like(f"{prefix}%"))
+        .all()
+    )
+    max_xx = -1
+    for (num,) in rows:
+        if num and num.startswith(prefix) and len(num) >= len(prefix) + 2:
+            try:
+                max_xx = max(max_xx, int(num[-2:]))
+            except ValueError:
+                pass
+    return f"{prefix}{max_xx + 1:02d}"
+
+
+def _next_devis_reference(db: Session, entreprise_id: int) -> str:
+    prefix = _document_ref_prefix(db, entreprise_id, "d")
+    return _next_sequential_devis_nom(db, entreprise_id, prefix)
 
 
 @app.post("/api/factures/confirm")
@@ -2931,6 +2971,35 @@ def get_devis_list(request: Request, db: Session = Depends(get_db)):
     return scoped(db, Devis, eid(request)).all()
 
 
+@app.get("/api/devis/next-reference")
+def get_next_devis_reference(request: Request, db: Session = Depends(get_db)):
+    tenant_id = eid(request)
+    ref = _next_devis_reference(db, tenant_id)
+    prefix = _document_ref_prefix(db, tenant_id, "d")
+    org = get_entreprise_row(db, tenant_id)
+    slug = _entreprise_ref_slug(org.nom_usage if org else None)
+    return {
+        "nom_devis": ref,
+        "numero_facture": ref,
+        "prefix": prefix,
+        "entreprise_slug": slug,
+        "kind": "d",
+    }
+
+
+@app.get("/api/devis/check-reference")
+def check_devis_reference(
+    request: Request,
+    db: Session = Depends(get_db),
+    numero: str = Query(..., min_length=1),
+    exclude_id: Optional[int] = Query(None),
+):
+    num = _require_devis_nom(numero)
+    tenant_id = eid(request)
+    exists = _devis_nom_exists(db, tenant_id, num, exclude_id=exclude_id)
+    return {"nom_devis": num, "numero_facture": num, "available": not exists}
+
+
 @app.patch("/api/devis/{devis_id}/statut", response_model=DevisSchema)
 def update_devis_statut(
     devis_id: int,
@@ -3078,6 +3147,7 @@ def confirm_devis_creation(
         db.commit()
         db.refresh(contact)
 
+        nom_saisi = _normalize_devis_nom(payload.nom_devis or "")
         if payload.id:
             devis = get_one(
                 db,
@@ -3086,17 +3156,25 @@ def confirm_devis_creation(
                 tenant_id,
                 "Devis non trouvé pour la mise à jour.",
             )
-            ref_devis = devis.nom
+            if nom_saisi:
+                if _devis_nom_exists(db, tenant_id, nom_saisi, exclude_id=devis.id):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"La référence « {nom_saisi} » existe déjà.",
+                    )
+                ref_devis = nom_saisi
+            else:
+                ref_devis = devis.nom
         else:
-            now = datetime.datetime.now()
-            month = now.strftime("%m")
-            year = now.strftime("%y")
-            count = (
-                scoped(db, Devis, tenant_id)
-                .filter(Devis.nom.like(f"mrliw_d{month}{year}%"))
-                .count()
-            )
-            ref_devis = f"mrliw_d{month}{year}{count:02d}"
+            if nom_saisi:
+                if _devis_nom_exists(db, tenant_id, nom_saisi):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"La référence « {nom_saisi} » existe déjà.",
+                    )
+                ref_devis = nom_saisi
+            else:
+                ref_devis = _next_devis_reference(db, tenant_id)
 
         nom_client = (
             f"{payload.prenom} {payload.nom} ({payload.entreprise})"
@@ -3139,6 +3217,7 @@ def confirm_devis_creation(
 
         file_path = generations.get("url_path", generations["pdf_path"])
         if payload.id:
+            devis.nom = ref_devis
             devis.description = "\n".join(desc_lines)
             devis.montant_ht = float(total_ht)
             devis.montant_tva = float(montant_tva)
