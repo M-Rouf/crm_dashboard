@@ -1,11 +1,14 @@
 {% if entreprise_nom %}
-<div id="entreprise-context-bar" class="border-b border-slate-200 bg-slate-50/95 shadow-sm">
-  <div class="container mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 md:px-8">
+<div id="entreprise-context-bar" class="entreprise-context-bar">
+  <div class="entreprise-context-bar__inner container mx-auto flex max-w-7xl items-center gap-3 px-4 py-2 md:gap-4 md:px-8 md:py-2.5">
     {% if entreprise_logo_url %}
     <img src="{{ entreprise_logo_url }}" alt="{{ entreprise_nom }} — logo"
-      class="h-8 w-auto max-h-8 max-w-[10rem] flex-shrink-0 object-contain" />
+      class="entreprise-context-bar__logo h-7 w-auto max-h-7 max-w-[9rem] flex-shrink-0 object-contain md:h-8 md:max-h-8 md:max-w-[10rem]" />
     {% endif %}
-    <span class="text-sm font-semibold tracking-tight text-slate-800 sm:text-base">{{ entreprise_nom }}</span>
+    <div class="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
+      <span class="entreprise-context-bar__label">Espace entreprise</span>
+      <span class="entreprise-context-bar__name truncate">{{ entreprise_nom }}</span>
+    </div>
   </div>
 </div>
 {% endif %}

@@ -49,3 +49,67 @@ body {
 .stylised-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* Bandeau entreprise — transition header sombre / contenu clair, aspect métal brossé */
+.entreprise-context-bar {
+  position: relative;
+  border-bottom: 1px solid #1e293b;
+  background: linear-gradient(
+    180deg,
+    #475569 0%,
+    #3d4d61 18%,
+    #334155 52%,
+    #293548 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 3px 10px rgba(15, 23, 42, 0.2);
+}
+
+.entreprise-context-bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 3px,
+    rgba(255, 255, 255, 0.02) 3px,
+    rgba(255, 255, 255, 0.02) 4px
+  );
+  opacity: 0.6;
+}
+
+.entreprise-context-bar__inner {
+  position: relative;
+  z-index: 1;
+}
+
+.entreprise-context-bar__label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.entreprise-context-bar__name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #f1f5f9;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 640px) {
+  .entreprise-context-bar__name {
+    font-size: 0.9375rem;
+  }
+}
+
+.entreprise-context-bar__logo {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
