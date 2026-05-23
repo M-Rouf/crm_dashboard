@@ -1,36 +1,6 @@
 (function () {
-  function applyEntrepriseBrand(me) {
-    if (!me || !me.entreprise_nom) return;
-    if (document.getElementById("entreprise-context-bar")) return;
-    var header = document.querySelector("header");
-    if (!header) return;
-
-    var nom = me.entreprise_nom;
-    var bar = document.createElement("div");
-    bar.id = "entreprise-context-bar";
-    bar.className =
-      "border-b border-slate-200 bg-slate-50/95 shadow-sm";
-    bar.innerHTML =
-      '<div class="container mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 md:px-8">' +
-      '<img id="entreprise-context-logo" alt="" class="hidden h-8 w-auto max-h-8 max-w-[10rem] flex-shrink-0 object-contain" />' +
-      '<span id="entreprise-context-name" class="text-sm font-semibold tracking-tight text-slate-800 sm:text-base"></span>' +
-      "</div>";
-
-    header.insertAdjacentElement("afterend", bar);
-
-    var nameEl = document.getElementById("entreprise-context-name");
-    var logoEl = document.getElementById("entreprise-context-logo");
-    if (nameEl) nameEl.textContent = nom;
-    if (logoEl && me.entreprise_logo_url) {
-      logoEl.src = me.entreprise_logo_url;
-      logoEl.alt = nom + " — logo";
-      logoEl.classList.remove("hidden");
-    }
-  }
-
   function applyNavAccess(me) {
     if (!me) return;
-    applyEntrepriseBrand(me);
     if (!me.is_primary_user) {
       document.querySelectorAll('a[href="/requetes"]').forEach(function (a) {
         a.remove();

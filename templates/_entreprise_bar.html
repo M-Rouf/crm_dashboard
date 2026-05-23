@@ -1,0 +1,11 @@
+{% if entreprise_nom %}
+<div id="entreprise-context-bar" class="border-b border-slate-200 bg-slate-50/95 shadow-sm">
+  <div class="container mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 md:px-8">
+    {% if entreprise_logo_url %}
+    <img src="{{ entreprise_logo_url }}" alt="{{ entreprise_nom }} — logo"
+      class="h-8 w-auto max-h-8 max-w-[10rem] flex-shrink-0 object-contain" />
+    {% endif %}
+    <span class="text-sm font-semibold tracking-tight text-slate-800 sm:text-base">{{ entreprise_nom }}</span>
+  </div>
+</div>
+{% endif %}

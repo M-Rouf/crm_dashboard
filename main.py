@@ -71,6 +71,21 @@ Base = declarative_base()
 ENTREPRISE_LOGOS_DIR = Path(__file__).resolve().parent / "files" / "logos"
 
 
+def brand_template_context(request: Request, db: Session) -> dict:
+    """Contexte Jinja : nom et logo entreprise de l'utilisateur connecté."""
+    user = get_session_user(request, db, Utilisateur)
+    if not user:
+        return {"entreprise_nom": None, "entreprise_logo_url": None}
+    entreprise = (
+        db.query(Entreprise).filter(Entreprise.id == user.entreprise_id).first()
+    )
+    nom = entreprise.nom_usage if entreprise else None
+    return {
+        "entreprise_nom": nom,
+        "entreprise_logo_url": resolve_entreprise_logo_url(nom),
+    }
+
+
 def resolve_entreprise_logo_url(nom_usage: Optional[str]) -> Optional[str]:
     """URL publique du logo : files/logos/{nom_usage}.png ou .jpg"""
     if not nom_usage:
@@ -2103,34 +2118,56 @@ def page_requetes(request: Request, db: Session = Depends(get_db)):
     user = get_session_user(request, db, Utilisateur)
     if not is_primary_user(user):
         return RedirectResponse(url="/dashboard", status_code=303)
-    return templates.TemplateResponse(request=request, name="index.html", context={})
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context=brand_template_context(request, db),
+    )
 
 
 @app.get("/contacts", response_class=HTMLResponse)
-def page_contacts(request: Request):
-    return templates.TemplateResponse(request=request, name="contacts.html", context={})
+def page_contacts(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        request=request,
+        name="contacts.html",
+        context=brand_template_context(request, db),
+    )
 
 
 @app.get("/actions", response_class=HTMLResponse)
-def page_actions(request: Request):
-    return templates.TemplateResponse(request=request, name="actions.html", context={})
+def page_actions(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        request=request,
+        name="actions.html",
+        context=brand_template_context(request, db),
+    )
 
 
 @app.get("/commandes", response_class=HTMLResponse)
-def page_commandes(request: Request):
+def page_commandes(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
-        request=request, name="commandes.html", context={}
+        request=request,
+        name="commandes.html",
+        context=brand_template_context(request, db),
     )
 
 
 @app.get("/factures", response_class=HTMLResponse)
-def page_factures(request: Request):
-    return templates.TemplateResponse(request=request, name="factures.html", context={})
+def page_factures(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        request=request,
+        name="factures.html",
+        context=brand_template_context(request, db),
+    )
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
-def page_dashboard(request: Request):
-    return templates.TemplateResponse(request=request, name="dashboard.html", context={})
+def page_dashboard(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard.html",
+        context=brand_template_context(request, db),
+    )
 
 
 def _aggregate_pending_payments(factures: list, flux: str) -> DashboardPendingFluxSchema:
@@ -2863,8 +2900,12 @@ def confirm_devis_creation(
 
 
 @app.get("/devis", response_class=HTMLResponse)
-def page_devis(request: Request):
-    return templates.TemplateResponse(request=request, name="devis.html", context={})
+def page_devis(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        request=request,
+        name="devis.html",
+        context=brand_template_context(request, db),
+    )
 
 
 @app.get("/utilisateurs", response_class=HTMLResponse)
@@ -2873,5 +2914,7 @@ def page_utilisateurs(request: Request, db: Session = Depends(get_db)):
     if not user or (user.role or "").strip().lower() != "admin":
         return RedirectResponse(url="/dashboard", status_code=303)
     return templates.TemplateResponse(
-        request=request, name="utilisateurs.html", context={}
+        request=request,
+        name="utilisateurs.html",
+        context=brand_template_context(request, db),
     )
