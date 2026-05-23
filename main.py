@@ -2005,6 +2005,8 @@ class ConfirmDevisPayload(BaseModel):
     email: str
     articles: List[ArticlePayload] = []
     total_estime: float = 0.0
+    tva_applicable: bool = False
+    taux_tva: float = 20.0
     tva_percent: float = 0.0
     montant_tva: float = 0.0
     montant_ttc: float = 0.0
@@ -3106,18 +3108,24 @@ def confirm_devis_creation(
             contact_client = f"{contact.telephone} | {payload.email}"
 
         org = get_entreprise_row(db, tenant_id)
+        total_ht = _money_dec(payload.total_estime)
+        montant_tva, montant_ttc, taux_tva = _calc_facture_tva_amounts(
+            total_ht, bool(payload.tva_applicable), payload.taux_tva
+        )
         generations = generate_devis_files(
             ref_devis=ref_devis,
             nom_client=nom_client,
             adresse_client=payload.adresse_livraison or "",
             contact_client=contact_client,
             articles=payload.articles,
-            total_ht=payload.total_estime,
-            total_tva=payload.montant_tva,
-            total_ttc=payload.montant_ttc,
+            total_ht=float(total_ht),
+            total_tva=float(montant_tva),
+            total_ttc=float(montant_ttc),
             delai=payload.delai,
             notes=payload.note,
             entreprise=org,
+            tva_applicable=bool(payload.tva_applicable),
+            taux_tva=taux_tva,
         )
 
         desc_lines = ["Articles:"]
@@ -3132,9 +3140,9 @@ def confirm_devis_creation(
         file_path = generations.get("url_path", generations["pdf_path"])
         if payload.id:
             devis.description = "\n".join(desc_lines)
-            devis.montant_ht = payload.total_estime
-            devis.montant_tva = payload.montant_tva
-            devis.montant_ttc = payload.montant_ttc
+            devis.montant_ht = float(total_ht)
+            devis.montant_tva = float(montant_tva)
+            devis.montant_ttc = float(montant_ttc)
             devis.file_path = file_path
         else:
             devis = Devis(
@@ -3142,9 +3150,9 @@ def confirm_devis_creation(
                 nom=ref_devis,
                 client=contact.id,
                 description="\n".join(desc_lines),
-                montant_ht=payload.total_estime,
-                montant_tva=payload.montant_tva,
-                montant_ttc=payload.montant_ttc,
+                montant_ht=float(total_ht),
+                montant_tva=float(montant_tva),
+                montant_ttc=float(montant_ttc),
                 statut="En attente",
                 file_path=file_path,
             )

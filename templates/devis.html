@@ -982,28 +982,51 @@
                                             Aucun article enregistré.
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                                        <div class="flex flex-col bg-sky-50 p-3 rounded-lg border border-sky-200">
-                                            <span class="font-bold text-slate-900 text-sm mb-1">Total HT (€)</span>
-                                            <div class="text-sm font-bold text-sky-800">
-                                                {{ computedTotalEstime.toFixed(2) }}
+                                    <div class="mt-4 space-y-4">
+                                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                                            <label class="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" v-model="parsedDevisData.tva_applicable"
+                                                    class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" />
+                                                <span class="text-sm font-medium text-gray-800">TVA applicable</span>
+                                            </label>
+                                            <div v-if="parsedDevisData.tva_applicable" class="overflow-visible">
+                                                <span class="block text-sm font-medium text-gray-700 mb-2">Taux de TVA</span>
+                                                <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Taux de TVA">
+                                                    <label v-for="t in tauxTvaOptions" :key="'tva-devis-' + t"
+                                                        class="inline-flex cursor-pointer items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors select-none"
+                                                        :class="Number(parsedDevisData.taux_tva) === t
+                                                            ? 'border-sky-600 bg-sky-50 text-sky-900 ring-1 ring-sky-600'
+                                                            : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'">
+                                                        <input type="radio" class="sr-only" name="taux_tva_devis" :value="t"
+                                                            v-model.number="parsedDevisData.taux_tva" />
+                                                        {{ t }} %
+                                                    </label>
+                                                </div>
                                             </div>
+                                            <p class="text-xs text-gray-500" v-if="!parsedDevisData.tva_applicable">
+                                                TVA non applicable, art 293B du CGI (mention sur le devis).
+                                            </p>
                                         </div>
-                                        <div
-                                            class="flex flex-col bg-blue-50 p-3 rounded-lg border border-blue-100 relative">
-                                            <label class="font-bold text-blue-900 text-sm mb-1">TVA (%)</label>
-                                            <input type="number" v-model.number="parsedDevisData.tva_percent" step="0.1"
-                                                min="0"
-                                                class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 bg-white" />
-                                            <div class="text-xs text-blue-700 mt-1 font-semibold">
-                                                TVA: {{ computedTva.toFixed(2) }} €
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div class="flex flex-col bg-sky-50 p-3 rounded-lg border border-sky-200">
+                                                <span class="font-bold text-slate-900 text-sm mb-1">Total HT (€)</span>
+                                                <div class="text-sm font-bold text-sky-800 tabular-nums">
+                                                    {{ computedTotalEstime.toFixed(2) }}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div
-                                            class="flex flex-col bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                                            <span class="font-bold text-emerald-900 text-sm mb-1">Total TTC (€)</span>
-                                            <div class="text-lg font-bold text-emerald-700">
-                                                {{ computedTtc.toFixed(2) }}
+                                            <div class="flex flex-col bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                                <span class="font-bold text-amber-900 text-sm mb-1">
+                                                    TVA<span v-if="parsedDevisData.tva_applicable"> ({{ parsedDevisData.taux_tva }} %)</span>
+                                                </span>
+                                                <div class="text-sm font-bold text-amber-900 tabular-nums">
+                                                    {{ computedTva.toFixed(2) }}
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                                <span class="font-bold text-emerald-900 text-sm mb-1">Total TTC (€)</span>
+                                                <div class="text-lg font-bold text-emerald-700 tabular-nums">
+                                                    {{ computedTtc.toFixed(2) }}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1079,6 +1102,14 @@
                 const step = ref(1);
                 const parsedDevisData = ref(null);
                 const isPrimaryUser = ref(false);
+                const entrepriseTvaApplicable = ref(false);
+                const tauxTvaOptions = [20, 10, 5.5, 2.1];
+
+                const applyDevisTvaDefaults = (data) => ({
+                    ...data,
+                    tva_applicable: entrepriseTvaApplicable.value,
+                    taux_tva: entrepriseTvaApplicable.value ? 20 : 0,
+                });
 
                 const closeAddModal = () => {
                     showAddModal.value = false;
@@ -1130,7 +1161,7 @@
                         ) {
                             mappedData.designation = mappedData.articles[0].designation;
                         }
-                        parsedDevisData.value = mappedData;
+                        parsedDevisData.value = applyDevisTvaDefaults(mappedData);
                         step.value = 2;
                     } catch (e) {
                         addError.value = e.message;
@@ -1226,7 +1257,7 @@
                             try {
                                 const activeDevis = selectedDevis.value || {};
                                 const contact = activeDevis.contact || {};
-                                parsedDevisData.value = {
+                                parsedDevisData.value = applyDevisTvaDefaults({
                                     id: activeDevis.id,
                                     prenom: contact.prenom || "",
                                     nom: contact.nom || "",
@@ -1253,7 +1284,6 @@
                                         };
                                     }),
                                     total_estime: res_json.total_estime || 0.0,
-                                    tva_percent: 0,
                                     delai: res_json.delai || "",
                                     envoi: res_json.envoi !== undefined ? res_json.envoi : 1,
                                     note: res_json.note || "",
@@ -1262,7 +1292,7 @@
                                         res_json.articles && res_json.articles.length > 0
                                             ? res_json.articles[0].designation
                                             : "",
-                                };
+                                });
                                 newDevisRequestText.value = updateDevisText.value;
                                 closeUpdateModal();
                                 step.value = 2;
@@ -1290,16 +1320,25 @@
                     }, 0);
                 });
 
+                const roundMoney = (v) => {
+                    const n = Number(v);
+                    if (!Number.isFinite(n)) return 0;
+                    return Math.round((n + Number.EPSILON) * 100) / 100;
+                };
+
                 const computedTva = computed(() => {
-                    const tvaPercent = parseFloat(
-                        parsedDevisData.value?.tva_percent || 0,
-                    );
-                    return computedTotalEstime.value * (tvaPercent / 100);
+                    const d = parsedDevisData.value;
+                    if (!d || !d.tva_applicable) return 0;
+                    const taux = parseFloat(d.taux_tva);
+                    if (!tauxTvaOptions.includes(taux)) {
+                        return roundMoney(computedTotalEstime.value * 0.2);
+                    }
+                    return roundMoney(computedTotalEstime.value * taux / 100);
                 });
 
-                const computedTtc = computed(() => {
-                    return computedTotalEstime.value + computedTva.value;
-                });
+                const computedTtc = computed(() =>
+                    roundMoney(computedTotalEstime.value + computedTva.value),
+                );
 
                 const confirmDevis = async () => {
                     isSubmitting.value = true;
@@ -1307,10 +1346,14 @@
                     parsedDevisData.value.total_estime = computedTotalEstime.value;
                     parsedDevisData.value.montant_tva = computedTva.value;
                     parsedDevisData.value.montant_ttc = computedTtc.value;
+                    const d = parsedDevisData.value;
                     const reqPayload = {
-                        ...parsedDevisData.value,
+                        ...d,
                         texte: newDevisRequestText.value,
-                        envoi: isPrimaryUser.value ? parsedDevisData.value.envoi : 0,
+                        envoi: isPrimaryUser.value ? d.envoi : 0,
+                        tva_applicable: Boolean(d.tva_applicable),
+                        taux_tva: d.tva_applicable ? (parseFloat(d.taux_tva) || 20) : 0,
+                        tva_percent: d.tva_applicable ? (parseFloat(d.taux_tva) || 20) : 0,
                     };
                     try {
                         const res = await fetch("/api/devis/confirm", {
@@ -1360,8 +1403,10 @@
                         const meRes = await fetch("/api/auth/me");
                         const me = meRes.ok ? await meRes.json() : null;
                         isPrimaryUser.value = Boolean(me && me.is_primary_user);
+                        entrepriseTvaApplicable.value = Boolean(me && me.tva_applicable);
                     } catch (e) {
                         isPrimaryUser.value = false;
+                        entrepriseTvaApplicable.value = false;
                     }
                     fetchData();
                     fetchContacts();
@@ -1596,6 +1641,8 @@
                     step,
                     parsedDevisData,
                     isPrimaryUser,
+                    entrepriseTvaApplicable,
+                    tauxTvaOptions,
                     closeAddModal,
                     confirmDevis,
                     computedTotalEstime,

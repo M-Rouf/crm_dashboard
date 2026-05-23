@@ -5,6 +5,9 @@ import pdfkit
 
 from scripts.entreprise_template import apply_entreprise_placeholders
 
+TVA_LEGAL_NON_APPLICABLE = "TVA non applicable, art 293B du CGI"
+TVA_LEGAL_APPLICABLE = "TVA soumise au taux en vigueur."
+
 
 def generate_devis_files(
     ref_devis,
@@ -18,6 +21,8 @@ def generate_devis_files(
     delai="",
     notes="",
     entreprise=None,
+    tva_applicable: bool = False,
+    taux_tva: float = 0.0,
 ):
     # Chemin vers les fichiers
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -51,6 +56,8 @@ def generate_devis_files(
             .replace(chr(13), "<br>")
         )
 
+    tva_legal = TVA_LEGAL_APPLICABLE if tva_applicable else TVA_LEGAL_NON_APPLICABLE
+
     # Remplacements de base
     replacements = {
         "#ref_devis": ref_devis,
@@ -63,6 +70,7 @@ def generate_devis_files(
         "#Tot_HT": f"{total_ht:.2f} €",
         "#Tot_TVA": f"{total_tva:.2f} €",
         "#Tot_TTC": f"{total_ttc:.2f} €",
+        "#tva_applicable": tva_legal,
         "#delai": delai,
         "#notes_devis": (
             f'<div class="note-section" style="margin-bottom: 20px; font-size: 10pt; color: #555;"><strong>Notes additionnelles :</strong><br>{safe_notes}</div>'
