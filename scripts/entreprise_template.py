@@ -1,8 +1,14 @@
 """Placeholders entreprise (#nom_usage, #logo, etc.) pour les PDF/HTML générés."""
 
 import os
+import re
 from pathlib import Path
 from typing import Any, Optional
+
+_LOGO_IMG_PATTERN = re.compile(
+    r'<img\s+[^>]*\bsrc="#logo"[^>]*/?\s*>',
+    re.IGNORECASE,
+)
 
 
 def resolve_logo_file_path(nom_usage: Optional[str], base_dir: str) -> Optional[str]:
@@ -40,15 +46,8 @@ def _html_multiline(text: str) -> str:
 
 def build_entreprise_replacements(entreprise: Any, base_dir: str) -> dict:
     nom_usage = _field(entreprise, "nom_usage")
-    logo_path = resolve_logo_file_path(nom_usage, base_dir)
-    if logo_path:
-        logo_src = Path(logo_path).as_uri()
-    else:
-        fallback = Path(base_dir) / "files" / "templates" / "logo_devis.png"
-        logo_src = fallback.resolve().as_uri() if fallback.is_file() else ""
 
     return {
-        "#logo": logo_src,
         "#nom_usage": nom_usage,
         "#raison_sociale": _field(entreprise, "raison_sociale"),
         "#adresse_entreprise": _html_multiline(_field(entreprise, "adresse")),
@@ -69,6 +68,14 @@ def apply_entreprise_placeholders(
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if entreprise is None:
         return html_content
+
+    nom_usage = _field(entreprise, "nom_usage")
+    logo_path = resolve_logo_file_path(nom_usage, base_dir)
+    if logo_path:
+        html_content = html_content.replace("#logo", Path(logo_path).as_uri())
+    else:
+        html_content = _LOGO_IMG_PATTERN.sub("", html_content)
+
     for key, value in build_entreprise_replacements(entreprise, base_dir).items():
         html_content = html_content.replace(key, value)
     return html_content
