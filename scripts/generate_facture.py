@@ -11,6 +11,16 @@ def _format_money(amount: float) -> str:
     return f"{amount:.2f} €"
 
 
+def _format_taux(taux: float) -> str:
+    if taux == int(taux):
+        return str(int(taux))
+    return f"{taux:g}"
+
+
+TVA_LEGAL_NON_APPLICABLE = "TVA non applicable, art 293B du CGI"
+TVA_LEGAL_APPLICABLE = "TVA soumise au taux en vigueur."
+
+
 def generate_facture_files(
     ref_facture: str,
     nom_client: str,
@@ -23,6 +33,9 @@ def generate_facture_files(
     description: str = "",
     mode_reglement: str = "Au choix du client",
     entreprise=None,
+    tva_applicable: bool = False,
+    taux_tva: float = 0.0,
+    montant_tva: float = 0.0,
 ):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     template_path = os.path.join(
@@ -40,7 +53,10 @@ def generate_facture_files(
     date_now = datetime.now()
     date_facture_str = date_now.strftime("%d/%m/%Y")
     date_echeance_str = (date_now + timedelta(days=30)).strftime("%d/%m/%Y")
-    total_ttc = float(total_ht)
+    tva = float(montant_tva or 0)
+    taux = float(taux_tva or 0) if tva_applicable else 0.0
+    total_ttc = float(total_ht) + tva
+    tva_legal = TVA_LEGAL_APPLICABLE if tva_applicable else TVA_LEGAL_NON_APPLICABLE
 
     replacements = {
         "#ref_facture": ref_facture,
@@ -52,6 +68,9 @@ def generate_facture_files(
         "#mode_reglement": mode_reglement,
         "#Tot_HT": _format_money(total_ht),
         "#Tot_TTC": _format_money(total_ttc),
+        "#taux_tva": _format_taux(taux),
+        "#tot_TVA": f"{tva:.2f}",
+        "#tva_applicable": tva_legal,
     }
     for key, val in replacements.items():
         html_content = html_content.replace(key, str(val))

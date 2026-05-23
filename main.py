@@ -684,6 +684,28 @@ FACTURE_CATEGORIES = (
 )
 
 FACTURE_CATEGORIES_VALIDES = frozenset(FACTURE_CATEGORIES)
+TAUX_TVA_VALIDES = frozenset({20.0, 10.0, 5.5, 2.1})
+
+
+def _calc_facture_tva_amounts(
+    total_ht: Decimal, tva_applicable: bool, taux_tva: float
+) -> tuple[Decimal, Decimal, float]:
+    if not tva_applicable:
+        return (
+            Decimal("0.00"),
+            total_ht.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            0.0,
+        )
+    taux = float(taux_tva)
+    if taux not in TAUX_TVA_VALIDES:
+        taux = 20.0
+    montant_tva = (total_ht * Decimal(str(taux)) / Decimal("100")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    montant_ttc = (total_ht + montant_tva).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    return montant_tva, montant_ttc, taux
 
 
 class DashboardChartsSchema(BaseModel):
@@ -789,6 +811,7 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
         "entreprise_nom": entreprise_nom,
         "entreprise_logo_url": resolve_entreprise_logo_url(entreprise_nom),
         "is_primary_user": is_primary_user(user),
+        "tva_applicable": bool(entreprise.tva_applicable) if entreprise else False,
     }
 
 
@@ -2023,6 +2046,8 @@ class ConfirmFacturePayload(BaseModel):
     categorie: Optional[str] = "AUTRE"
     devis_associe: Optional[str] = ""
     articles: List[ArticlePayload] = []
+    tva_applicable: bool = False
+    taux_tva: float = 20.0
 
 
 def _next_facture_reference(db: Session, entreprise_id: int) -> str:
@@ -2089,8 +2114,9 @@ def confirm_facture_creation(
         r = Decimal(str(a.remise or 0))
         total_ht += pu * q * (Decimal("1") - r / Decimal("100"))
     total_ht = total_ht.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    montant_tva = Decimal("0")
-    montant_ttc = total_ht
+    montant_tva, montant_ttc, taux_tva = _calc_facture_tva_amounts(
+        total_ht, bool(payload.tva_applicable), payload.taux_tva
+    )
 
     tenant_id = eid(request)
     contact = scoped(db, Contact, tenant_id).filter(Contact.email == email).first()
@@ -2130,6 +2156,9 @@ def confirm_facture_creation(
         ref_devis=ref_devis,
         description=payload.description or "",
         entreprise=org,
+        tva_applicable=bool(payload.tva_applicable),
+        taux_tva=taux_tva,
+        montant_tva=float(montant_tva),
     )
 
     now = datetime.datetime.now(datetime.timezone.utc)
