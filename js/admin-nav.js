@@ -1,4 +1,25 @@
 (function () {
+  var ADMIN_LINKS = [
+    { href: "/mon-entreprise", label: "Mon entreprise" },
+    { href: "/utilisateurs", label: "Utilisateurs" },
+  ];
+
+  function appendAdminLink(container, href, label, desktop) {
+    if (container.querySelector('a[href="' + href + '"]')) return;
+    var a = document.createElement("a");
+    a.href = href;
+    a.setAttribute("data-admin-nav-link", "1");
+    if (desktop) {
+      a.className =
+        "px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white";
+    } else {
+      a.className =
+        "block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900";
+    }
+    a.textContent = label;
+    container.appendChild(a);
+  }
+
   function applyNavAccess(me) {
     if (!me) return;
     if (!me.is_primary_user) {
@@ -7,30 +28,17 @@
       });
     }
     if (me.role !== "admin") return;
-    if (
-      document.querySelector("[data-admin-nav-link]") ||
-      document.querySelector('a[href="/utilisateurs"]')
-    ) {
-      return;
-    }
+
     document.querySelectorAll("nav.hidden.md\\:flex").forEach(function (nav) {
-      var a = document.createElement("a");
-      a.href = "/utilisateurs";
-      a.setAttribute("data-admin-nav-link", "1");
-      a.className =
-        "px-4 py-2 rounded-md text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white";
-      a.textContent = "Utilisateurs";
-      nav.appendChild(a);
+      ADMIN_LINKS.forEach(function (link) {
+        appendAdminLink(nav, link.href, link.label, true);
+      });
     });
     document.querySelectorAll("details.group > div").forEach(function (menu) {
       if (!menu.querySelector('a[href="/factures"]')) return;
-      var m = document.createElement("a");
-      m.href = "/utilisateurs";
-      m.setAttribute("data-admin-nav-link", "1");
-      m.className =
-        "block rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900";
-      m.textContent = "Utilisateurs";
-      menu.appendChild(m);
+      ADMIN_LINKS.forEach(function (link) {
+        appendAdminLink(menu, link.href, link.label, false);
+      });
     });
   }
 

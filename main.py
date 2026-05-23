@@ -833,6 +833,108 @@ def _normalize_utilisateur_role(role: str) -> str:
     return r
 
 
+class EntrepriseSchema(BaseModel):
+    id: int
+    nom_usage: str
+    raison_sociale: Optional[str] = None
+    siret: str
+    adresse: Optional[str] = None
+    code_postal: Optional[str] = None
+    ville: Optional[str] = None
+    telephone: Optional[str] = None
+    email_contact: Optional[str] = None
+    id_super_pdp: Optional[str] = None
+    rib: Optional[str] = None
+    bic: Optional[str] = None
+    tva_applicable: bool = False
+    logo_url: Optional[str] = None
+    date_creation: Optional[datetime.datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class EntrepriseUpdateBody(BaseModel):
+    nom_usage: str
+    raison_sociale: Optional[str] = ""
+    siret: str
+    adresse: Optional[str] = ""
+    code_postal: Optional[str] = ""
+    ville: Optional[str] = ""
+    telephone: Optional[str] = ""
+    email_contact: Optional[str] = ""
+    id_super_pdp: Optional[str] = ""
+    rib: Optional[str] = ""
+    bic: Optional[str] = ""
+    tva_applicable: bool = False
+
+
+def _entreprise_to_schema(row: Entreprise) -> EntrepriseSchema:
+    return EntrepriseSchema(
+        id=row.id,
+        nom_usage=row.nom_usage,
+        raison_sociale=row.raison_sociale,
+        siret=row.siret,
+        adresse=row.adresse,
+        code_postal=row.code_postal,
+        ville=row.ville,
+        telephone=row.telephone,
+        email_contact=row.email_contact,
+        id_super_pdp=row.id_super_pdp,
+        rib=row.rib,
+        bic=row.bic,
+        tva_applicable=bool(row.tva_applicable),
+        logo_url=resolve_entreprise_logo_url(row.nom_usage),
+        date_creation=row.date_creation,
+    )
+
+
+@app.get("/api/entreprise", response_model=EntrepriseSchema)
+def get_entreprise_api(request: Request, db: Session = Depends(get_db)):
+    require_admin(request, db, Utilisateur)
+    return _entreprise_to_schema(get_entreprise_row(db, eid(request)))
+
+
+@app.put("/api/entreprise", response_model=EntrepriseSchema)
+def update_entreprise_api(
+    body: EntrepriseUpdateBody, request: Request, db: Session = Depends(get_db)
+):
+    require_admin(request, db, Utilisateur)
+    row = get_entreprise_row(db, eid(request))
+
+    nom_usage = (body.nom_usage or "").strip()
+    siret = (body.siret or "").strip()
+    if not nom_usage:
+        raise HTTPException(status_code=400, detail="Le nom d'usage est requis.")
+    if not siret:
+        raise HTTPException(status_code=400, detail="Le SIRET est requis.")
+
+    other = db.query(Entreprise).filter(Entreprise.siret == siret).first()
+    if other and other.id != row.id:
+        raise HTTPException(status_code=400, detail="Ce SIRET est déjà utilisé.")
+
+    row.nom_usage = nom_usage
+    row.raison_sociale = (body.raison_sociale or "").strip() or None
+    row.siret = siret
+    row.adresse = (body.adresse or "").strip() or None
+    row.code_postal = (body.code_postal or "").strip() or None
+    row.ville = (body.ville or "").strip() or None
+    row.telephone = (body.telephone or "").strip() or None
+    row.email_contact = (body.email_contact or "").strip() or None
+    row.id_super_pdp = (body.id_super_pdp or "").strip() or None
+    row.rib = (body.rib or "").strip() or None
+    row.bic = (body.bic or "").strip() or None
+    row.tva_applicable = bool(body.tva_applicable)
+
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    db.refresh(row)
+    return _entreprise_to_schema(row)
+
+
 # --- Routes de l'API ---
 @app.get("/api/utilisateurs", response_model=List[UtilisateurSchema])
 def list_utilisateurs(request: Request, db: Session = Depends(get_db)):
@@ -2922,6 +3024,18 @@ def page_devis(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         request=request,
         name="devis.html",
+        context=brand_template_context(request, db),
+    )
+
+
+@app.get("/mon-entreprise", response_class=HTMLResponse)
+def page_mon_entreprise(request: Request, db: Session = Depends(get_db)):
+    user = get_session_user(request, db, Utilisateur)
+    if not user or (user.role or "").strip().lower() != "admin":
+        return RedirectResponse(url="/dashboard", status_code=303)
+    return templates.TemplateResponse(
+        request=request,
+        name="mon_entreprise.html",
         context=brand_template_context(request, db),
     )
 
