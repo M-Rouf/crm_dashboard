@@ -806,6 +806,33 @@ def eid(request: Request) -> int:
     return int(entreprise_id)
 
 
+
+def list_requetes_for_tenant(db: Session, entreprise_id: int):
+    """Requêtes du tenant via le contact (n8n peut renseigner un entreprise_id incohérent)."""
+    return (
+        db.query(Requete)
+        .join(Contact, Requete.contact_id == Contact.id)
+        .filter(Contact.entreprise_id == entreprise_id)
+        .options(joinedload(Requete.contact))
+        .all()
+    )
+
+
+def get_requete_for_tenant(
+    db: Session, requete_id: int, entreprise_id: int, detail: str = "Requête non trouvée."
+):
+    requete = (
+        db.query(Requete)
+        .join(Contact, Requete.contact_id == Contact.id)
+        .filter(Requete.id == requete_id, Contact.entreprise_id == entreprise_id)
+        .options(joinedload(Requete.contact))
+        .first()
+    )
+    if not requete:
+        raise HTTPException(status_code=404, detail=detail)
+    return requete
+
+
 class LoginBody(BaseModel):
     email: str
     password: str
@@ -1099,7 +1126,7 @@ def update_utilisateur_api(
 @app.get("/api/data", response_model=List[RequeteSchema])
 def get_data(request: Request, db: Session = Depends(get_db)):
     require_primary_user(request, db, Utilisateur)
-    return scoped(db, Requete, eid(request)).all()
+    return list_requetes_for_tenant(db, eid(request))
 
 
 @app.patch("/api/requete/{requete_id}/statut", response_model=RequeteSchema)
@@ -1110,7 +1137,7 @@ def update_statut(
     db: Session = Depends(get_db),
 ):
     require_primary_user(request, db, Utilisateur)
-    requete = get_one(db, Requete, requete_id, eid(request), "Requête non trouvée")
+    requete = get_requete_for_tenant(db, requete_id, eid(request))
     if statut_update.statut not in ["nouveau", "traite"]:
         raise HTTPException(status_code=400, detail="Statut invalide.")
 
