@@ -173,9 +173,6 @@ class Contact(Base):
 class Requete(Base):
     __tablename__ = "requetes"
     id = Column(Integer, primary_key=True, index=True)
-    entreprise_id = Column(
-        Integer, ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False
-    )
     contact_id = Column(
         Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
     )
@@ -1099,7 +1096,12 @@ def update_utilisateur_api(
 @app.get("/api/data", response_model=List[RequeteSchema])
 def get_data(request: Request, db: Session = Depends(get_db)):
     require_primary_user(request, db, Utilisateur)
-    return scoped(db, Requete, eid(request)).all()
+    return (
+        db.query(Requete)
+        .options(joinedload(Requete.contact))
+        .order_by(Requete.date_reception.desc())
+        .all()
+    )
 
 
 @app.patch("/api/requete/{requete_id}/statut", response_model=RequeteSchema)
@@ -1110,7 +1112,14 @@ def update_statut(
     db: Session = Depends(get_db),
 ):
     require_primary_user(request, db, Utilisateur)
-    requete = get_one(db, Requete, requete_id, eid(request), "Requête non trouvée")
+    requete = (
+        db.query(Requete)
+        .options(joinedload(Requete.contact))
+        .filter(Requete.id == requete_id)
+        .first()
+    )
+    if not requete:
+        raise HTTPException(status_code=404, detail="Requête non trouvée.")
     if statut_update.statut not in ["nouveau", "traite"]:
         raise HTTPException(status_code=400, detail="Statut invalide.")
 
