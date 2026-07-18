@@ -273,7 +273,7 @@
                 </span>
               </div>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-center">
               <button @click="startEdit"
                 class="text-sky-600 hover:text-sky-900 px-3 py-1.5 rounded-xl hover:bg-sky-50 transition-colors flex items-center gap-1.5 text-sm font-medium"
                 title="Editer">
@@ -285,6 +285,17 @@
                   <path d="m15 5 4 4" />
                 </svg>
                 Editer
+              </button>
+              <button @click="deleteContact" :disabled="isDeleting"
+                class="text-red-600 hover:text-red-800 px-3 py-1.5 rounded-xl hover:bg-red-50 transition-colors flex items-center gap-1.5 text-sm font-medium disabled:opacity-50"
+                title="Supprimer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                {{ isDeleting ? 'Suppression…' : 'Supprimer' }}
               </button>
               <button @click="selectedContact = null; isEditingContact = false"
                 class="text-gray-400 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100 transition-colors"
@@ -586,6 +597,7 @@
         const editedContact = ref({});
         const isUpdating = ref(false);
         const updateError = ref("");
+        const isDeleting = ref(false);
 
         const startEdit = () => {
           editedContact.value = { ...selectedContact.value };
@@ -628,6 +640,40 @@
             updateError.value = e.message;
           } finally {
             isUpdating.value = false;
+          }
+        };
+
+        const deleteContact = async () => {
+          if (!selectedContact.value) return;
+          const label =
+            `${selectedContact.value.prenom || ""} ${selectedContact.value.nom || ""}`.trim() ||
+            selectedContact.value.email;
+          if (
+            !confirm(
+              `Supprimer le contact « ${label} » ?\nCette action est irréversible.`,
+            )
+          ) {
+            return;
+          }
+          isDeleting.value = true;
+          try {
+            const res = await fetch(
+              `/api/contacts/${selectedContact.value.id}`,
+              { method: "DELETE" },
+            );
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(
+                data.detail || "Erreur lors de la suppression du contact.",
+              );
+            }
+            selectedContact.value = null;
+            isEditingContact.value = false;
+            await fetchData();
+          } catch (e) {
+            alert(e.message || "Erreur lors de la suppression.");
+          } finally {
+            isDeleting.value = false;
           }
         };
 
@@ -748,8 +794,10 @@
           editedContact,
           isUpdating,
           updateError,
+          isDeleting,
           startEdit,
           updateContact,
+          deleteContact,
           showAddModal,
           isSubmitting,
           addError,

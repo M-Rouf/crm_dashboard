@@ -1191,6 +1191,14 @@ def update_contact(
     return contact
 
 
+@app.delete("/api/contacts/{contact_id}")
+def delete_contact(contact_id: int, request: Request, db: Session = Depends(get_db)):
+    contact = get_one(db, Contact, contact_id, eid(request), "Contact non trouvé")
+    db.delete(contact)
+    db.commit()
+    return {"status": "success", "id": contact_id}
+
+
 @app.get("/api/actions", response_model=List[ActionSchema])
 def get_actions(request: Request, db: Session = Depends(get_db)):
     actions = scoped(db, Action, eid(request)).all()
