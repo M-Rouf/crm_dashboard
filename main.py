@@ -163,11 +163,17 @@ class Contact(Base):
     telephone = Column(String(30))
     date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
-    requetes = relationship("Requete", back_populates="contact")
-    devis = relationship("Devis", back_populates="contact")
-    actions = relationship("Action", back_populates="contact")
-    commandes = relationship("Commande", back_populates="contact")
-    factures = relationship("Facture", back_populates="contact")
+    requetes = relationship(
+        "Requete", back_populates="contact", passive_deletes=True
+    )
+    devis = relationship("Devis", back_populates="contact", passive_deletes=True)
+    actions = relationship("Action", back_populates="contact", passive_deletes=True)
+    commandes = relationship(
+        "Commande", back_populates="contact", passive_deletes=True
+    )
+    factures = relationship(
+        "Facture", back_populates="contact", passive_deletes=True
+    )
 
 
 class Requete(Base):
@@ -1194,8 +1200,47 @@ def update_contact(
 @app.delete("/api/contacts/{contact_id}")
 def delete_contact(contact_id: int, request: Request, db: Session = Depends(get_db)):
     contact = get_one(db, Contact, contact_id, eid(request), "Contact non trouvé")
-    db.delete(contact)
-    db.commit()
+    try:
+        # Détacher les actions (FK SET NULL) avant suppression
+        db.query(Action).filter(Action.contact_id == contact_id).update(
+            {Action.contact_id: None}, synchronize_session=False
+        )
+
+        facture_ids = [
+            row[0]
+            for row in db.query(Facture.id)
+            .filter(Facture.contact_id == contact_id)
+            .all()
+        ]
+        if facture_ids:
+            # Couper les liens avoir ↔ facture avant suppressions
+            db.query(Facture).filter(
+                Facture.id_facture_associee.in_(facture_ids)
+            ).update(
+                {Facture.id_facture_associee: None}, synchronize_session=False
+            )
+            db.query(Facture).filter(Facture.contact_id == contact_id).delete(
+                synchronize_session=False
+            )
+
+        db.query(Commande).filter(Commande.contact_id == contact_id).delete(
+            synchronize_session=False
+        )
+        db.query(Devis).filter(Devis.client == contact_id).delete(
+            synchronize_session=False
+        )
+        db.query(Requete).filter(Requete.contact_id == contact_id).delete(
+            synchronize_session=False
+        )
+
+        db.delete(contact)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Impossible de supprimer le contact : {e}",
+        )
     return {"status": "success", "id": contact_id}
 
 
