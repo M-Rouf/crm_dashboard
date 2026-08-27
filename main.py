@@ -8,10 +8,18 @@ import sys
 import urllib.request
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import Dict, List, Optional
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+)
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -39,8 +47,8 @@ from sqlalchemy.orm import (
 )
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from scripts.generate_devis import generate_devis_files
 from scripts.generate_avoir import generate_avoir_files
+from scripts.generate_devis import generate_devis_files
 from scripts.generate_facture import generate_facture_files
 from scripts.generate_registre import generate_registre_files
 from tenant_auth import (
@@ -54,7 +62,6 @@ from tenant_auth import (
     setup_auth_middleware,
     setup_session_middleware,
     verify_password,
-    webhook_entreprise_id,
 )
 
 # --- Configurations de la Base de Données ---
@@ -87,7 +94,7 @@ def brand_template_context(request: Request, db: Session) -> dict:
     }
 
 
-def resolve_entreprise_logo_url(nom_usage: Optional[str]) -> Optional[str]:
+def resolve_entreprise_logo_url(nom_usage: str | None) -> str | None:
     """URL publique du logo : files/logos/{nom_usage}.png ou .jpg"""
     if not nom_usage:
         return None
@@ -163,17 +170,11 @@ class Contact(Base):
     telephone = Column(String(30))
     date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
-    requetes = relationship(
-        "Requete", back_populates="contact", passive_deletes=True
-    )
+    requetes = relationship("Requete", back_populates="contact", passive_deletes=True)
     devis = relationship("Devis", back_populates="contact", passive_deletes=True)
     actions = relationship("Action", back_populates="contact", passive_deletes=True)
-    commandes = relationship(
-        "Commande", back_populates="contact", passive_deletes=True
-    )
-    factures = relationship(
-        "Facture", back_populates="contact", passive_deletes=True
-    )
+    commandes = relationship("Commande", back_populates="contact", passive_deletes=True)
+    factures = relationship("Facture", back_populates="contact", passive_deletes=True)
 
 
 class Requete(Base):
@@ -308,7 +309,7 @@ class Facture(Base):
     )
 
 
-def _facture_platform_bucket(statut_plateforme: Optional[str]) -> str:
+def _facture_platform_bucket(statut_plateforme: str | None) -> str:
     s = (statut_plateforme or "").strip().lower() or "draft"
     if s == "draft":
         return "draft"
@@ -331,7 +332,7 @@ def _post_facture_email_webhook(facture: Facture) -> None:
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
-        "https://n8n.mrliw.fr/webhook/envoi_factures",
+        "https://n8n.mrliw.fr/webhook-test/envoi_factures",
         data=data,
         headers={"Content-Type": "application/json"},
     )
@@ -341,7 +342,7 @@ def _post_facture_email_webhook(facture: Facture) -> None:
 
 def _money_dec(value) -> Decimal:
     if value is None:
-        return Decimal("0")
+        return Decimal(0)
     return Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
@@ -349,10 +350,8 @@ def _facture_taux_tva(facture: Facture) -> Decimal:
     ht = _money_dec(facture.montant_ht)
     tva = _money_dec(facture.montant_tva)
     if ht <= 0:
-        return Decimal("0")
-    return (tva / ht * Decimal("100")).quantize(
-        Decimal("0.01"), rounding=ROUND_HALF_UP
-    )
+        return Decimal(0)
+    return (tva / ht * Decimal(100)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def _calc_avoir_montants(
@@ -374,9 +373,9 @@ def _calc_avoir_montants(
         Decimal("0.01"), rounding=ROUND_HALF_UP
     )
     if taux_tva > 0 and montant_ht > 0:
-        attendu_ttc = (
-            montant_ht + montant_ht * taux_tva / Decimal("100")
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        attendu_ttc = (montant_ht + montant_ht * taux_tva / Decimal(100)).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
         if abs(attendu_ttc - montant_ttc) > Decimal("0.02"):
             raise HTTPException(
                 status_code=400,
@@ -440,7 +439,7 @@ def _sync_facture_paiement_from_montants(facture: Facture, db: Session) -> None:
     _reconcile_paiement_rows([facture], db)
 
 
-def _reconcile_paiement_rows(rows: List[Facture], db: Session) -> None:
+def _reconcile_paiement_rows(rows: list[Facture], db: Session) -> None:
     """Met à jour en base les statuts incohérents (ex. paye avec montant_paye < TTC)."""
     if not rows:
         return
@@ -472,46 +471,46 @@ def _reconcile_paiement_rows(rows: List[Facture], db: Session) -> None:
 # --- Schémas Pydantic ---
 class ContactSchema(BaseModel):
     id: int
-    prenom: Optional[str] = None
-    nom: Optional[str] = None
-    entreprise: Optional[str] = None
-    siret: Optional[str] = None
-    tva_intra: Optional[str] = None
-    type_entite: Optional[str] = "B2B"
-    poste: Optional[str] = None
-    adresse_livraison: Optional[str] = None
-    adresse_facturation: Optional[str] = None
+    prenom: str | None = None
+    nom: str | None = None
+    entreprise: str | None = None
+    siret: str | None = None
+    tva_intra: str | None = None
+    type_entite: str | None = "B2B"
+    poste: str | None = None
+    adresse_livraison: str | None = None
+    adresse_facturation: str | None = None
     email: str
-    telephone: Optional[str] = None
-    date_creation: Optional[datetime.datetime] = None
+    telephone: str | None = None
+    date_creation: datetime.datetime | None = None
 
     class Config:
         from_attributes = True
 
 
 class ContactCreate(BaseModel):
-    prenom: Optional[str] = None
-    nom: Optional[str] = None
-    entreprise: Optional[str] = None
-    siret: Optional[str] = None
-    tva_intra: Optional[str] = None
-    type_entite: Optional[str] = "B2B"
-    poste: Optional[str] = None
+    prenom: str | None = None
+    nom: str | None = None
+    entreprise: str | None = None
+    siret: str | None = None
+    tva_intra: str | None = None
+    type_entite: str | None = "B2B"
+    poste: str | None = None
     email: str
-    telephone: Optional[str] = None
-    adresse_livraison: Optional[str] = None
-    adresse_facturation: Optional[str] = None
+    telephone: str | None = None
+    adresse_livraison: str | None = None
+    adresse_facturation: str | None = None
 
 
 class RequeteSchema(BaseModel):
     id: int
     contact_id: int
-    priorite: Optional[str] = "normale"
-    sujet: Optional[str] = None
+    priorite: str | None = "normale"
+    sujet: str | None = None
     message: str
-    statut: Optional[str] = "nouveau"
-    source: Optional[str] = "formulaire_web"
-    date_reception: Optional[datetime.datetime] = None
+    statut: str | None = "nouveau"
+    source: str | None = "formulaire_web"
+    date_reception: datetime.datetime | None = None
     contact: ContactSchema
 
     class Config:
@@ -525,13 +524,13 @@ class StatutUpdate(BaseModel):
 class ActionSchema(BaseModel):
     id: int
     nom: str
-    contact_id: Optional[int] = None
-    detail: Optional[str] = None
-    priorite: Optional[str] = "normale"
-    statut: Optional[str] = "nouveau"
-    date: Optional[datetime.datetime] = None
+    contact_id: int | None = None
+    detail: str | None = None
+    priorite: str | None = "normale"
+    statut: str | None = "nouveau"
+    date: datetime.datetime | None = None
 
-    contact: Optional[ContactSchema] = None
+    contact: ContactSchema | None = None
 
     class Config:
         from_attributes = True
@@ -545,17 +544,17 @@ class DevisSchema(BaseModel):
     id: int
     nom: str
     client: int
-    description: Optional[str] = None
-    montant_ht: Optional[float] = None
-    montant_tva: Optional[float] = 0.0
-    montant_ttc: Optional[float] = 0.0
-    file_path: Optional[str] = None
-    statut: Optional[str] = "En attente"
-    type: Optional[str] = "émis"
-    date_emission: Optional[datetime.datetime] = None
+    description: str | None = None
+    montant_ht: float | None = None
+    montant_tva: float | None = 0.0
+    montant_ttc: float | None = 0.0
+    file_path: str | None = None
+    statut: str | None = "En attente"
+    type: str | None = "émis"
+    date_emission: datetime.datetime | None = None
 
     # Relationship for frontend mapping
-    contact: Optional[ContactSchema] = None
+    contact: ContactSchema | None = None
 
     class Config:
         from_attributes = True
@@ -567,23 +566,23 @@ class DevisStatutUpdate(BaseModel):
 
 class CommandeSchema(BaseModel):
     id: int
-    reference: Optional[str] = None
-    description: Optional[str] = None
+    reference: str | None = None
+    description: str | None = None
     contact_id: int
-    devis_id: Optional[int] = None
+    devis_id: int | None = None
     flux: str
-    statut: Optional[str] = "en_attente"
-    priorite: Optional[str] = "normale"
-    montant_ht: Optional[float] = 0
-    montant_ttc: Optional[float] = 0
-    file_path: Optional[str] = None
-    date_commande: Optional[datetime.datetime] = None
-    date_livraison_prevue: Optional[datetime.datetime] = None
-    url_suivi_colis: Optional[str] = None
-    notes_internes: Optional[str] = None
+    statut: str | None = "en_attente"
+    priorite: str | None = "normale"
+    montant_ht: float | None = 0
+    montant_ttc: float | None = 0
+    file_path: str | None = None
+    date_commande: datetime.datetime | None = None
+    date_livraison_prevue: datetime.datetime | None = None
+    url_suivi_colis: str | None = None
+    notes_internes: str | None = None
 
-    contact: Optional[ContactSchema] = None
-    devis: Optional[DevisSchema] = None
+    contact: ContactSchema | None = None
+    devis: DevisSchema | None = None
 
     class Config:
         from_attributes = True
@@ -595,19 +594,19 @@ class StatutCommandeUpdate(BaseModel):
 
 class CommandeUpdate(BaseModel):
     reference: str
-    description: Optional[str] = None
+    description: str | None = None
     contact_id: int
-    devis_id: Optional[int] = None
+    devis_id: int | None = None
     priorite: str
-    date_livraison_prevue: Optional[str] = None
-    url_suivi_colis: Optional[str] = None
-    notes_internes: Optional[str] = None
+    date_livraison_prevue: str | None = None
+    url_suivi_colis: str | None = None
+    notes_internes: str | None = None
 
 
 class FactureDevisMini(BaseModel):
     id: int
-    nom: Optional[str] = None
-    statut: Optional[str] = None
+    nom: str | None = None
+    statut: str | None = None
 
     class Config:
         from_attributes = True
@@ -615,7 +614,7 @@ class FactureDevisMini(BaseModel):
 
 class FactureCommandeMini(BaseModel):
     id: int
-    reference: Optional[str] = None
+    reference: str | None = None
 
     class Config:
         from_attributes = True
@@ -623,7 +622,7 @@ class FactureCommandeMini(BaseModel):
 
 class FactureLieeMini(BaseModel):
     id: int
-    numero_facture: Optional[str] = None
+    numero_facture: str | None = None
 
     class Config:
         from_attributes = True
@@ -633,28 +632,28 @@ class FactureSchema(BaseModel):
     id: int
     numero_facture: str
     contact_id: int
-    devis_id: Optional[int] = None
-    commande_id: Optional[int] = None
+    devis_id: int | None = None
+    commande_id: int | None = None
     flux: str
-    montant_ht: Optional[float] = None
-    montant_tva: Optional[float] = None
-    montant_ttc: Optional[float] = None
-    devise: Optional[str] = "EUR"
-    file_path: Optional[str] = None
-    external_id: Optional[str] = None
-    statut_plateforme: Optional[str] = "draft"
-    statut_paiement: Optional[str] = "non_paye"
-    type_facture: Optional[str] = "Facture"
-    montant_paye: Optional[float] = 0
-    categorie: Optional[str] = "AUTRE"
-    id_facture_associee: Optional[int] = None
-    date_emission: Optional[datetime.datetime] = None
-    date_echeance: Optional[datetime.datetime] = None
-    date_paiement: Optional[datetime.datetime] = None
-    contact: Optional[ContactSchema] = None
-    devis: Optional[FactureDevisMini] = None
-    commande: Optional[FactureCommandeMini] = None
-    facture_associee: Optional[FactureLieeMini] = None
+    montant_ht: float | None = None
+    montant_tva: float | None = None
+    montant_ttc: float | None = None
+    devise: str | None = "EUR"
+    file_path: str | None = None
+    external_id: str | None = None
+    statut_plateforme: str | None = "draft"
+    statut_paiement: str | None = "non_paye"
+    type_facture: str | None = "Facture"
+    montant_paye: float | None = 0
+    categorie: str | None = "AUTRE"
+    id_facture_associee: int | None = None
+    date_emission: datetime.datetime | None = None
+    date_echeance: datetime.datetime | None = None
+    date_paiement: datetime.datetime | None = None
+    contact: ContactSchema | None = None
+    devis: FactureDevisMini | None = None
+    commande: FactureCommandeMini | None = None
+    facture_associee: FactureLieeMini | None = None
 
     class Config:
         from_attributes = True
@@ -668,7 +667,7 @@ class FactureAvoirBody(BaseModel):
     raison: str
     montant_ht: float
     montant_ttc: float
-    numero_facture: Optional[str] = ""
+    numero_facture: str | None = ""
 
 
 class FactureCategorieUpdate(BaseModel):
@@ -750,7 +749,7 @@ def _calc_facture_tva_amounts(
     taux = float(taux_tva)
     if taux not in TAUX_TVA_VALIDES:
         taux = 20.0
-    montant_tva = (total_ht * Decimal(str(taux)) / Decimal("100")).quantize(
+    montant_tva = (total_ht * Decimal(str(taux)) / Decimal(100)).quantize(
         Decimal("0.01"), rounding=ROUND_HALF_UP
     )
     montant_ttc = (total_ht + montant_tva).quantize(
@@ -762,21 +761,21 @@ def _calc_facture_tva_amounts(
 class DashboardChartsSchema(BaseModel):
     mois_debut: str
     mois_fin: str
-    months: List[str]
-    categories: List[str]
-    achats_ttc: List[float]
-    ventes_ttc: List[float]
-    resultat_apres_impots_ht: List[float]
-    ventes_par_categorie: Dict[str, List[float]]
-    achats_par_categorie: Dict[str, List[float]]
+    months: list[str]
+    categories: list[str]
+    achats_ttc: list[float]
+    ventes_ttc: list[float]
+    resultat_apres_impots_ht: list[float]
+    ventes_par_categorie: dict[str, list[float]]
+    achats_par_categorie: dict[str, list[float]]
 
 
 class DashboardPieChartsSchema(BaseModel):
     mois_debut: str
     mois_fin: str
-    categories: List[str]
-    achats_par_categorie: Dict[str, float]
-    ventes_par_categorie: Dict[str, float]
+    categories: list[str]
+    achats_par_categorie: dict[str, float]
+    ventes_par_categorie: dict[str, float]
     achats_total: float
     ventes_total: float
 
@@ -833,7 +832,11 @@ def get_db():
 def auth_login(body: LoginBody, request: Request, db: Session = Depends(get_db)):
     email = (body.email or "").strip().lower()
     user = db.query(Utilisateur).filter(Utilisateur.email == email).first()
-    if not user or not user.actif or not verify_password(body.password, user.mot_de_passe_hash):
+    if (
+        not user
+        or not user.actif
+        or not verify_password(body.password, user.mot_de_passe_hash)
+    ):
         raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect.")
     request.session["user_id"] = user.id
     return {"status": "ok", "redirect": "/dashboard"}
@@ -850,7 +853,9 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
     user = get_session_user(request, db, Utilisateur)
     if not user:
         raise HTTPException(status_code=401, detail="Non authentifié.")
-    entreprise = db.query(Entreprise).filter(Entreprise.id == user.entreprise_id).first()
+    entreprise = (
+        db.query(Entreprise).filter(Entreprise.id == user.entreprise_id).first()
+    )
     entreprise_nom = entreprise.nom_usage if entreprise else None
     return {
         "id": user.id,
@@ -879,7 +884,7 @@ class UtilisateurSchema(BaseModel):
     email: str
     role: str
     actif: bool
-    date_creation: Optional[datetime.datetime] = None
+    date_creation: datetime.datetime | None = None
 
     class Config:
         from_attributes = True
@@ -898,7 +903,7 @@ class UtilisateurUpdateBody(BaseModel):
     nom: str
     prenom: str
     email: str
-    password: Optional[str] = ""
+    password: str | None = ""
     role: str
     actif: bool
 
@@ -913,19 +918,19 @@ def _normalize_utilisateur_role(role: str) -> str:
 class EntrepriseSchema(BaseModel):
     id: int
     nom_usage: str
-    raison_sociale: Optional[str] = None
+    raison_sociale: str | None = None
     siret: str
-    adresse: Optional[str] = None
-    code_postal: Optional[str] = None
-    ville: Optional[str] = None
-    telephone: Optional[str] = None
-    email_contact: Optional[str] = None
-    id_super_pdp: Optional[str] = None
-    rib: Optional[str] = None
-    bic: Optional[str] = None
+    adresse: str | None = None
+    code_postal: str | None = None
+    ville: str | None = None
+    telephone: str | None = None
+    email_contact: str | None = None
+    id_super_pdp: str | None = None
+    rib: str | None = None
+    bic: str | None = None
     tva_applicable: bool = False
-    logo_url: Optional[str] = None
-    date_creation: Optional[datetime.datetime] = None
+    logo_url: str | None = None
+    date_creation: datetime.datetime | None = None
 
     class Config:
         from_attributes = True
@@ -933,16 +938,16 @@ class EntrepriseSchema(BaseModel):
 
 class EntrepriseUpdateBody(BaseModel):
     nom_usage: str
-    raison_sociale: Optional[str] = ""
+    raison_sociale: str | None = ""
     siret: str
-    adresse: Optional[str] = ""
-    code_postal: Optional[str] = ""
-    ville: Optional[str] = ""
-    telephone: Optional[str] = ""
-    email_contact: Optional[str] = ""
-    id_super_pdp: Optional[str] = ""
-    rib: Optional[str] = ""
-    bic: Optional[str] = ""
+    adresse: str | None = ""
+    code_postal: str | None = ""
+    ville: str | None = ""
+    telephone: str | None = ""
+    email_contact: str | None = ""
+    id_super_pdp: str | None = ""
+    rib: str | None = ""
+    bic: str | None = ""
     tva_applicable: bool = False
 
 
@@ -1013,7 +1018,7 @@ def update_entreprise_api(
 
 
 # --- Routes de l'API ---
-@app.get("/api/utilisateurs", response_model=List[UtilisateurSchema])
+@app.get("/api/utilisateurs", response_model=list[UtilisateurSchema])
 def list_utilisateurs(request: Request, db: Session = Depends(get_db)):
     require_admin(request, db, Utilisateur)
     rows = (
@@ -1099,7 +1104,7 @@ def update_utilisateur_api(
     return user
 
 
-@app.get("/api/data", response_model=List[RequeteSchema])
+@app.get("/api/data", response_model=list[RequeteSchema])
 def get_data(request: Request, db: Session = Depends(get_db)):
     require_primary_user(request, db, Utilisateur)
     return (
@@ -1135,7 +1140,7 @@ def update_statut(
     return requete
 
 
-@app.get("/api/contacts", response_model=List[ContactSchema])
+@app.get("/api/contacts", response_model=list[ContactSchema])
 def get_contacts(request: Request, db: Session = Depends(get_db)):
     return scoped(db, Contact, eid(request)).all()
 
@@ -1145,9 +1150,7 @@ def create_contact(
     contact: ContactCreate, request: Request, db: Session = Depends(get_db)
 ):
     db_contact = (
-        scoped(db, Contact, eid(request))
-        .filter(Contact.email == contact.email)
-        .first()
+        scoped(db, Contact, eid(request)).filter(Contact.email == contact.email).first()
     )
     if db_contact:
         raise HTTPException(status_code=400, detail="Le contact est déjà enregistré.")
@@ -1216,9 +1219,7 @@ def delete_contact(contact_id: int, request: Request, db: Session = Depends(get_
             # Couper les liens avoir ↔ facture avant suppressions
             db.query(Facture).filter(
                 Facture.id_facture_associee.in_(facture_ids)
-            ).update(
-                {Facture.id_facture_associee: None}, synchronize_session=False
-            )
+            ).update({Facture.id_facture_associee: None}, synchronize_session=False)
             db.query(Facture).filter(Facture.contact_id == contact_id).delete(
                 synchronize_session=False
             )
@@ -1244,7 +1245,7 @@ def delete_contact(contact_id: int, request: Request, db: Session = Depends(get_
     return {"status": "success", "id": contact_id}
 
 
-@app.get("/api/actions", response_model=List[ActionSchema])
+@app.get("/api/actions", response_model=list[ActionSchema])
 def get_actions(request: Request, db: Session = Depends(get_db)):
     actions = scoped(db, Action, eid(request)).all()
     return [ActionSchema.from_orm(a) for a in actions]
@@ -1265,7 +1266,7 @@ def update_action_statut(
     return action
 
 
-@app.get("/api/commandes", response_model=List[CommandeSchema])
+@app.get("/api/commandes", response_model=list[CommandeSchema])
 def get_commandes(request: Request, db: Session = Depends(get_db)):
     return scoped(db, Commande, eid(request)).all()
 
@@ -1277,9 +1278,7 @@ def update_commande_statut(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    commande = get_one(
-        db, Commande, commande_id, eid(request), "Commande non trouvée"
-    )
+    commande = get_one(db, Commande, commande_id, eid(request), "Commande non trouvée")
 
     commande.statut = statut_update.statut
     db.commit()
@@ -1294,9 +1293,7 @@ def update_commande(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    commande = get_one(
-        db, Commande, commande_id, eid(request), "Commande non trouvée"
-    )
+    commande = get_one(db, Commande, commande_id, eid(request), "Commande non trouvée")
     get_one(db, Contact, payload.contact_id, eid(request), "Contact introuvable")
 
     if payload.devis_id:
@@ -1330,7 +1327,7 @@ def create_manual_commande(
     reference: str = Form(...),
     description: str = Form(""),
     contact_id: int = Form(...),
-    devis_id: Optional[int] = Form(None),
+    devis_id: int | None = Form(None),
     priorite: str = Form("normale"),
     montant_ht: float = Form(0.0),
     montant_ttc: float = Form(0.0),
@@ -1437,11 +1434,11 @@ def factures_unpaid_stats(request: Request, db: Session = Depends(get_db)):
     return out
 
 
-@app.get("/api/factures", response_model=List[FactureSchema])
+@app.get("/api/factures", response_model=list[FactureSchema])
 def list_factures(
     request: Request,
-    ref: Optional[str] = None,
-    client: Optional[str] = None,
+    ref: str | None = None,
+    client: str | None = None,
     include_paid: bool = True,
     db: Session = Depends(get_db),
 ):
@@ -1504,7 +1501,9 @@ def get_next_facture_reference(
     tenant_id = eid(request)
     k = (kind or "f").strip().lower()
     if k not in ("f", "a"):
-        raise HTTPException(status_code=400, detail="Le paramètre kind doit être « f » ou « a ».")
+        raise HTTPException(
+            status_code=400, detail="Le paramètre kind doit être « f » ou « a »."
+        )
     if k == "a":
         ref = _next_avoir_reference(db, tenant_id)
         prefix = _document_ref_prefix(db, tenant_id, "a")
@@ -1713,8 +1712,7 @@ def add_facture_versement(
             detail="La facture est déjà entièrement payée.",
         )
     new_pay = (pay + ajout).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    if new_pay > ttc:
-        new_pay = ttc
+    new_pay = min(new_pay, ttc)
     if new_pay <= pay:
         raise HTTPException(
             status_code=400,
@@ -1870,7 +1868,7 @@ def generate_facture_avoir(
         ),
         date_emission=now,
         date_echeance=None,
-        date_paiement=now if montant_paye_avoir >= montant_ttc_avoir and montant_ttc_avoir > 0 else None,
+        date_paiement=now if montant_paye_avoir >= montant_ttc_avoir > 0 else None,
         type_facture="Avoir",
         montant_paye=montant_paye_avoir,
         categorie=facture.categorie or "AUTRE",
@@ -1931,7 +1929,7 @@ def create_manual_facture(
     if categorie_db not in FACTURE_CATEGORIES_VALIDES:
         categorie_db = "AUTRE"
 
-    d_id: Optional[int] = None
+    d_id: int | None = None
     if devis_id and str(devis_id).strip():
         try:
             d_id = int(devis_id)
@@ -1940,7 +1938,7 @@ def create_manual_facture(
         if d_id is not None:
             get_one(db, Devis, d_id, tenant_id, "Devis introuvable")
 
-    c_id: Optional[int] = None
+    c_id: int | None = None
     if commande_id and str(commande_id).strip():
         try:
             c_id = int(commande_id)
@@ -1949,7 +1947,7 @@ def create_manual_facture(
         if c_id is not None:
             get_one(db, Commande, c_id, tenant_id, "Commande introuvable")
 
-    def _parse_day(s: str) -> Optional[datetime.datetime]:
+    def _parse_day(s: str) -> datetime.datetime | None:
         if not s or not str(s).strip():
             return None
         try:
@@ -2060,29 +2058,29 @@ class ArticlePayload(BaseModel):
 
 
 class ConfirmDevisPayload(BaseModel):
-    id: Optional[int] = None
-    nom: Optional[str] = ""
-    prenom: Optional[str] = ""
-    entreprise: Optional[str] = ""
-    siret: Optional[str] = ""
-    tva_intra: Optional[str] = ""
-    type_entite: Optional[str] = "B2B"
-    adresse_facturation: Optional[str] = ""
-    adresse_livraison: Optional[str] = ""
+    id: int | None = None
+    nom: str | None = ""
+    prenom: str | None = ""
+    entreprise: str | None = ""
+    siret: str | None = ""
+    tva_intra: str | None = ""
+    type_entite: str | None = "B2B"
+    adresse_facturation: str | None = ""
+    adresse_livraison: str | None = ""
     email: str
-    articles: List[ArticlePayload] = []
+    articles: list[ArticlePayload] = []
     total_estime: float = 0.0
     tva_applicable: bool = False
     taux_tva: float = 20.0
     tva_percent: float = 0.0
     montant_tva: float = 0.0
     montant_ttc: float = 0.0
-    delai: Optional[str] = ""
+    delai: str | None = ""
     envoi: int = 1
-    note: Optional[str] = ""
+    note: str | None = ""
     texte: str
-    designation: Optional[str] = ""
-    nom_devis: Optional[str] = ""
+    designation: str | None = ""
+    nom_devis: str | None = ""
 
 
 class UpdateDevisPayload(BaseModel):
@@ -2134,18 +2132,12 @@ def trigger_action_webhook(payload: WebhookPayload, request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def _resolve_devis_associe_label(
-    value: str, db: Session, entreprise_id: int
-) -> str:
+def _resolve_devis_associe_label(value: str, db: Session, entreprise_id: int) -> str:
     value = (value or "").strip()
     if not value:
         return ""
     if value.isdigit():
-        devis = (
-            scoped(db, Devis, entreprise_id)
-            .filter(Devis.id == int(value))
-            .first()
-        )
+        devis = scoped(db, Devis, entreprise_id).filter(Devis.id == int(value)).first()
         return devis.nom if devis else value
     devis = scoped(db, Devis, entreprise_id).filter(Devis.nom == value).first()
     return devis.nom if devis else value
@@ -2155,7 +2147,7 @@ def _enrich_facture_webhook_response(
     data,
     db: Session,
     entreprise_id: int,
-    fallback_devis_id: Optional[int] = None,
+    fallback_devis_id: int | None = None,
 ):
     if not isinstance(data, dict):
         return data
@@ -2205,21 +2197,21 @@ def trigger_factures_webhook(
 
 
 class ConfirmFacturePayload(BaseModel):
-    prenom: Optional[str] = ""
-    nom: Optional[str] = ""
-    entreprise: Optional[str] = ""
+    prenom: str | None = ""
+    nom: str | None = ""
+    entreprise: str | None = ""
     email: str
-    adresse_facturation: Optional[str] = ""
-    description: Optional[str] = ""
-    categorie: Optional[str] = "AUTRE"
-    devis_associe: Optional[str] = ""
-    articles: List[ArticlePayload] = []
+    adresse_facturation: str | None = ""
+    description: str | None = ""
+    categorie: str | None = "AUTRE"
+    devis_associe: str | None = ""
+    articles: list[ArticlePayload] = []
     tva_applicable: bool = False
     taux_tva: float = 20.0
-    numero_facture: Optional[str] = ""
+    numero_facture: str | None = ""
 
 
-def _entreprise_ref_slug(nom_usage: Optional[str]) -> str:
+def _entreprise_ref_slug(nom_usage: str | None) -> str:
     s = (nom_usage or "entreprise").strip().lower()
     s = re.sub(r"[^a-z0-9]+", "_", s)
     s = re.sub(r"_+", "_", s).strip("_")
@@ -2255,9 +2247,7 @@ def _document_ref_prefix(db: Session, entreprise_id: int, kind: str) -> str:
     return f"{slug}_{kind}{now.strftime('%y')}{now.strftime('%m')}"
 
 
-def _next_sequential_reference(
-    db: Session, entreprise_id: int, prefix: str
-) -> str:
+def _next_sequential_reference(db: Session, entreprise_id: int, prefix: str) -> str:
     rows = (
         scoped(db, Facture, entreprise_id)
         .with_entities(Facture.numero_facture)
@@ -2293,7 +2283,7 @@ def _require_devis_nom(nom: str) -> str:
 
 
 def _devis_nom_exists(
-    db: Session, entreprise_id: int, nom: str, exclude_id: Optional[int] = None
+    db: Session, entreprise_id: int, nom: str, exclude_id: int | None = None
 ) -> bool:
     q = scoped(db, Devis, entreprise_id).filter(Devis.nom == nom)
     if exclude_id is not None:
@@ -2337,12 +2327,12 @@ def confirm_facture_creation(
     if categorie not in FACTURE_CATEGORIES_VALIDES:
         raise HTTPException(status_code=400, detail="Catégorie de facture invalide.")
 
-    total_ht = Decimal("0")
+    total_ht = Decimal(0)
     for a in payload.articles:
         pu = Decimal(str(a.prix_unitaire))
         q = Decimal(str(a.quantite))
         r = Decimal(str(a.remise or 0))
-        total_ht += pu * q * (Decimal("1") - r / Decimal("100"))
+        total_ht += pu * q * (Decimal(1) - r / Decimal(100))
     total_ht = total_ht.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     montant_tva, montant_ttc, taux_tva = _calc_facture_tva_amounts(
         total_ht, bool(payload.tva_applicable), payload.taux_tva
@@ -2374,9 +2364,7 @@ def confirm_facture_creation(
 
     entreprise = (payload.entreprise or "").strip()
     prenom_nom = f"{payload.prenom or ''} {payload.nom or ''}".strip()
-    nom_client = (
-        f"{prenom_nom} ({entreprise})" if entreprise else prenom_nom
-    )
+    nom_client = f"{prenom_nom} ({entreprise})" if entreprise else prenom_nom
 
     ref_devis = (payload.devis_associe or "").strip()
     devis_id = None
@@ -2561,7 +2549,9 @@ def page_dashboard(request: Request, db: Session = Depends(get_db)):
     )
 
 
-def _aggregate_pending_payments(factures: list, flux: str) -> DashboardPendingFluxSchema:
+def _aggregate_pending_payments(
+    factures: list, flux: str
+) -> DashboardPendingFluxSchema:
     flux_key = flux.strip().lower()
     total_ttc = Decimal("0.00")
     total_reste = Decimal("0.00")
@@ -2582,10 +2572,10 @@ def _aggregate_pending_payments(factures: list, flux: str) -> DashboardPendingFl
     )
 
 
-@app.get("/api/dashboard/pending-payments", response_model=DashboardPendingPaymentsSchema)
-def dashboard_pending_payments(
-    request: Request, db: Session = Depends(get_db)
-):
+@app.get(
+    "/api/dashboard/pending-payments", response_model=DashboardPendingPaymentsSchema
+)
+def dashboard_pending_payments(request: Request, db: Session = Depends(get_db)):
     factures = (
         scoped(db, Facture, eid(request))
         .filter(
@@ -2648,7 +2638,7 @@ def _query_paid_factures(
     date_debut: datetime.date,
     date_fin: datetime.date,
     entreprise_id: int,
-    flux: Optional[str] = None,
+    flux: str | None = None,
 ) -> list:
     date_debut_dt = datetime.datetime.combine(date_debut, datetime.time.min)
     date_fin_dt = datetime.datetime.combine(date_fin, datetime.time.max)
@@ -2736,17 +2726,15 @@ def _build_registre_data(factures: list) -> tuple[list, dict]:
     totals["resultat_ht"] = totals["vente_ht"] - totals["achat_ht"]
     totals["resultat_ttc"] = totals["vente_ttc"] - totals["achat_ttc"]
     totals["resultat_avant_impots_ht"] = totals["resultat_ht"] + totals["impots_ht"]
-    totals["resultat_avant_impots_ttc"] = (
-        totals["resultat_ttc"] + totals["impots_ttc"]
-    )
+    totals["resultat_avant_impots_ttc"] = totals["resultat_ttc"] + totals["impots_ttc"]
     return items, totals
 
 
 @app.get("/api/dashboard/kpi", response_model=DashboardKpiSchema)
 def dashboard_kpi(
     request: Request,
-    year: Optional[int] = None,
-    month: Optional[int] = None,
+    year: int | None = None,
+    month: int | None = None,
     db: Session = Depends(get_db),
 ):
     today = datetime.date.today()
@@ -2764,7 +2752,7 @@ def dashboard_kpi(
 @app.get("/api/dashboard/kpi-year", response_model=DashboardKpiYearSchema)
 def dashboard_kpi_year(
     request: Request,
-    year: Optional[int] = None,
+    year: int | None = None,
     db: Session = Depends(get_db),
 ):
     today = datetime.date.today()
@@ -2836,12 +2824,12 @@ def _month_keys_between(mois_debut: str, mois_fin: str) -> list[str]:
     return keys
 
 
-def _normalize_facture_categorie(categorie: Optional[str]) -> str:
+def _normalize_facture_categorie(categorie: str | None) -> str:
     key = (categorie or "AUTRE").strip().upper() or "AUTRE"
     return key if key in FACTURE_CATEGORIES else "AUTRE"
 
 
-def _facture_payment_month_key(date_paiement) -> Optional[str]:
+def _facture_payment_month_key(date_paiement) -> str | None:
     if not date_paiement:
         return None
     if isinstance(date_paiement, datetime.datetime):
@@ -2864,9 +2852,7 @@ def _build_monthly_charts_data(
     achats_ttc = [Decimal("0.00")] * n
     ventes_ht = [Decimal("0.00")] * n
     achats_ht = [Decimal("0.00")] * n
-    ventes_par_categorie = {
-        cat: [Decimal("0.00")] * n for cat in FACTURE_CATEGORIES
-    }
+    ventes_par_categorie = {cat: [Decimal("0.00")] * n for cat in FACTURE_CATEGORIES}
     achats_par_categorie = {cat: [Decimal("0.00")] * n for cat in FACTURE_CATEGORIES}
 
     for facture in _query_paid_factures(db, date_debut, date_fin, entreprise_id):
@@ -2898,7 +2884,9 @@ def _build_monthly_charts_data(
             achats_par_categorie[categorie][idx] += montant_ttc
 
     def _series(values: list[Decimal]) -> list[float]:
-        return [float(v.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)) for v in values]
+        return [
+            float(v.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)) for v in values
+        ]
 
     resultat_apres_impots_ht = [
         (ventes_ht[i] - achats_ht[i]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -2925,8 +2913,8 @@ def _build_monthly_charts_data(
 @app.get("/api/dashboard/charts", response_model=DashboardChartsSchema)
 def dashboard_charts(
     request: Request,
-    mois_debut: Optional[str] = None,
-    mois_fin: Optional[str] = None,
+    mois_debut: str | None = None,
+    mois_fin: str | None = None,
     db: Session = Depends(get_db),
 ):
     default_debut, default_fin = _default_chart_period()
@@ -2969,8 +2957,8 @@ def _build_pie_charts_data(
 @app.get("/api/dashboard/pie-charts", response_model=DashboardPieChartsSchema)
 def dashboard_pie_charts(
     request: Request,
-    mois_debut: Optional[str] = None,
-    mois_fin: Optional[str] = None,
+    mois_debut: str | None = None,
+    mois_fin: str | None = None,
     db: Session = Depends(get_db),
 ):
     default_debut, default_fin = _default_pie_period()
@@ -3039,7 +3027,7 @@ def generate_registre(
     return {"status": "success", "file_path": generations["url_path"]}
 
 
-@app.get("/api/devis", response_model=List[DevisSchema])
+@app.get("/api/devis", response_model=list[DevisSchema])
 def get_devis_list(request: Request, db: Session = Depends(get_db)):
     return scoped(db, Devis, eid(request)).all()
 
@@ -3065,7 +3053,7 @@ def check_devis_reference(
     request: Request,
     db: Session = Depends(get_db),
     numero: str = Query(..., min_length=1),
-    exclude_id: Optional[int] = Query(None),
+    exclude_id: int | None = Query(None),
 ):
     num = _require_devis_nom(numero)
     tenant_id = eid(request)
