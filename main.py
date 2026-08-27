@@ -1805,6 +1805,8 @@ def generate_facture_avoir(
     nom_client = f"{prenom_nom} ({client_societe})" if client_societe else prenom_nom
     adresse_client = contact.adresse_facturation or contact.adresse_livraison or ""
     org = get_entreprise_row(db, tenant_id)
+    session_user = get_session_user(request, db, Utilisateur)
+    seller_email = (session_user.email if session_user else "") or ""
     generations = generate_avoir_files(
         ref_avoir=ref_avoir,
         ref_facture=facture.numero_facture,
@@ -1823,6 +1825,7 @@ def generate_facture_avoir(
         buyer_nom=contact.nom or "",
         buyer_siret=contact.siret or "",
         buyer_tva_intra=contact.tva_intra or "",
+        seller_electronic_address=seller_email,
     )
 
     montant_paye_initial = _money_dec(facture.montant_paye)
@@ -2376,6 +2379,8 @@ def confirm_facture_creation(
     org = get_entreprise_row(db, tenant_id)
     now = datetime.datetime.now(datetime.timezone.utc)
     echeance = now + datetime.timedelta(days=30)
+    session_user = get_session_user(request, db, Utilisateur)
+    seller_email = (session_user.email if session_user else "") or ""
     generations = generate_facture_files(
         ref_facture=ref_facture,
         nom_client=nom_client,
@@ -2396,6 +2401,7 @@ def confirm_facture_creation(
         buyer_tva_intra=getattr(contact, "tva_intra", None) or "",
         date_emission=now,
         date_echeance=echeance,
+        seller_electronic_address=seller_email,
     )
     file_path = generations.get("url_path") or f"/files/factures/{ref_facture}.pdf"
 

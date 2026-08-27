@@ -136,6 +136,7 @@ def build_facturx_data_dict(
     buyer_nom: str = "",
     buyer_siret: str = "",
     buyer_tva_intra: str = "",
+    seller_electronic_address: str = "",
     ref_devis: str = "",
     ref_commande: str = "",
     description: str = "",
@@ -215,9 +216,15 @@ def build_facturx_data_dict(
     if seller_vat:
         data["BT-31"] = seller_vat
 
-    seller_email = (getattr(entreprise, "email_contact", None) or "").strip() if entreprise else ""
+    seller_email = (seller_electronic_address or "").strip()
+    if not seller_email and entreprise:
+        seller_email = (getattr(entreprise, "email_contact", None) or "").strip()
     seller_phone = (getattr(entreprise, "telephone", None) or "").strip() if entreprise else ""
+    # BT-34 = adresse électronique du vendeur (requis Super PDP / FE)
+    # scheme EM = Electronic Mail (EAS code list)
     if seller_email:
+        data["BT-34"] = seller_email
+        data["BT-34-1"] = "EM"
         data["BT-43"] = seller_email
     if seller_phone:
         data["BT-42"] = seller_phone
@@ -394,6 +401,7 @@ def make_facturx_pdf(
     buyer_nom: str = "",
     buyer_siret: str = "",
     buyer_tva_intra: str = "",
+    seller_electronic_address: str = "",
     ref_devis: str = "",
     ref_commande: str = "",
     description: str = "",
@@ -427,6 +435,7 @@ def make_facturx_pdf(
             buyer_nom=buyer_nom,
             buyer_siret=buyer_siret,
             buyer_tva_intra=buyer_tva_intra,
+            seller_electronic_address=seller_electronic_address,
             ref_devis=ref_devis,
             ref_commande=ref_commande,
             description=description,

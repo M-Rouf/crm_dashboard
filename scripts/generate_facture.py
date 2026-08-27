@@ -44,6 +44,7 @@ def generate_facture_files(
     buyer_tva_intra: str = "",
     date_emission=None,
     date_echeance=None,
+    seller_electronic_address: str = "",
     facturx: bool = True,
 ):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -189,6 +190,7 @@ def generate_facture_files(
             buyer_nom=buyer_nom,
             buyer_siret=buyer_siret,
             buyer_tva_intra=buyer_tva_intra,
+            seller_electronic_address=seller_electronic_address,
             ref_devis=ref_devis,
             ref_commande=ref_commande,
             description=description or "",

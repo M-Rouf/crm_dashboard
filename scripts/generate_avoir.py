@@ -40,6 +40,7 @@ def generate_avoir_files(
     buyer_nom: str = "",
     buyer_siret: str = "",
     buyer_tva_intra: str = "",
+    seller_electronic_address: str = "",
     facturx: bool = True,
 ):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -136,6 +137,7 @@ def generate_avoir_files(
             buyer_nom=buyer_nom,
             buyer_siret=buyer_siret,
             buyer_tva_intra=buyer_tva_intra,
+            seller_electronic_address=seller_electronic_address,
             description=f"Avoir relatif à la facture {ref_facture}. {description_avoir or ''}".strip(),
             document_type_code="381",
             preceding_invoice_ref=ref_facture,
