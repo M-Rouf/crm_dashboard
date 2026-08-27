@@ -5,6 +5,7 @@ from typing import Optional
 import pdfkit
 
 from scripts.entreprise_template import apply_entreprise_placeholders
+from scripts.facturx_invoice import make_facturx_pdf
 
 
 def _format_money(amount: float) -> str:
@@ -34,6 +35,12 @@ def generate_avoir_files(
     taux_tva: float,
     date_facture: Optional[datetime],
     entreprise=None,
+    buyer_entreprise: str = "",
+    buyer_prenom: str = "",
+    buyer_nom: str = "",
+    buyer_siret: str = "",
+    buyer_tva_intra: str = "",
+    facturx: bool = True,
 ):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     template_path = os.path.join(base_dir, "files", "templates", "template_avoirs.html")
@@ -91,8 +98,52 @@ def generate_avoir_files(
     except Exception as e:
         print(f"Erreur PDF generation avoir: {e}")
 
-    return {
+    result = {
         "html_path": html_output_path,
         "pdf_path": pdf_output_path,
         "url_path": f"/files/avoirs/{ref_avoir}.pdf",
+        "facturx": False,
+        "xml_path": None,
     }
+
+    if facturx and os.path.isfile(pdf_output_path):
+        tva_ok = float(taux_tva or 0) > 0
+        articles = [
+            {
+                "designation": description_avoir or f"Avoir sur {ref_facture}",
+                "quantite": 1,
+                "prix_unitaire": abs(ht),
+                "remise": 0,
+            }
+        ]
+        fx = make_facturx_pdf(
+            pdf_output_path,
+            ref_facture=ref_avoir,
+            articles=articles,
+            total_ht=abs(ht),
+            montant_tva=abs(tva),
+            total_ttc=abs(ttc),
+            tva_applicable=tva_ok,
+            taux_tva=taux if tva_ok else 0.0,
+            date_emission=datetime.now(),
+            date_echeance=datetime.now(),
+            entreprise=entreprise,
+            nom_client=nom_client,
+            adresse_client=adresse_client or "",
+            email_client=contact_client or "",
+            buyer_entreprise=buyer_entreprise,
+            buyer_prenom=buyer_prenom,
+            buyer_nom=buyer_nom,
+            buyer_siret=buyer_siret,
+            buyer_tva_intra=buyer_tva_intra,
+            description=f"Avoir relatif à la facture {ref_facture}. {description_avoir or ''}".strip(),
+            document_type_code="381",
+            preceding_invoice_ref=ref_facture,
+            preceding_invoice_date=date_facture,
+        )
+        result["facturx"] = bool(fx.get("facturx"))
+        result["xml_path"] = fx.get("xml_path")
+        if fx.get("error"):
+            print(f"Erreur Factur-X avoir: {fx['error']}")
+
+    return result

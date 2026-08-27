@@ -1820,6 +1820,11 @@ def generate_facture_avoir(
         taux_tva=float(taux_tva),
         date_facture=facture.date_emission,
         entreprise=org,
+        buyer_entreprise=contact.entreprise or "",
+        buyer_prenom=contact.prenom or "",
+        buyer_nom=contact.nom or "",
+        buyer_siret=contact.siret or "",
+        buyer_tva_intra=contact.tva_intra or "",
     )
 
     montant_paye_initial = _money_dec(facture.montant_paye)
@@ -2381,6 +2386,8 @@ def confirm_facture_creation(
             devis_id = devis.id
 
     org = get_entreprise_row(db, tenant_id)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    echeance = now + datetime.timedelta(days=30)
     generations = generate_facture_files(
         ref_facture=ref_facture,
         nom_client=nom_client,
@@ -2394,10 +2401,14 @@ def confirm_facture_creation(
         tva_applicable=bool(payload.tva_applicable),
         taux_tva=taux_tva,
         montant_tva=float(montant_tva),
+        buyer_entreprise=payload.entreprise or "",
+        buyer_prenom=payload.prenom or "",
+        buyer_nom=payload.nom or "",
+        buyer_siret=getattr(contact, "siret", None) or "",
+        buyer_tva_intra=getattr(contact, "tva_intra", None) or "",
+        date_emission=now,
+        date_echeance=echeance,
     )
-
-    now = datetime.datetime.now(datetime.timezone.utc)
-    echeance = now + datetime.timedelta(days=30)
     file_path = generations.get("url_path") or f"/files/factures/{ref_facture}.pdf"
 
     facture = Facture(

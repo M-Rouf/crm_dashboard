@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import pdfkit
 
 from scripts.entreprise_template import apply_entreprise_placeholders
+from scripts.facturx_invoice import make_facturx_pdf
 
 
 def _format_money(amount: float) -> str:
@@ -36,6 +37,14 @@ def generate_facture_files(
     tva_applicable: bool = False,
     taux_tva: float = 0.0,
     montant_tva: float = 0.0,
+    buyer_entreprise: str = "",
+    buyer_prenom: str = "",
+    buyer_nom: str = "",
+    buyer_siret: str = "",
+    buyer_tva_intra: str = "",
+    date_emission=None,
+    date_echeance=None,
+    facturx: bool = True,
 ):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     template_path = os.path.join(
@@ -151,8 +160,43 @@ def generate_facture_files(
     except Exception as e:
         print(f"Erreur PDF generation facture: {e}")
 
-    return {
+    result = {
         "html_path": html_output_path,
         "pdf_path": pdf_output_path,
         "url_path": f"/files/factures/{ref_facture}.pdf",
+        "facturx": False,
+        "xml_path": None,
     }
+
+    if facturx and os.path.isfile(pdf_output_path):
+        fx = make_facturx_pdf(
+            pdf_output_path,
+            ref_facture=ref_facture,
+            articles=articles,
+            total_ht=float(total_ht),
+            montant_tva=tva,
+            total_ttc=total_ttc,
+            tva_applicable=bool(tva_applicable),
+            taux_tva=taux,
+            date_emission=date_emission or date_now,
+            date_echeance=date_echeance or (date_now + timedelta(days=30)),
+            entreprise=entreprise,
+            nom_client=nom_client,
+            adresse_client=adresse_client or "",
+            email_client=contact_client or "",
+            buyer_entreprise=buyer_entreprise,
+            buyer_prenom=buyer_prenom,
+            buyer_nom=buyer_nom,
+            buyer_siret=buyer_siret,
+            buyer_tva_intra=buyer_tva_intra,
+            ref_devis=ref_devis,
+            ref_commande=ref_commande,
+            description=description or "",
+            document_type_code="380",
+        )
+        result["facturx"] = bool(fx.get("facturx"))
+        result["xml_path"] = fx.get("xml_path")
+        if fx.get("error"):
+            print(f"Erreur Factur-X facture: {fx['error']}")
+
+    return result

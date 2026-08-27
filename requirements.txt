@@ -8,3 +8,7 @@ pdfkit>=1.0.0
 python-multipart>=0.0.6
 bcrypt>=4.0.0
 itsdangerous>=2.1.0
+factur-x>=6.8
+pypdf>=5.3.0
+lxml>=4.9.0
+python-stdnum>=1.19
