@@ -137,6 +137,7 @@ def build_facturx_data_dict(
     buyer_siret: str = "",
     buyer_tva_intra: str = "",
     seller_electronic_address: str = "",
+    business_process_type: str = "S1",
     ref_devis: str = "",
     ref_commande: str = "",
     description: str = "",
@@ -180,6 +181,9 @@ def build_facturx_data_dict(
         "BT-5": "EUR",
         "BT-8": "invoice",
         "BT-9": due_date,
+        # BT-23 : type de processus métier (e-reporting FR)
+        # S1 = prestation de services ; B1 = vente de biens
+        "BT-23": (business_process_type or "S1").strip().upper() or "S1",
         "BT-27": _seller_name(entreprise),
         "BT-35": seller_line,
         "BT-37": seller_ville,
@@ -402,6 +406,7 @@ def make_facturx_pdf(
     buyer_siret: str = "",
     buyer_tva_intra: str = "",
     seller_electronic_address: str = "",
+    business_process_type: str = "S1",
     ref_devis: str = "",
     ref_commande: str = "",
     description: str = "",
@@ -436,6 +441,7 @@ def make_facturx_pdf(
             buyer_siret=buyer_siret,
             buyer_tva_intra=buyer_tva_intra,
             seller_electronic_address=seller_electronic_address,
+            business_process_type=business_process_type,
             ref_devis=ref_devis,
             ref_commande=ref_commande,
             description=description,
