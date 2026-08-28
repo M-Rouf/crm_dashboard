@@ -124,6 +124,7 @@ class Entreprise(Base):
     rib = Column(String(34))
     bic = Column(String(11))
     tva_applicable = Column(Boolean, default=False)
+    tva_intra = Column(String(20))
     date_creation = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
 
@@ -929,6 +930,7 @@ class EntrepriseSchema(BaseModel):
     rib: str | None = None
     bic: str | None = None
     tva_applicable: bool = False
+    tva_intra: str | None = None
     logo_url: str | None = None
     date_creation: datetime.datetime | None = None
 
@@ -949,6 +951,7 @@ class EntrepriseUpdateBody(BaseModel):
     rib: str | None = ""
     bic: str | None = ""
     tva_applicable: bool = False
+    tva_intra: str | None = ""
 
 
 def _entreprise_to_schema(row: Entreprise) -> EntrepriseSchema:
@@ -966,6 +969,7 @@ def _entreprise_to_schema(row: Entreprise) -> EntrepriseSchema:
         rib=row.rib,
         bic=row.bic,
         tva_applicable=bool(row.tva_applicable),
+        tva_intra=row.tva_intra,
         logo_url=resolve_entreprise_logo_url(row.nom_usage),
         date_creation=row.date_creation,
     )
@@ -1007,6 +1011,7 @@ def update_entreprise_api(
     row.rib = (body.rib or "").strip() or None
     row.bic = (body.bic or "").strip() or None
     row.tva_applicable = bool(body.tva_applicable)
+    row.tva_intra = (body.tva_intra or "").strip().upper().replace(" ", "") or None
 
     try:
         db.commit()
@@ -1825,6 +1830,7 @@ def generate_facture_avoir(
         buyer_nom=contact.nom or "",
         buyer_siret=contact.siret or "",
         buyer_tva_intra=contact.tva_intra or "",
+        buyer_type_entite=contact.type_entite or "B2B",
         seller_electronic_address=seller_email,
     )
 
@@ -2399,6 +2405,7 @@ def confirm_facture_creation(
         buyer_nom=payload.nom or "",
         buyer_siret=getattr(contact, "siret", None) or "",
         buyer_tva_intra=getattr(contact, "tva_intra", None) or "",
+        buyer_type_entite=getattr(contact, "type_entite", None) or "B2B",
         date_emission=now,
         date_echeance=echeance,
         seller_electronic_address=seller_email,

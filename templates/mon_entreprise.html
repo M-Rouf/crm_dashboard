@@ -93,6 +93,11 @@
             <input v-model="form.siret" required maxlength="14" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono" />
           </div>
           <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">TVA intracommunautaire</label>
+            <input v-model="form.tva_intra" maxlength="20" placeholder="Ex. FR12345678901"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono uppercase" />
+          </div>
+          <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Téléphone</label>
             <input v-model="form.telephone" type="tel" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
           </div>
@@ -161,7 +166,7 @@
 
         function emptyForm() {
           return {
-            nom_usage: "", raison_sociale: "", siret: "", adresse: "", code_postal: "",
+            nom_usage: "", raison_sociale: "", siret: "", tva_intra: "", adresse: "", code_postal: "",
             ville: "", telephone: "", email_contact: "", id_super_pdp: "", rib: "", bic: "",
             tva_applicable: false, logo_url: null, date_creation: null,
           };
@@ -174,6 +179,7 @@
             nom_usage: data.nom_usage || "",
             raison_sociale: data.raison_sociale || "",
             siret: data.siret || "",
+            tva_intra: data.tva_intra || "",
             adresse: data.adresse || "",
             code_postal: data.code_postal || "",
             ville: data.ville || "",

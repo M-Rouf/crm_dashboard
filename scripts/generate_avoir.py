@@ -40,6 +40,7 @@ def generate_avoir_files(
     buyer_nom: str = "",
     buyer_siret: str = "",
     buyer_tva_intra: str = "",
+    buyer_type_entite: str = "B2B",
     seller_electronic_address: str = "",
     facturx: bool = True,
 ):
@@ -137,6 +138,7 @@ def generate_avoir_files(
             buyer_nom=buyer_nom,
             buyer_siret=buyer_siret,
             buyer_tva_intra=buyer_tva_intra,
+            buyer_type_entite=buyer_type_entite,
             seller_electronic_address=seller_electronic_address,
             description=f"Avoir relatif à la facture {ref_facture}. {description_avoir or ''}".strip(),
             document_type_code="381",

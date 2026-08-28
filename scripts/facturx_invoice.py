@@ -136,6 +136,7 @@ def build_facturx_data_dict(
     buyer_nom: str = "",
     buyer_siret: str = "",
     buyer_tva_intra: str = "",
+    buyer_type_entite: str = "B2B",
     seller_electronic_address: str = "",
     business_process_type: str = "S1",
     ref_devis: str = "",
@@ -155,7 +156,11 @@ def build_facturx_data_dict(
 
     seller_siret = _digits(getattr(entreprise, "siret", None) if entreprise else None)
     seller_siren = seller_siret[:9] if len(seller_siret) >= 9 else ""
-    seller_vat = french_vat_from_siret(seller_siret) if tva_applicable else ""
+    seller_vat = ""
+    if entreprise:
+        seller_vat = (
+            (getattr(entreprise, "tva_intra", None) or "").strip().upper().replace(" ", "")
+        )
 
     seller_line, seller_cp, seller_ville = parse_fr_address(
         getattr(entreprise, "adresse", None) if entreprise else "",
@@ -170,9 +175,10 @@ def build_facturx_data_dict(
     buyer_line, buyer_cp, buyer_ville = parse_fr_address(adresse_client)
     buyer_siret_d = _digits(buyer_siret)
     buyer_siren = buyer_siret_d[:9] if len(buyer_siret_d) >= 9 else ""
-    buyer_vat = (buyer_tva_intra or "").strip().upper().replace(" ", "")
-    if not buyer_vat and buyer_siret_d:
-        buyer_vat = french_vat_from_siret(buyer_siret_d)
+    is_b2b = (buyer_type_entite or "B2B").strip().upper() == "B2B"
+    buyer_vat = ""
+    if is_b2b:
+        buyer_vat = (buyer_tva_intra or "").strip().upper().replace(" ", "")
 
     data: dict = {
         "BT-1": (ref_facture or "").strip()[:50],
@@ -405,6 +411,7 @@ def make_facturx_pdf(
     buyer_nom: str = "",
     buyer_siret: str = "",
     buyer_tva_intra: str = "",
+    buyer_type_entite: str = "B2B",
     seller_electronic_address: str = "",
     business_process_type: str = "S1",
     ref_devis: str = "",
@@ -440,6 +447,7 @@ def make_facturx_pdf(
             buyer_nom=buyer_nom,
             buyer_siret=buyer_siret,
             buyer_tva_intra=buyer_tva_intra,
+            buyer_type_entite=buyer_type_entite,
             seller_electronic_address=seller_electronic_address,
             business_process_type=business_process_type,
             ref_devis=ref_devis,
